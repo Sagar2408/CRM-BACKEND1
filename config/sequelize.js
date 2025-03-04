@@ -1,3 +1,4 @@
+// config/sequelize.js
 require("dotenv").config();
 const { Sequelize } = require("sequelize");
 
@@ -24,7 +25,7 @@ sequelize
 const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
-db.Users = require("../models/User.model")(sequelize, Sequelize);
+db.Users = require("../models/User.model")(sequelize, Sequelize); // Pass sequelize and Sequelize to the model function
 
 // Debugging: Check if models are loaded
 console.log("📌 Loaded models:", Object.keys(db));

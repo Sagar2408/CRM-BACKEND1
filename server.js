@@ -1,11 +1,18 @@
 require("dotenv").config();
 const express = require("express");
 const db = require("./config/sequelize"); // Ensure correct path
+const passport = require("passport");
+const userRoutes = require("./routes/User.routes");
+const configurePassport = require("./config/passport");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(express.json());
+app.use(passport.initialize());
+configurePassport();
+
+app.use("/api", userRoutes);
 
 // ✅ Ensure `db.sequelize` exists before syncing
 if (db.sequelize) {

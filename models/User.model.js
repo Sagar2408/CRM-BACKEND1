@@ -1,3 +1,4 @@
+// models/User.model.js
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
@@ -24,11 +25,11 @@ module.exports = (sequelize) => {
       },
       password: {
         type: DataTypes.STRING,
-        allowNull: true, // Can be null if user signs up via social login
+        allowNull: true,
       },
       oauth_provider: {
         type: DataTypes.ENUM("twitter", "facebook", "linkedin", "local"),
-        allowNull: true, // "local" means a regular email-password signup
+        allowNull: true,
       },
       oauth_id: {
         type: DataTypes.STRING,
