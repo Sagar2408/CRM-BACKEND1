@@ -3,6 +3,72 @@ const { Users } = require("../config/sequelize"); // Import the Users model from
 const { Op } = require("sequelize"); // Import Sequelize operators
 const bcrypt = require("bcrypt");
 const passport = require("passport");
+require("dotenv").config();
+const jwt = require("jsonwebtoken"); 
+
+/*-----------------------Login---------------------*/
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check if user exists
+    const user = await Users.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Validate password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true, // Prevents JavaScript access (XSS protection)
+      secure: false, // Change this to true in production (HTTPS)
+      sameSite: "Lax", // Helps prevent CSRF attacks
+      maxAge: 3600000, // 1 hour
+    });
+
+    res.status(200).json({
+      message: "Login successful",
+      token, 
+      user: { id: user.id, email: user.email, username: user.username },
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+/*-------------------------User Profile--------------*/
+const getUserProfile = async (req, res) => {
+  try {
+    const user = await Users.findByPk(req.user.userId, {
+      attributes: { exclude: ["password"] }, // Don't return the password
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
 
 // Local Signup (username/email/password)
 const signupLocal = async (req, res) => {
@@ -135,7 +201,8 @@ const oauthCallback = (provider) => {
 
 module.exports = {
   signupLocal,
-
+  login,
+  getUserProfile, // Add missing function
   // Twitter signup
   signupTwitter: passport.authenticate("twitter"),
   twitterCallback: [

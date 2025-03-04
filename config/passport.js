@@ -1,4 +1,3 @@
-// config/passport.js
 const passport = require("passport");
 const TwitterStrategy = require("passport-twitter").Strategy;
 const FacebookStrategy = require("passport-facebook").Strategy;
@@ -6,7 +5,6 @@ const LinkedInStrategy = require("passport-linkedin-oauth2").Strategy;
 const { handleOAuthSignup } = require("../controller/User.controller");
 
 module.exports = () => {
-  // Twitter Strategy
   passport.use(
     new TwitterStrategy(
       {
@@ -20,7 +18,6 @@ module.exports = () => {
     )
   );
 
-  // Facebook Strategy
   passport.use(
     new FacebookStrategy(
       {
@@ -35,7 +32,6 @@ module.exports = () => {
     )
   );
 
-  // LinkedIn Strategy
   passport.use(
     new LinkedInStrategy(
       {
