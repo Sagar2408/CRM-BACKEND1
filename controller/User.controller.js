@@ -69,10 +69,12 @@ const signupLocal = async (req, res) => {
 
 // Rest of your controller code remains the same...
 // OAuth Signup Handler
+
+// OAuth Signup Handler
 const handleOAuthSignup = async (profile, provider, done) => {
   try {
     // Check if user exists with this OAuth ID
-    let user = await User.findOne({
+    let user = await Users.findOne({
       where: {
         oauth_provider: provider,
         oauth_id: profile.id,
@@ -82,16 +84,18 @@ const handleOAuthSignup = async (profile, provider, done) => {
     if (!user) {
       // Check if email exists from another provider
       if (profile.emails && profile.emails[0]) {
-        user = await User.findOne({
+        user = await Users.findOne({
           where: { email: profile.emails[0].value },
         });
       }
 
       if (!user) {
         // Create new user
-        user = await User.create({
+        user = await Users.create({
           username:
-            profile.displayName || profile.username || `user_${Date.now()}`,
+            profile.displayName ||
+            profile.username ||
+            `user_${Date.now()}`.substring(0, 25), // Truncate if too long
           email: profile.emails ? profile.emails[0].value : null,
           oauth_provider: provider,
           oauth_id: profile.id,
@@ -119,13 +123,22 @@ const oauthCallback = (provider) => {
     try {
       const user = req.user;
 
+      // Generate JWT token (optional, for authentication state)
+      const token = jwt.sign(
+        { id: user.id, username: user.username },
+        process.env.JWT_SECRET_KEY || "AtoZeeVisas", // Use your JWT secret from .env
+        { expiresIn: "24h" }
+      );
+
       res.json({
         message: `${provider} signup successful`,
         user: {
           id: user.id,
           username: user.username,
           email: user.email,
+          profile_picture: user.profile_picture,
         },
+        token, // Return the JWT token for frontend use (optional)
       });
     } catch (error) {
       res.status(500).json({ error: "Signup failed" });
@@ -133,24 +146,27 @@ const oauthCallback = (provider) => {
   };
 };
 
+// Twitter signup
+const signupTwitter = passport.authenticate("twitter");
+const twitterCallback = [
+  passport.authenticate("twitter", { session: false }),
+  oauthCallback("twitter"),
+];
+
+// Export all controller methods
 module.exports = {
   signupLocal,
+  signupTwitter,
+  twitterCallback,
 
-  // Twitter signup
-  signupTwitter: passport.authenticate("twitter"),
-  twitterCallback: [
-    passport.authenticate("twitter", { session: false }),
-    oauthCallback("twitter"),
-  ],
-
-  // Facebook signup
+  // Facebook signup (unchanged, remove if not needed)
   signupFacebook: passport.authenticate("facebook", { scope: ["email"] }),
   facebookCallback: [
     passport.authenticate("facebook", { session: false }),
     oauthCallback("facebook"),
   ],
 
-  // LinkedIn signup
+  // LinkedIn signup (unchanged, remove if not needed)
   signupLinkedin: passport.authenticate("linkedin"),
   linkedinCallback: [
     passport.authenticate("linkedin", { session: false }),

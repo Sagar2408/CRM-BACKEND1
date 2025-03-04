@@ -32,7 +32,7 @@ console.log("📌 Loaded models:", Object.keys(db));
 
 // Sync schema with database
 sequelize
-  .sync({ alter: true }) // Change to `force: true` if needed to reset tables
+  .sync({ alter: false }) // Change to `force: true` if needed to reset tables
   .then(() => console.log("✅ Database schema synchronized"))
   .catch((err) => console.error("❌ Schema synchronization failed:", err));
 

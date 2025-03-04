@@ -6,7 +6,7 @@ const userController = require("../controller/User.controller");
 router.post("/signup", userController.signupLocal);
 
 // Twitter routes
-router.get("/auth/twitter", userController.signupTwitter);
+router.get("/auth/twitter/signup", userController.signupTwitter);
 router.get("/auth/twitter/callback", userController.twitterCallback);
 
 // Facebook routes

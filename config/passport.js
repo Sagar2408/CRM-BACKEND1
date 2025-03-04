@@ -3,7 +3,42 @@ const passport = require("passport");
 const TwitterStrategy = require("passport-twitter").Strategy;
 const FacebookStrategy = require("passport-facebook").Strategy;
 const LinkedInStrategy = require("passport-linkedin-oauth2").Strategy;
-const { handleOAuthSignup } = require("../controller/User.controller");
+const { Users, Op } = require("../config/sequelize"); // Import Users and Op from sequelize config
+
+// OAuth Signup Handler (defined locally)
+const handleOAuthSignup = async (profile, provider, done) => {
+  try {
+    // Check if user exists with this OAuth ID
+    let user = await Users.findOne({
+      where: {
+        [Op.or]: [
+          { oauth_id: profile.id, oauth_provider: provider },
+          { email: profile.emails ? profile.emails[0].value : null },
+        ],
+      },
+    });
+
+    if (user) {
+      return done(null, false, {
+        message: `User already exists with this ${provider} account or email`,
+      });
+    }
+
+    // Create new user if not found
+    user = await Users.create({
+      username:
+        profile.displayName || `${provider}_${profile.id}`.substring(0, 25), // Truncate if too long
+      email: profile.emails ? profile.emails[0].value : null,
+      oauth_provider: provider,
+      oauth_id: profile.id,
+      profile_picture: profile.photos ? profile.photos[0].value : null,
+    });
+
+    return done(null, user);
+  } catch (error) {
+    return done(error, null);
+  }
+};
 
 module.exports = () => {
   // Twitter Strategy
