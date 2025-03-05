@@ -16,10 +16,7 @@ const sequelize = new Sequelize(
 );
 
 // Test database connection
-sequelize
-  .authenticate()
-  .then(() => console.log("✅ Database connected successfully!"))
-  .catch((err) => console.error("❌ Database connection failed:", err));
+sequelize.authenticate();
 
 // Define models
 const db = {};
@@ -29,11 +26,5 @@ db.Users = require("../models/User.model")(sequelize, Sequelize); // Pass sequel
 
 // Debugging: Check if models are loaded
 console.log("📌 Loaded models:", Object.keys(db));
-
-// Sync schema with database
-sequelize
-  .sync({ alter: false }) // Change to `force: true` if needed to reset tables
-  .then(() => console.log("✅ Database schema synchronized"))
-  .catch((err) => console.error("❌ Schema synchronization failed:", err));
 
 module.exports = db;

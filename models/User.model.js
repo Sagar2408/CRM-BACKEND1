@@ -34,7 +34,6 @@ module.exports = (sequelize) => {
       oauth_id: {
         type: DataTypes.STRING,
         allowNull: true,
-        unique: true,
       },
       profile_picture: {
         type: DataTypes.STRING,

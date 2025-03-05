@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const db = require("./config/sequelize"); 
+const db = require("./config/sequelize");
 const passport = require("passport");
 const userRoutes = require("./routes/User.routes");
 const cookieParser = require("cookie-parser");
@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(
   cors({
-    origin: "http://localhost:3000", 
+    origin: "http://localhost:3000",
     credentials: true, // Enable cookies
   })
 );
@@ -27,7 +27,7 @@ app.use("/api", userRoutes);
 // ✅ Ensure `db.sequelize` exists before syncing
 if (db.sequelize) {
   db.sequelize
-    .sync({ alter: true })
+    .sync({ alter: false })
     .then(() => console.log("✅ Database schema synchronized"))
     .catch((err) => console.error("❌ Schema synchronization failed:", err));
 } else {

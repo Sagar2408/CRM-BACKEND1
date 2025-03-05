@@ -3,8 +3,18 @@ const { Users } = require("../config/sequelize"); // Import the Users model from
 const { Op } = require("sequelize"); // Import Sequelize operators
 const bcrypt = require("bcrypt");
 const passport = require("passport");
+const nodemailer = require("nodemailer"); // Add Nodemailer
+const crypto = require("crypto");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail", // or your email provider (e.g., SMTP)
+  auth: {
+    user: process.env.EMAIL_USER, // your email
+    pass: process.env.EMAIL_PASS, // your email password or app password
+  },
+});
 
 /*-----------------------Login---------------------*/
 const login = async (req, res) => {
@@ -130,6 +140,84 @@ const signupLocal = async (req, res) => {
   }
 };
 
+/*-------------------------Forgot Password--------------*/
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    const user = await Users.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenExpiry = Date.now() + 3600000; // 1 hour expiry
+
+    // Save token and expiry to user
+    await user.update({
+      resetPasswordToken: resetToken,
+      resetPasswordExpiry: resetTokenExpiry,
+    });
+
+    // Send reset email
+    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`; // Update with your frontend URL
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Password Reset Request",
+      text: `Click this link to reset your password: ${resetUrl}\nThis link expires in 1 hour.`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: "Password reset link sent to your email" });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+// // /*-------------------------Reset Password--------------*/
+// const resetPassword = async (req, res) => {
+//   try {
+//     const { token, newPassword } = req.body;
+
+//     if (!token || !newPassword) {
+//       return res
+//         .status(400)
+//         .json({ error: "Token and new password are required" });
+//     }
+
+//     const user = await Users.findOne({
+//       where: {
+//         resetPasswordToken: token,
+//         resetPasswordExpiry: { [Op.gt]: Date.now() }, // Check if token is still valid
+//       },
+//     });
+
+//     if (!user) {
+//       return res.status(400).json({ error: "Invalid or expired token" });
+//     }
+
+//     // Hash new password
+//     const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+//     // Update password and clear reset fields
+//     await user.update({
+//       password: hashedPassword,
+//       resetPasswordToken: null,
+//       resetPasswordExpiry: null,
+//     });
+
+//     res.status(200).json({ message: "Password successfully reset" });
+//   } catch (error) {
+//     console.error("Reset password error:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
 // OAuth Signup Handler (for Twitter, Facebook, LinkedIn)
 const handleOAuthSignup = async (profile, provider, done) => {
   try {
@@ -206,6 +294,8 @@ module.exports = {
   login,
   getUserProfile,
   signupLocal,
+  forgotPassword,
+  // resetPassword,
   signupTwitter,
   twitterCallback,
 
