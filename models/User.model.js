@@ -27,14 +27,6 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      oauth_provider: {
-        type: DataTypes.ENUM("twitter", "facebook", "linkedin", "local"),
-        allowNull: true,
-      },
-      oauth_id: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
       profile_picture: {
         type: DataTypes.STRING,
         allowNull: true,

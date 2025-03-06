@@ -12,8 +12,4 @@ router.get("/profile", userController.getUserProfile);
 router.post("/forgot-password", userController.forgotPassword);
 // router.post("/reset-password", userController.resetPassword);
 
-// Twitter signup routes
-router.get("/auth/twitter/signup", userController.signupTwitter);
-router.get("/auth/twitter/callback", userController.twitterCallback);
-
 module.exports = router;

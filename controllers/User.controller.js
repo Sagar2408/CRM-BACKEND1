@@ -181,114 +181,43 @@ const forgotPassword = async (req, res) => {
   }
 };
 // // /*-------------------------Reset Password--------------*/
-// const resetPassword = async (req, res) => {
-//   try {
-//     const { token, newPassword } = req.body;
-
-//     if (!token || !newPassword) {
-//       return res
-//         .status(400)
-//         .json({ error: "Token and new password are required" });
-//     }
-
-//     const user = await Users.findOne({
-//       where: {
-//         resetPasswordToken: token,
-//         resetPasswordExpiry: { [Op.gt]: Date.now() }, // Check if token is still valid
-//       },
-//     });
-
-//     if (!user) {
-//       return res.status(400).json({ error: "Invalid or expired token" });
-//     }
-
-//     // Hash new password
-//     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-//     // Update password and clear reset fields
-//     await user.update({
-//       password: hashedPassword,
-//       resetPasswordToken: null,
-//       resetPasswordExpiry: null,
-//     });
-
-//     res.status(200).json({ message: "Password successfully reset" });
-//   } catch (error) {
-//     console.error("Reset password error:", error);
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// };
-// OAuth Signup Handler (for Twitter, Facebook, LinkedIn)
-const handleOAuthSignup = async (profile, provider, done) => {
+const resetPassword = async (req, res) => {
   try {
-    // Check if user exists with this OAuth ID
-    let user = await Users.findOne({
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res
+        .status(400)
+        .json({ error: "Token and new password are required" });
+    }
+
+    const user = await Users.findOne({
       where: {
-        [Op.or]: [
-          { oauth_id: profile.id, oauth_provider: provider },
-          { email: profile.emails ? profile.emails[0].value : null },
-        ],
+        resetPasswordToken: token,
+        resetPasswordExpiry: { [Op.gt]: Date.now() }, // Check if token is still valid
       },
     });
 
-    if (user) {
-      return done(null, false, {
-        message: `User already exists with this ${provider} account or email`,
-      });
+    if (!user) {
+      return res.status(400).json({ error: "Invalid or expired token" });
     }
 
-    // Create new user if not found
-    user = await Users.create({
-      username:
-        profile.displayName || `${provider}_${profile.id}`.substring(0, 25), // Truncate if too long
-      email: profile.emails ? profile.emails[0].value : null,
-      oauth_provider: provider,
-      oauth_id: profile.id,
-      profile_picture: profile.photos ? profile.photos[0].value : null,
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password and clear reset fields
+    await user.update({
+      password: hashedPassword,
+      resetPasswordToken: null,
+      resetPasswordExpiry: null,
     });
 
-    return done(null, user);
+    res.status(200).json({ message: "Password successfully reset" });
   } catch (error) {
-    return done(error, null);
+    console.error("Reset password error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
-
-// Controller methods for each OAuth provider callback
-const oauthCallback = (provider) => {
-  return async (req, res) => {
-    try {
-      const user = req.user;
-
-      // Generate JWT token (optional, for authentication state)
-      const token = jwt.sign(
-        { id: user.id, username: user.username },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" }
-      );
-
-      res.json({
-        message: `${provider} signup successful`,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          profile_picture: user.profile_picture,
-        },
-        token, // Return the JWT token for frontend use (optional)
-      });
-    } catch (error) {
-      res.status(500).json({ error: "Signup failed" });
-    }
-  };
-};
-
-// Twitter signup
-const signupTwitter = passport.authenticate("twitter");
-const twitterCallback = [
-  passport.authenticate("twitter", { session: false }),
-  oauthCallback("twitter"),
-];
-
 // Export all controller methods
 module.exports = {
   login,
@@ -296,20 +225,4 @@ module.exports = {
   signupLocal,
   forgotPassword,
   // resetPassword,
-  signupTwitter,
-  twitterCallback,
-
-  // Facebook signup (unchanged, remove if not needed)
-  signupFacebook: passport.authenticate("facebook", { scope: ["email"] }),
-  facebookCallback: [
-    passport.authenticate("facebook", { session: false }),
-    oauthCallback("facebook"),
-  ],
-
-  // LinkedIn signup (unchanged, remove if not needed)
-  signupLinkedin: passport.authenticate("linkedin"),
-  linkedinCallback: [
-    passport.authenticate("linkedin", { session: false }),
-    oauthCallback("linkedin"),
-  ],
 };
