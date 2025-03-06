@@ -77,7 +77,7 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-// Local Signup (username/email/password)
+/*-------------------------Sign Up User--------------*/
 const signupLocal = async (req, res) => {
   console.log("Signup request received:", req.body);
   try {
@@ -116,7 +116,6 @@ const signupLocal = async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      oauth_provider: "local",
     });
 
     console.log("User created:", user.username);
