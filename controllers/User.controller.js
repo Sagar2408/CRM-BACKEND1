@@ -224,5 +224,5 @@ module.exports = {
   getUserProfile,
   signupLocal,
   forgotPassword,
-  // resetPassword,
+  resetPassword,
 };
