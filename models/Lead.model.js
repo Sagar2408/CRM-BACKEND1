@@ -9,32 +9,36 @@ module.exports = (sequelize) => {
         autoIncrement: true,
         primaryKey: true,
       },
-      name: {
+      clientLeadId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: "ClientLeads", // Foreign key reference to ClientLead table
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
+      },
+      assignedToExecutive: {
         type: DataTypes.STRING,
         allowNull: false,
+        comment: "Name of the executive assigned to the lead",
       },
-      email: {
-        type: DataTypes.STRING,
-        allowNull: true,
-        validate: {
-          isEmail: true,
-        },
-      },
-      phone: {
-        type: DataTypes.STRING,
-        allowNull: true,
+      assignmentDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
       },
       status: {
         type: DataTypes.ENUM(
           "New",
-          "Contacted",
-          "Qualified",
-          "Proposal Sent",
-          "Negotiation",
-          "Won",
-          "Lost"
+          "Assigned",
+          "In Progress",
+          "Follow-Up",
+          "Closed",
+          "Rejected"
         ),
-        defaultValue: "New",
+        defaultValue: "Assigned",
       },
       createdAt: {
         type: DataTypes.DATE,

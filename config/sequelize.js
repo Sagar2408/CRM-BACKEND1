@@ -27,6 +27,7 @@ db.Deal = require("../models/Deal.model")(sequelize, Sequelize);
 db.Lead = require("../models/Lead.model")(sequelize, Sequelize);
 db.Meeting = require("../models/Meeting.model")(sequelize, Sequelize);
 db.Opportunity = require("../models/Opportunity.model")(sequelize, Sequelize);
+db.ClientLead = require("../models/ClientLead.model")(sequelize, Sequelize);
 
 db.Lead.hasMany(db.Deal, { foreignKey: "leadId", onDelete: "CASCADE" });
 db.Deal.belongsTo(db.Lead, { foreignKey: "leadId" });
