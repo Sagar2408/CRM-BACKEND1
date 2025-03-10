@@ -1,39 +1,67 @@
+const fs = require("fs");
+const path = require("path");
+const multer = require("multer");
 const xlsx = require("xlsx");
-const { ClientLead } = require("../models/ClientLead.model");
+const csv = require("csv-parser");
+const ClientLead = require("../models/ClientLead");
 
-// Upload and save Excel data
-exports.uploadClientLeads = async (req, res) => {
+const upload = multer({ dest: "uploads/" });
+
+const uploadFile = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).send("No file uploaded.");
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
     }
 
-    // Read the uploaded Excel file
-    const workbook = xlsx.readFile(req.file.path);
-    const sheetName = workbook.SheetNames[0];
-    const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    const fileExt = path.extname(file.originalname).toLowerCase();
+    let data = [];
 
-    // Save each row to the database
-    for (const row of sheetData) {
-      await ClientLead.create({
-        name: row.name,
-        email: row.email,
-        phone: row.phone,
-        education: row.education,
-        experience: row.experience,
-        state: row.state,
-        country: row.country,
-        dob: row.dob,
-        leadAssignDate: row.leadAssignDate,
-        countryPreference: row.countryPreference,
-        assignedToExecutive: row.assignedToExecutive,
-        status: row.status || "New",
-      });
+    if (fileExt === ".xlsx" || fileExt === ".xls") {
+      // Process Excel file
+      const workbook = xlsx.readFile(file.path);
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      data = xlsx.utils.sheet_to_json(sheet);
+    } else if (fileExt === ".csv") {
+      // Process CSV file
+      const fileData = [];
+      fs.createReadStream(file.path)
+        .pipe(csv())
+        .on("data", (row) => fileData.push(row))
+        .on("end", async () => {
+          data = fileData;
+
+          // Save to database
+          try {
+            for (const record of data) {
+              await ClientLead.create(record);
+            }
+            res.status(200).json({ message: "File uploaded and data saved" });
+          } catch (err) {
+            console.error("Failed to save data:", err);
+            res.status(500).json({ message: "Failed to save data" });
+          }
+        });
+      return;
+    } else {
+      return res.status(400).json({ message: "Unsupported file format" });
     }
 
-    res.status(200).send("File uploaded and data saved successfully.");
+    // Save to database for Excel files
+    for (const record of data) {
+      await ClientLead.create(record);
+    }
+
+    res.status(200).json({ message: "File uploaded and data saved" });
   } catch (err) {
-    console.error("❌ Error processing file:", err);
-    res.status(500).send("Error saving data.");
+    console.error("Error uploading file:", err);
+    res.status(500).json({ message: "Error uploading file" });
   }
+};
+
+module.exports = {
+  upload,
+  uploadFile,
 };
