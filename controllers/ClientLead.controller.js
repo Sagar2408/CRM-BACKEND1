@@ -3,7 +3,7 @@ const path = require("path");
 const multer = require("multer");
 const xlsx = require("xlsx");
 const csv = require("csv-parser");
-const ClientLead = require("../models/ClientLead");
+const ClientLead = require("../models/ClientLead.model");
 
 const upload = multer({ dest: "uploads/" });
 
