@@ -6,6 +6,7 @@ const userRoutes = require("./routes/User.routes");
 const dealRoutes = require("./routes/Deal.routes");
 const leadRoutes = require("./routes/Lead.routes");
 const opportunityRoutes = require("./routes/Opportunity.routes");
+const clientLeadRoutes = require("./routes/ClientLead.routes");
 const meetingRoutes = require("./routes/Meeting.routes");
 const cookieParser = require("cookie-parser");
 const app = express();
@@ -27,6 +28,7 @@ app.use("/api/deals", dealRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/meetings", meetingRoutes);
 app.use("/api/opportunities", opportunityRoutes);
+app.use("/api/client-leads", clientLeadRoutes);
 
 // ✅ Ensure `db.sequelize` exists before syncing
 if (db.sequelize) {
