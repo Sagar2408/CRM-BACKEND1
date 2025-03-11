@@ -4,7 +4,7 @@ const multer = require("multer");
 const xlsx = require("xlsx");
 const csv = require("csv-parser");
 
-const ClientLead = require("../models/ClientLead.model");
+const { ClientLead } = require("../config/sequelize");
 
 // Define possible dynamic field names for "name" and "phone"
 const nameFields = [
@@ -61,6 +61,8 @@ const processExcel = (filePath) => {
 
 const uploadFile = async (req, res) => {
   try {
+    console.log("📌 ClientLead Model:", ClientLead); // Debugging: Check if the model is loaded properly
+
     const file = req.file;
 
     if (!file) {
