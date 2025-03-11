@@ -4,7 +4,7 @@ const multer = require("multer");
 const xlsx = require("xlsx");
 const csv = require("csv-parser"); // Make sure to install with npm install csv-parser
 
-const ClientLead = require("../models/ClientLead.model");
+const { ClientLead } = require("../config/sequelize");
 
 // Define allowed attributes to save to the database
 const allowedAttributes = ["name", "email", "phone", "address"]; // Update this list as needed
@@ -51,6 +51,8 @@ const processExcel = (filePath) => {
 
 const uploadFile = async (req, res) => {
   try {
+    console.log("📌 ClientLead Model:", ClientLead); // Debugging: Check if the model is loaded properly
+
     const file = req.file;
 
     if (!file) {
