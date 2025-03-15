@@ -8,9 +8,10 @@ const leadRoutes = require("./routes/Lead.routes");
 const opportunityRoutes = require("./routes/Opportunity.routes");
 const clientLeadRoutes = require("./routes/ClientLead.routes");
 const meetingRoutes = require("./routes/Meeting.routes");
+const invoiceRoutes = require("./routes/Invoices.routes");
 const cookieParser = require("cookie-parser");
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 app.use(
   cors({
@@ -29,7 +30,9 @@ app.use("/api/leads", leadRoutes);
 app.use("/api/meetings", meetingRoutes);
 app.use("/api/opportunities", opportunityRoutes);
 app.use("/api/client-leads", clientLeadRoutes);
+app.use("/api/invoice", invoiceRoutes);
 
+console.log("🔄 Starting server...");
 // ✅ Ensure `db.sequelize` exists before syncing
 if (db.sequelize) {
   db.sequelize
@@ -39,7 +42,7 @@ if (db.sequelize) {
 } else {
   console.error("❌ Sequelize instance not initialized.");
 }
-
+console.log("✅ Reached end of server.js");
 module.exports = app;
 // Start Server
 if (process.env.NODE_ENV !== "test") {

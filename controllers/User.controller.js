@@ -1,18 +1,17 @@
-// controllers/User.controller.js
-const { Users } = require("../config/sequelize"); // Import the Users model from db
-const { Op } = require("sequelize"); // Import Sequelize operators
+const { Users } = require("../config/sequelize");
+const { Op } = require("sequelize");
 const bcrypt = require("bcrypt");
-const passport = require("passport");
-const nodemailer = require("nodemailer"); // Add Nodemailer
+const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 require("dotenv").config();
-const jwt = require("jsonwebtoken");
 
+// Email transporter
 const transporter = nodemailer.createTransport({
-  service: "gmail", // or your email provider (e.g., SMTP)
+  service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER, // your email
-    pass: process.env.EMAIL_PASS, // your email password or app password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
@@ -21,37 +20,40 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check if user exists
     const user = await Users.findOne({ where: { email } });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Validate password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Generate JWT token
+    // Generate JWT token with role
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
     res.cookie("token", token, {
-      httpOnly: true, // Prevents JavaScript access (XSS protection)
-      secure: false, // Change this to true in production (HTTPS)
-      sameSite: "Lax", // Helps prevent CSRF attacks
+      httpOnly: true,
+      secure: false, // Set to true in production (HTTPS)
+      sameSite: "Lax",
       maxAge: 3600000, // 1 hour
     });
 
     res.status(200).json({
       message: "Login successful",
       token,
-      user: { id: user.id, email: user.email, username: user.username },
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+      },
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -62,8 +64,19 @@ const login = async (req, res) => {
 /*-------------------------User Profile--------------*/
 const getUserProfile = async (req, res) => {
   try {
-    const user = await Users.findByPk(req.user.userId, {
-      attributes: { exclude: ["password"] }, // Don't return the password
+    const { id, role } = req.user; // Extract from token
+
+    if (role === "admin") {
+      // Admins can view any profile
+      const users = await Users.findAll({
+        attributes: { exclude: ["password"] },
+      });
+      return res.json(users);
+    }
+
+    // Normal users can only see their own profile
+    const user = await Users.findByPk(id, {
+      attributes: { exclude: ["password"] },
     });
 
     if (!user) {
@@ -81,25 +94,20 @@ const getUserProfile = async (req, res) => {
 const signupLocal = async (req, res) => {
   console.log("Signup request received:", req.body);
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role } = req.body;
 
-    // Validate required fields
-    if (!username || !password) {
+    if (!username || !password || !role) {
       return res
         .status(400)
-        .json({ error: "Username and password are required" });
+        .json({ error: "Username, password, and role are required" });
     }
 
-    // Additional validation
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ error: "Invalid email format" });
     }
 
-    // Check if user already exists
     const existingUser = await Users.findOne({
-      where: {
-        [Op.or]: [{ username }, { email }], // Use Op.or for Sequelize v6+
-      },
+      where: { [Op.or]: [{ username }, { email }] },
     });
 
     if (existingUser) {
@@ -108,14 +116,13 @@ const signupLocal = async (req, res) => {
         .json({ error: "Username or email already exists" });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
     const user = await Users.create({
       username,
       email,
       password: hashedPassword,
+      role, // Assign role
     });
 
     console.log("User created:", user.username);
@@ -125,6 +132,7 @@ const signupLocal = async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -153,18 +161,15 @@ const forgotPassword = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Generate reset token
     const resetToken = crypto.randomBytes(32).toString("hex");
     const resetTokenExpiry = Date.now() + 3600000; // 1 hour expiry
 
-    // Save token and expiry to user
     await user.update({
       resetPasswordToken: resetToken,
       resetPasswordExpiry: resetTokenExpiry,
     });
 
-    // Send reset email
-    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`; // Update with your frontend URL
+    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -179,7 +184,8 @@ const forgotPassword = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-// // /*-------------------------Reset Password--------------*/
+
+/*-------------------------Reset Password--------------*/
 const resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
@@ -193,7 +199,7 @@ const resetPassword = async (req, res) => {
     const user = await Users.findOne({
       where: {
         resetPasswordToken: token,
-        resetPasswordExpiry: { [Op.gt]: Date.now() }, // Check if token is still valid
+        resetPasswordExpiry: { [Op.gt]: Date.now() },
       },
     });
 
@@ -201,10 +207,8 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ error: "Invalid or expired token" });
     }
 
-    // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password and clear reset fields
     await user.update({
       password: hashedPassword,
       resetPasswordToken: null,
@@ -217,6 +221,7 @@ const resetPassword = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 // Export all controller methods
 module.exports = {
   login,

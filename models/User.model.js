@@ -1,4 +1,3 @@
-// models/User.model.js
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
@@ -38,6 +37,11 @@ module.exports = (sequelize) => {
       resetPasswordExpiry: {
         type: DataTypes.BIGINT,
         allowNull: true,
+      },
+      role: {
+        type: DataTypes.ENUM("Admin", "User"),
+        allowNull: false,
+        defaultValue: "User",
       },
       createdAt: {
         type: DataTypes.DATE,
