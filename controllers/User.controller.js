@@ -31,7 +31,6 @@ const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Generate JWT token with role
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
@@ -40,9 +39,9 @@ const login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false, // Set to true in production (HTTPS)
+      secure: process.env.NODE_ENV === "production",
       sameSite: "Lax",
-      maxAge: 3600000, // 1 hour
+      maxAge: 3600000,
     });
 
     res.status(200).json({
@@ -61,22 +60,35 @@ const login = async (req, res) => {
   }
 };
 
-/*-------------------------User Profile--------------*/
 const getUserProfile = async (req, res) => {
   try {
-    const { id, role } = req.user; // Extract from token
+    const { id, role } = req.user;
 
-    if (role === "admin") {
-      // Admins can view any profile
+    if (role === "Admin") {
       const users = await Users.findAll({
-        attributes: { exclude: ["password"] },
+        attributes: {
+          exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
+        },
+      });
+      return res.json(users);
+    } else if (role === "TL") {
+      // Team Lead can see their team (Executives) and their own profile
+      const users = await Users.findAll({
+        where: {
+          [Op.or]: [{ id: id }, { role: "Executive" }],
+        },
+        attributes: {
+          exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
+        },
       });
       return res.json(users);
     }
 
-    // Normal users can only see their own profile
+    // Executives can only see their own profile
     const user = await Users.findByPk(id, {
-      attributes: { exclude: ["password"] },
+      attributes: {
+        exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
+      },
     });
 
     if (!user) {
@@ -90,16 +102,17 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-/*-------------------------Sign Up User--------------*/
 const signupLocal = async (req, res) => {
-  console.log("Signup request received:", req.body);
   try {
     const { username, email, password, role } = req.body;
 
-    if (!username || !password || !role) {
-      return res
-        .status(400)
-        .json({ error: "Username, password, and role are required" });
+    // Only allow valid roles
+    const validRoles = ["Admin", "TL", "Executive"];
+    if (!username || !password || !role || !validRoles.includes(role)) {
+      return res.status(400).json({
+        error:
+          "Username, password, and valid role (Admin, TL, or Executive) are required",
+      });
     }
 
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -122,10 +135,9 @@ const signupLocal = async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      role, // Assign role
+      role,
     });
 
-    console.log("User created:", user.username);
     return res.status(201).json({
       message: "User created successfully",
       user: {
@@ -136,7 +148,7 @@ const signupLocal = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Signup error:", error.message || error);
+    console.error("Signup error:", error);
     let errorMessage = "Internal server error";
     if (error.name === "SequelizeValidationError") {
       errorMessage = error.errors.map((e) => e.message).join(", ");
@@ -146,7 +158,6 @@ const signupLocal = async (req, res) => {
     return res.status(500).json({ error: errorMessage });
   }
 };
-
 /*-------------------------Forgot Password--------------*/
 const forgotPassword = async (req, res) => {
   try {
