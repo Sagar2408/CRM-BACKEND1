@@ -158,6 +158,68 @@ const signupLocal = async (req, res) => {
     return res.status(500).json({ error: errorMessage });
   }
 };
+const getAdminDashboard = async (req, res) => {
+  try {
+    const users = await Users.findAll({
+      attributes: {
+        exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
+      },
+    });
+    res.json({
+      message: "Welcome to Admin Dashboard",
+      users,
+      currentUser: {
+        id: req.user.id,
+        email: req.user.email,
+        role: req.user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Admin dashboard error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const getTLDashboard = async (req, res) => {
+  try {
+    const users = await Users.findAll({
+      where: {
+        [Op.or]: [{ id: req.user.id }, { role: "Executive" }],
+      },
+      attributes: {
+        exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
+      },
+    });
+    res.json({
+      message: "Welcome to Team Lead Dashboard",
+      teamMembers: users,
+      currentUser: {
+        id: req.user.id,
+        email: req.user.email,
+        role: req.user.role,
+      },
+    });
+  } catch (error) {
+    console.error("TL dashboard error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+const getExecutiveDashboard = async (req, res) => {
+  try {
+    const user = await Users.findByPk(req.user.id, {
+      attributes: {
+        exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
+      },
+    });
+    res.json({
+      message: "Welcome to Executive Dashboard",
+      user: user,
+    });
+  } catch (error) {
+    console.error("Executive dashboard error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 /*-------------------------Forgot Password--------------*/
 const forgotPassword = async (req, res) => {
   try {
@@ -240,4 +302,7 @@ module.exports = {
   signupLocal,
   forgotPassword,
   resetPassword,
+  getAdminDashboard,
+  getTLDashboard,
+  getExecutiveDashboard,
 };
