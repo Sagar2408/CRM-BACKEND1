@@ -11,7 +11,7 @@ const meetingRoutes = require("./routes/Meeting.routes");
 const invoiceRoutes = require("./routes/Invoices.routes");
 const cookieParser = require("cookie-parser");
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 
 app.use(
   cors({

@@ -43,6 +43,11 @@ module.exports = (sequelize) => {
         allowNull: false,
         defaultValue: "Executive",
       },
+      permission: {
+        type: DataTypes.ENUM("approved", "not approved", "pending"),
+        allowNull: false,
+        defaultValue: "pending",
+      },
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
