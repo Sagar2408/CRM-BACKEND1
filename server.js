@@ -9,6 +9,7 @@ const opportunityRoutes = require("./routes/Opportunity.routes");
 const clientLeadRoutes = require("./routes/ClientLead.routes");
 const meetingRoutes = require("./routes/Meeting.routes");
 const invoiceRoutes = require("./routes/Invoices.routes");
+const chatbotRoutes = require("./routes/Chatbot.routes");
 const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -31,6 +32,7 @@ app.use("/api/meetings", meetingRoutes);
 app.use("/api/opportunities", opportunityRoutes);
 app.use("/api/client-leads", clientLeadRoutes);
 app.use("/api/invoice", invoiceRoutes);
+app.use("/api", chatbotRoutes);
 
 console.log("🔄 Starting server...");
 // ✅ Ensure `db.sequelize` exists before syncing
