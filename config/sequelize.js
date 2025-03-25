@@ -29,9 +29,17 @@ db.Meeting = require("../models/Meeting.model")(sequelize, Sequelize);
 db.Opportunity = require("../models/Opportunity.model")(sequelize, Sequelize);
 db.ClientLead = require("../models/ClientLead.model")(sequelize, Sequelize);
 db.Invoice = require("../models/Invoice.model")(sequelize, Sequelize);
-
+db.LeadAssignmentHistory = require("../models/LeadAssignmentHistory")(
+  sequelize,
+  Sequelize
+);
 db.Lead.hasMany(db.Deal, { foreignKey: "leadId", onDelete: "CASCADE" });
 db.Deal.belongsTo(db.Lead, { foreignKey: "leadId" });
+db.Lead.hasMany(db.LeadAssignmentHistory, {
+  foreignKey: "leadId",
+  as: "assignmentHistory",
+});
+db.LeadAssignmentHistory.belongsTo(db.Lead, { foreignKey: "leadId" });
 
 // Debugging: Check if models are loaded
 console.log("📌 Loaded models:", Object.keys(db));

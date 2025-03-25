@@ -13,7 +13,7 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "ClientLeads", // Foreign key reference to ClientLead table
+          model: "ClientLeads",
           key: "id",
         },
         onUpdate: "CASCADE",
@@ -22,7 +22,12 @@ module.exports = (sequelize) => {
       assignedToExecutive: {
         type: DataTypes.STRING,
         allowNull: false,
-        comment: "Name of the executive assigned to the lead",
+        comment: "Currently assigned executive",
+      },
+      previousAssignedTo: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "Previous executive",
       },
       assignmentDate: {
         type: DataTypes.DATEONLY,
@@ -51,6 +56,12 @@ module.exports = (sequelize) => {
     },
     {
       timestamps: true,
+      indexes: [
+        {
+          unique: true,
+          fields: ["clientLeadId", "assignedToExecutive"], // Prevent duplicate assignments
+        },
+      ],
     }
   );
 };
