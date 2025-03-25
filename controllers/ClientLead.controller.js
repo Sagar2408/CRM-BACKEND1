@@ -103,8 +103,18 @@ const uploadFile = async (req, res) => {
     res.status(500).json({ message: "Error uploading file" });
   }
 };
+const getClientLeads = async (req, res) => {
+  try {
+    const leads = await ClientLead.findAll();
+    res.status(200).json({ leads });
+  } catch (err) {
+    console.error("Error fetching client leads:", err);
+    res.status(500).json({ message: "Failed to fetch client leads" });
+  }
+};
 
 module.exports = {
   upload,
   uploadFile,
+  getClientLeads,
 };
