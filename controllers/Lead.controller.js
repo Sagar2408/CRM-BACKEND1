@@ -1,4 +1,7 @@
 const { Lead, Deal } = require("../config/sequelize");
+const {
+  createAssignmentHistory,
+} = require("./LeadAssignmentHistory.controller");
 
 // 📌 Get all leads
 exports.getAllLeads = async (req, res) => {
@@ -16,13 +19,16 @@ exports.getAllLeads = async (req, res) => {
 // 📌 Get lead by ID
 exports.getLeadById = async (req, res) => {
   try {
-    const lead = await Lead.findByPk(req.params.id, {
-      include: [{ model: Deal, attributes: ["revenue", "profit", "status"] }], // Include Deals
-    });
+    const { leadId } = req.params; // Ensure this is passed correctly
+    const lead = await Lead.findByPk(leadId);
 
-    if (!lead) return res.status(404).json({ message: "Lead not found" });
+    if (!lead) {
+      return res
+        .status(404)
+        .json({ message: `Lead with ID ${leadId} not found` });
+    }
 
-    res.status(200).json(lead);
+    res.json(lead);
   } catch (error) {
     console.error("Error fetching lead:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -32,18 +38,36 @@ exports.getLeadById = async (req, res) => {
 // 📌 Create a new lead
 exports.createLead = async (req, res) => {
   try {
-    const { name, email, phone, status, assignedToExecutive } = req.body;
+    const { email, phone, status, assignedToExecutive, clientLeadId } =
+      req.body;
+
+    // Validate required fields
+    if (!clientLeadId || !assignedToExecutive) {
+      return res.status(400).json({
+        message: "clientLeadId and assignedToExecutive are required.",
+      });
+    }
 
     const lead = await Lead.create({
       name,
       email,
       phone,
-      status,
+      status: status || "Assigned", // Default status if not provided
       assignedToExecutive,
+      clientLeadId,
     });
+
     res.status(201).json(lead);
   } catch (error) {
     console.error("Error creating lead:", error);
+
+    if (error.name === "SequelizeUniqueConstraintError") {
+      return res.status(409).json({
+        message:
+          "Lead with this clientLeadId is already assigned to this executive.",
+      });
+    }
+
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -80,34 +104,25 @@ exports.deleteLead = async (req, res) => {
 
 exports.reassignLead = async (req, res) => {
   try {
-    const { newExecutive } = req.body;
-    const { id } = req.params;
+    const { leadId, newExecutive } = req.body;
 
     // Find the lead
-    let lead = await Lead.findByPk(id);
-    if (!lead) return res.status(404).json({ message: "Lead not found" });
-
-    // Prevent duplicate assignment
-    if (lead.assignedToExecutive === newExecutive) {
-      return res
-        .status(400)
-        .json({ message: "Lead is already assigned to this executive" });
+    const lead = await Lead.findByPk(leadId);
+    if (!lead) {
+      return res.status(404).json({ message: "Lead not found" });
     }
 
-    // Store the previous assignment in history
-    await LeadAssignmentHistory.create({
-      leadId: lead.id,
-      assignedTo: lead.assignedToExecutive, // Store old executive
-    });
+    // Save previous executive
+    const previousAssignedTo = lead.assignedToExecutive;
 
-    // Update the lead with the new executive
-    await lead.update({
-      previousAssignedTo: lead.assignedToExecutive, // Keep track of old executive
-      assignedToExecutive: newExecutive,
-      assignmentDate: new Date(),
-    });
+    // Update the lead with a new executive
+    lead.assignedToExecutive = newExecutive;
+    await lead.save();
 
-    res.status(200).json({ message: "Lead reassigned successfully", lead });
+    // ✅ Save in assignment history
+    await createAssignmentHistory(leadId, newExecutive);
+
+    res.json({ message: "Lead reassigned successfully", lead });
   } catch (error) {
     console.error("Error reassigning lead:", error);
     res.status(500).json({ message: "Internal server error" });

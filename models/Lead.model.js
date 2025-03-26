@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  return sequelize.define(
+  const Lead = sequelize.define(
     "Lead",
     {
       id: {
@@ -12,27 +12,18 @@ module.exports = (sequelize) => {
       clientLeadId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: "ClientLeads",
-          key: "id",
-        },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
       },
       assignedToExecutive: {
         type: DataTypes.STRING,
         allowNull: false,
-        comment: "Currently assigned executive",
       },
       previousAssignedTo: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING, // ✅ Add this field
         allowNull: true,
-        comment: "Previous executive",
       },
       assignmentDate: {
         type: DataTypes.DATEONLY,
         allowNull: false,
-        defaultValue: DataTypes.NOW,
       },
       status: {
         type: DataTypes.ENUM(
@@ -43,7 +34,7 @@ module.exports = (sequelize) => {
           "Closed",
           "Rejected"
         ),
-        defaultValue: "Assigned",
+        defaultValue: "New",
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -56,12 +47,8 @@ module.exports = (sequelize) => {
     },
     {
       timestamps: true,
-      indexes: [
-        {
-          unique: true,
-          fields: ["clientLeadId", "assignedToExecutive"], // Prevent duplicate assignments
-        },
-      ],
     }
   );
+
+  return Lead;
 };
