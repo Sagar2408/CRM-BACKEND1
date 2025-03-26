@@ -1,7 +1,4 @@
 const { Lead, Deal } = require("../config/sequelize");
-const {
-  createAssignmentHistory,
-} = require("./LeadAssignmentHistory.controller");
 
 // 📌 Get all leads
 exports.getAllLeads = async (req, res) => {
@@ -112,17 +109,21 @@ exports.reassignLead = async (req, res) => {
       return res.status(404).json({ message: "Lead not found" });
     }
 
-    // Save previous executive
+    // Save previous executive (make sure this is captured before any updates)
     const previousAssignedTo = lead.assignedToExecutive;
 
     // Update the lead with a new executive
     lead.assignedToExecutive = newExecutive;
     await lead.save();
 
-    // ✅ Save in assignment history
-    await createAssignmentHistory(leadId, newExecutive);
-
-    res.json({ message: "Lead reassigned successfully", lead });
+    // Return the lead with the previousAssignedTo explicitly included
+    res.json({
+      message: "Lead reassigned successfully",
+      lead: {
+        ...lead.toJSON(), // Spread the lead object's attributes
+        previousAssignedTo: previousAssignedTo, // Explicitly add the previous executive
+      },
+    });
   } catch (error) {
     console.error("Error reassigning lead:", error);
     res.status(500).json({ message: "Internal server error" });
