@@ -295,6 +295,62 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// NEW API: Get all Executives
+const getAllExecutives = async (req, res) => {
+  try {
+    const { role } = req.user;
+
+    // Only Admin and TL can access this endpoint
+    if (role !== "Admin" && role !== "TL") {
+      return res.status(403).json({
+        message: "Unauthorized: Only Admin and TL can view all executives",
+      });
+    }
+
+    const executives = await Users.findAll({
+      where: { role: "Executive" },
+      attributes: {
+        exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
+      },
+    });
+
+    res.status(200).json({
+      message: "Executives retrieved successfully",
+      executives: executives,
+    });
+  } catch (error) {
+    console.error("Error fetching executives:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+// NEW API: Get all Team Leads
+const getAllTeamLeads = async (req, res) => {
+  try {
+    const { role } = req.user;
+
+    // Only Admin can access this endpoint
+    if (role !== "Admin") {
+      return res.status(403).json({
+        message: "Unauthorized: Only Admin can view all team leads",
+      });
+    }
+
+    const teamLeads = await Users.findAll({
+      where: { role: "TL" },
+      attributes: {
+        exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
+      },
+    });
+
+    res.status(200).json({
+      message: "Team Leads retrieved successfully",
+      teamLeads: teamLeads,
+    });
+  } catch (error) {
+    console.error("Error fetching team leads:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 // Export all controller methods
 module.exports = {
   login,
@@ -305,4 +361,6 @@ module.exports = {
   getAdminDashboard,
   getTLDashboard,
   getExecutiveDashboard,
+  getAllExecutives,
+  getAllTeamLeads,
 };

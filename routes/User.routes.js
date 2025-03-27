@@ -19,7 +19,19 @@ router.get(
   userController.getExecutiveDashboard
 );
 
-// General profile route (if still needed)
+// General profile route
 router.get("/profile", auth(), userController.getUserProfile); // No role restriction
+
+// New protected routes with proper authorization
+router.get(
+  "/executives",
+  auth(["Admin", "TL"]), // Only Admin and TL can access
+  userController.getAllExecutives
+);
+router.get(
+  "/team-leads",
+  auth(["Admin"]), // Only Admin can access
+  userController.getAllTeamLeads
+);
 
 module.exports = router;
