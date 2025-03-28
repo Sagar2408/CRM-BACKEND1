@@ -112,6 +112,7 @@ const getClientLeads = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch client leads" });
   }
 };
+
 const assignExecutive = async (req, res) => {
   try {
     const { id } = req.params;
@@ -137,9 +138,41 @@ const assignExecutive = async (req, res) => {
     res.status(500).json({ message: "Failed to assign executive" });
   }
 };
+
+const getLeadsByExecutive = async (req, res) => {
+  try {
+    const { executiveName } = req.query; // Using query parameter to get the executive name
+
+    if (!executiveName) {
+      return res.status(400).json({ message: "Executive name is required" });
+    }
+
+    const leads = await ClientLead.findAll({
+      where: {
+        assignedToExecutive: executiveName,
+      },
+    });
+
+    if (leads.length === 0) {
+      return res.status(404).json({
+        message: `No leads found for executive: ${executiveName}`,
+      });
+    }
+
+    res.status(200).json({
+      message: "Leads retrieved successfully",
+      leads,
+    });
+  } catch (err) {
+    console.error("Error fetching leads by executive:", err);
+    res.status(500).json({ message: "Failed to fetch leads by executive" });
+  }
+};
+
 module.exports = {
   upload,
   uploadFile,
   getClientLeads,
   assignExecutive,
+  getLeadsByExecutive,
 };

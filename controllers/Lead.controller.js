@@ -35,8 +35,7 @@ exports.getLeadById = async (req, res) => {
 // 📌 Create a new lead
 exports.createLead = async (req, res) => {
   try {
-    const { email, phone, status, assignedToExecutive, clientLeadId } =
-      req.body;
+    const { email, assignedToExecutive, clientLeadId } = req.body;
 
     // Validate required fields
     if (!clientLeadId || !assignedToExecutive) {
@@ -46,10 +45,8 @@ exports.createLead = async (req, res) => {
     }
 
     const lead = await Lead.create({
-      name,
       email,
-      phone,
-      status: status || "Assigned", // Default status if not provided
+      status: "Assigned", // Default status if not provided
       assignedToExecutive,
       clientLeadId,
     });

@@ -24,6 +24,7 @@ module.exports = (sequelize) => {
       assignmentDate: {
         type: DataTypes.DATEONLY,
         allowNull: false,
+        defaultValue: DataTypes.NOW,
       },
       status: {
         type: DataTypes.ENUM(

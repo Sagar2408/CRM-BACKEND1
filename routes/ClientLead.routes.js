@@ -10,5 +10,6 @@ const {
 router.post("/upload", upload.single("file"), uploadFile);
 router.get("/getClients", getClientLeads);
 router.put("/assign-executive/:id", assignExecutive);
+router.get("/client-leads/executive", getLeadsByExecutive);
 
 module.exports = router;
