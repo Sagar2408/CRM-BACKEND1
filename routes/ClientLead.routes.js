@@ -5,6 +5,7 @@ const {
   uploadFile,
   getClientLeads,
   assignExecutive,
+  getLeadsByExecutive,
 } = require("../controllers/ClientLead.controller");
 
 router.post("/upload", upload.single("file"), uploadFile);
