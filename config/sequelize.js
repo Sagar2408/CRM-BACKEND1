@@ -1,28 +1,34 @@
 // config/sequelize.js
-require("dotenv").config();
-const { Sequelize } = require("sequelize");
 
-// Initialize Sequelize
+require("dotenv").config(); // Load environment variables from the .env file
+const { Sequelize } = require("sequelize"); // Import Sequelize ORM
+
+// Initialize Sequelize with database credentials from environment variables
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
+  process.env.DB_NAME, // Database name
+  process.env.DB_USER, // Database username
+  process.env.DB_PASSWORD, // Database password
   {
-    host: process.env.DB_HOST,
-    dialect: "mysql",
-    port: process.env.DB_PORT,
-    logging: console.log,
+    host: process.env.DB_HOST, // Database host (e.g., localhost or remote server)
+    dialect: "mysql", // Specify MySQL as the database dialect
+    port: process.env.DB_PORT, // Database port (from .env file)
+    logging: console.log, // Enable logging of SQL queries (can be disabled in production)
   }
 );
 
-// Test database connection
-sequelize.authenticate();
+// Test the database connection
+sequelize
+  .authenticate()
+  .then(() => console.log("✅ Connected to MySQL database using Sequelize"))
+  .catch((err) => console.error("❌ Unable to connect to the database:", err));
 
-// Define models
+// Initialize an empty object to store models
 const db = {};
-db.Sequelize = Sequelize;
-db.sequelize = sequelize;
-db.Users = require("../models/User.model")(sequelize, Sequelize); // Pass sequelize and Sequelize to the model function
+db.Sequelize = Sequelize; // Store Sequelize package reference
+db.sequelize = sequelize; // Store the Sequelize instance
+
+// Define models and associate them with the Sequelize instance
+db.Users = require("../models/User.model")(sequelize, Sequelize);
 db.Deal = require("../models/Deal.model")(sequelize, Sequelize);
 db.Lead = require("../models/Lead.model")(sequelize, Sequelize);
 db.Meeting = require("../models/Meeting.model")(sequelize, Sequelize);
@@ -30,10 +36,11 @@ db.Opportunity = require("../models/Opportunity.model")(sequelize, Sequelize);
 db.ClientLead = require("../models/ClientLead.model")(sequelize, Sequelize);
 db.Invoice = require("../models/Invoice.model")(sequelize, Sequelize);
 
-db.Lead.hasMany(db.Deal, { foreignKey: "leadId", onDelete: "CASCADE" });
-db.Deal.belongsTo(db.Lead, { foreignKey: "leadId" });
+// Define model relationships
+db.Lead.hasMany(db.Deal, { foreignKey: "leadId", onDelete: "CASCADE" }); // A lead can have multiple deals
+db.Deal.belongsTo(db.Lead, { foreignKey: "leadId" }); // Each deal belongs to a lead
 
-// Debugging: Check if models are loaded
+// Debugging: Log the loaded models to verify correctness
 console.log("📌 Loaded models:", Object.keys(db));
 
-module.exports = db;
+module.exports = db; // Export the database object for use in other parts of the application

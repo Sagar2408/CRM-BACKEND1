@@ -1,12 +1,12 @@
-const fs = require("fs");
-const path = require("path");
-const multer = require("multer");
-const xlsx = require("xlsx");
-const csv = require("csv-parser");
+const fs = require("fs"); // File system module for handling file operations
+const path = require("path"); // Path module for working with file paths
+const multer = require("multer"); // Multer for handling file uploads
+const xlsx = require("xlsx"); // XLSX module for processing Excel files
+const csv = require("csv-parser"); // CSV parser for handling CSV files
 
-const { ClientLead } = require("../config/sequelize");
+const { ClientLead } = require("../config/sequelize"); // Importing the ClientLead model
 
-// Define possible dynamic field names for "name" and "phone"
+// Define possible dynamic field names for "name" and "phone" mapping
 const nameFields = [
   "name",
   "username",
@@ -16,15 +16,17 @@ const nameFields = [
 ];
 const phoneFields = ["phone", "ph.no", "contact number", "mobile", "telephone"];
 
-// Multer setup for file uploads
+// Multer setup for file uploads (stores uploaded files in the "uploads/" directory)
 const upload = multer({ dest: "uploads/" });
 
+// Function to map field names dynamically to standard names ("name" and "phone")
 const mapFieldName = (fieldName) => {
   if (nameFields.includes(fieldName.toLowerCase())) return "name";
   if (phoneFields.includes(fieldName.toLowerCase())) return "phone";
   return fieldName;
 };
 
+// Function to process CSV files and map fields dynamically
 const processCSV = (filePath) => {
   return new Promise((resolve, reject) => {
     const fileData = [];
@@ -43,9 +45,10 @@ const processCSV = (filePath) => {
   });
 };
 
+// Function to process Excel files and map fields dynamically
 const processExcel = (filePath) => {
   const workbook = xlsx.readFile(filePath);
-  const sheetName = workbook.SheetNames[0];
+  const sheetName = workbook.SheetNames[0]; // Get the first sheet
   const sheet = workbook.Sheets[sheetName];
   const data = xlsx.utils.sheet_to_json(sheet);
 
@@ -59,24 +62,25 @@ const processExcel = (filePath) => {
   });
 };
 
+// Function to handle file upload, process it, and store data in the database
 const uploadFile = async (req, res) => {
   try {
     console.log("📌 ClientLead Model:", ClientLead); // Debugging: Check if the model is loaded properly
 
-    const file = req.file;
+    const file = req.file; // Retrieve uploaded file
 
     if (!file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const fileExt = path.extname(file.originalname).toLowerCase();
+    const fileExt = path.extname(file.originalname).toLowerCase(); // Get file extension
     let data = [];
 
     if (fileExt === ".xlsx" || fileExt === ".xls") {
-      data = processExcel(file.path);
+      data = processExcel(file.path); // Process Excel files
     } else if (fileExt === ".csv") {
       try {
-        data = await processCSV(file.path);
+        data = await processCSV(file.path); // Process CSV files
       } catch (err) {
         console.error("Error processing CSV file:", err);
         return res.status(500).json({ message: "Failed to process CSV file" });
@@ -86,6 +90,7 @@ const uploadFile = async (req, res) => {
     }
 
     try {
+      // Save processed data into the database
       for (const record of data) {
         await ClientLead.create(record);
       }
@@ -94,6 +99,7 @@ const uploadFile = async (req, res) => {
       console.error("Failed to save data:", err);
       return res.status(500).json({ message: "Failed to save data" });
     } finally {
+      // Delete the uploaded file after processing
       fs.unlink(file.path, (err) => {
         if (err) console.error("Error deleting file:", err);
       });
@@ -103,6 +109,8 @@ const uploadFile = async (req, res) => {
     res.status(500).json({ message: "Error uploading file" });
   }
 };
+
+// Function to retrieve all client leads from the database
 const getClientLeads = async (req, res) => {
   try {
     const leads = await ClientLead.findAll();
@@ -113,10 +121,11 @@ const getClientLeads = async (req, res) => {
   }
 };
 
+// Function to assign an executive to a client lead
 const assignExecutive = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { executiveName } = req.body;
+    const { id } = req.params; // Extract lead ID from request parameters
+    const { executiveName } = req.body; // Extract executive name from request body
 
     if (!executiveName) {
       return res.status(400).json({ message: "Executive name is required" });
@@ -139,18 +148,18 @@ const assignExecutive = async (req, res) => {
   }
 };
 
+// Function to get client leads assigned to a specific executive
 const getLeadsByExecutive = async (req, res) => {
   try {
-    const { executiveName } = req.query; // Using query parameter to get the executive name
+    const { executiveName } = req.query; // Extract executive name from query parameters
 
     if (!executiveName) {
       return res.status(400).json({ message: "Executive name is required" });
     }
 
+    // Fetch leads assigned to the specified executive
     const leads = await ClientLead.findAll({
-      where: {
-        assignedToExecutive: executiveName,
-      },
+      where: { assignedToExecutive: executiveName },
     });
 
     if (leads.length === 0) {
@@ -159,16 +168,14 @@ const getLeadsByExecutive = async (req, res) => {
       });
     }
 
-    res.status(200).json({
-      message: "Leads retrieved successfully",
-      leads,
-    });
+    res.status(200).json({ message: "Leads retrieved successfully", leads });
   } catch (err) {
     console.error("Error fetching leads by executive:", err);
     res.status(500).json({ message: "Failed to fetch leads by executive" });
   }
 };
 
+// Export functions for use in other parts of the application
 module.exports = {
   upload,
   uploadFile,
