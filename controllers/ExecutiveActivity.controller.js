@@ -1,22 +1,28 @@
-const ExecutiveActivity = require("../models/ExecutiveActivity.model");
+const { ExecutiveActivity } = require("../config/sequelize");
 
 // ✅ Start Work Session
 exports.startWork = async (req, res) => {
   try {
     const { ExecutiveId } = req.body;
 
-    const [activity, created] = await ExecutiveActivity.findOrCreate({
-      where: { ExecutiveId },
-      defaults: {
-        workTime: 0,
-        breakTime: 0,
-        dailyCallTime: 0,
-        leadSectionVisits: 0,
-      },
-    });
+    // ✅ Check if ExecutiveId is coming in the request
+    if (!ExecutiveId) {
+      return res.status(400).json({ message: "ExecutiveId is required" });
+    }
 
-    activity.workStartTime = new Date(); // Store start time
-    await activity.save();
+    console.log("Received ExecutiveId:", ExecutiveId);
+
+    let activity = await ExecutiveActivity.findOne({ where: { ExecutiveId } });
+
+    if (!activity) {
+      activity = await ExecutiveActivity.create({
+        ExecutiveId,
+        workStartTime: new Date(),
+      });
+    } else {
+      activity.workStartTime = new Date();
+      await activity.save();
+    }
 
     res.json({ message: "Work session started", activity });
   } catch (error) {
@@ -29,23 +35,38 @@ exports.stopWork = async (req, res) => {
   try {
     const { ExecutiveId } = req.body;
 
+    // ✅ Check if ExecutiveId is coming in the request
+    if (!ExecutiveId) {
+      return res.status(400).json({ message: "ExecutiveId is required" });
+    }
+
+    console.log("Received ExecutiveId:", ExecutiveId);
+
     const activity = await ExecutiveActivity.findOne({
       where: { ExecutiveId },
     });
 
-    if (!activity || !activity.workStartTime) {
+    if (!activity) {
+      return res.status(400).json({ message: "Executive activity not found" });
+    }
+
+    console.log("Existing activity:", activity);
+
+    if (!activity.workStartTime) {
       return res.status(400).json({ message: "Work session not started" });
     }
 
     const workDuration = Math.floor(
-      (new Date() - activity.workStartTime) / 60000
+      (new Date() - new Date(activity.workStartTime)) / 60000
     ); // Convert to minutes
+
     activity.workTime += workDuration;
     activity.workStartTime = null; // Reset start time
     await activity.save();
 
     res.json({ message: "Work session stopped", workDuration, activity });
   } catch (error) {
+    console.error("Error stopping work session:", error);
     res.status(500).json({ message: "Error stopping work session", error });
   }
 };
@@ -105,7 +126,8 @@ exports.updateCallTime = async (req, res) => {
       where: { ExecutiveId },
     });
 
-    if (!activity) return res.status(404).json({ message: "User not found" });
+    if (!activity)
+      return res.status(404).json({ message: "Executive not found" });
 
     activity.dailyCallTime += callDuration;
     await activity.save();

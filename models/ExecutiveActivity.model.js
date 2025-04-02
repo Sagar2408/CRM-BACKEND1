@@ -1,32 +1,42 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  const ExecutiveActivity = sequelize.define(
+  return sequelize.define(
     "ExecutiveActivity",
     {
-      userId: {
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      ExecutiveId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "Users", // Ensure this matches your Users table
+          model: "Users", // Ensure Users model exists
           key: "id",
         },
+        onDelete: "CASCADE",
       },
       workTime: {
-        type: DataTypes.INTEGER, // Storing work time in minutes
+        type: DataTypes.INTEGER,
         defaultValue: 0,
       },
       breakTime: {
-        type: DataTypes.INTEGER, // Storing break time in minutes
+        type: DataTypes.INTEGER,
         defaultValue: 0,
       },
       dailyCallTime: {
-        type: DataTypes.INTEGER, // Storing daily call time in minutes
+        type: DataTypes.INTEGER,
         defaultValue: 0,
       },
       leadSectionVisits: {
-        type: DataTypes.INTEGER, // Counting visits to the lead section
+        type: DataTypes.INTEGER,
         defaultValue: 0,
+      },
+      workStartTime: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -38,9 +48,7 @@ module.exports = (sequelize) => {
       },
     },
     {
-      timestamps: true,
+      timestamps: true, // Automatically manages createdAt & updatedAt
     }
   );
-
-  return ExecutiveActivity;
 };
