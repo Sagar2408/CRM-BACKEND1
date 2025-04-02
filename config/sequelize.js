@@ -35,11 +35,20 @@ db.Meeting = require("../models/Meeting.model")(sequelize, Sequelize);
 db.Opportunity = require("../models/Opportunity.model")(sequelize, Sequelize);
 db.ClientLead = require("../models/ClientLead.model")(sequelize, Sequelize);
 db.Invoice = require("../models/Invoice.model")(sequelize, Sequelize);
+db.ExecutiveActivity = require("../models/ExecutiveActivity.model")(
+  sequelize,
+  Sequelize
+);
 
 // Define model relationships
 db.Lead.hasMany(db.Deal, { foreignKey: "leadId", onDelete: "CASCADE" }); // A lead can have multiple deals
 db.Deal.belongsTo(db.Lead, { foreignKey: "leadId" }); // Each deal belongs to a lead
 
+db.Users.hasMany(db.ExecutiveActivity, {
+  foreignKey: "userId",
+  onDelete: "CASCADE",
+}); // A user can have multiple executive activities
+db.ExecutiveActivity.belongsTo(db.Users, { foreignKey: "userId" });
 // Debugging: Log the loaded models to verify correctness
 console.log("📌 Loaded models:", Object.keys(db));
 
