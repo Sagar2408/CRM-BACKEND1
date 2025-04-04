@@ -26,6 +26,11 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
+      breakStartTime: {
+        // ✅ Added this field
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       dailyCallTime: {
         type: DataTypes.INTEGER,
         defaultValue: 0,
