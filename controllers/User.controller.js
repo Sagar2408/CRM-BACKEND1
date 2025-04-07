@@ -220,6 +220,37 @@ const getExecutiveDashboard = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+/*-------------------Executive Profile---------------------*/
+const getExecutiveById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const requestingUser = req.user; // from auth middleware
+
+    // Check access
+    if (
+      requestingUser.role === "Executive" &&
+      requestingUser.id !== parseInt(userId, 10)
+    ) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    // Find user
+    const executive = await Users.findOne({
+      where: { id: userId, role: "Executive" },
+      attributes: ["id", "username", "email", "role", "createdAt"],
+    });
+
+    if (!executive) {
+      return res.status(404).json({ message: "Executive not found." });
+    }
+
+    res.status(200).json({ executive });
+  } catch (error) {
+    console.error("Error fetching executive:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
 /*-------------------------Forgot Password--------------*/
 const forgotPassword = async (req, res) => {
   try {
@@ -362,5 +393,6 @@ module.exports = {
   getTLDashboard,
   getExecutiveDashboard,
   getAllExecutives,
+  getExecutiveById,
   getAllTeamLeads,
 };

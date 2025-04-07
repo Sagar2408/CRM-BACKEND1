@@ -33,5 +33,10 @@ router.get(
   auth(["Admin"]), // Only Admin can access
   userController.getAllTeamLeads
 );
+router.get(
+  "/executives/:id",
+  auth(["Admin", "TL", "Executive"]),
+  userController.getExecutiveById
+);
 
 module.exports = router;
