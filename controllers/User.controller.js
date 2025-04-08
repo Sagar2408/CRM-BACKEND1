@@ -250,6 +250,26 @@ const getExecutiveById = async (req, res) => {
     res.status(500).json({ message: "Server error." });
   }
 };
+/*----------------------------Admin profile------------------*/
+const getAdminById = async (req, res) => {
+  try {
+    const adminId = req.user.id; // ✅ Take from authenticated token
+
+    const admin = await Users.findOne({
+      where: { id: adminId, role: "Admin" },
+      attributes: ["id", "username", "email", "role"],
+    });
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    res.status(200).json(admin);
+  } catch (error) {
+    console.error("Error fetching admin details:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 /*-------------------------Forgot Password--------------*/
 const forgotPassword = async (req, res) => {
@@ -391,6 +411,7 @@ module.exports = {
   resetPassword,
   getAdminDashboard,
   getTLDashboard,
+  getAdminById,
   getExecutiveDashboard,
   getAllExecutives,
   getExecutiveById,

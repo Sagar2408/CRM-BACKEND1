@@ -34,9 +34,11 @@ router.get(
   userController.getAllTeamLeads
 );
 router.get(
-  "/executives/:id",
+  "/executives/:id",//For executive info popover
   auth(["Admin", "TL", "Executive"]),
   userController.getExecutiveById
 );
+router.get("/admin/profile", auth(["Admin"]), userController.getAdminById);
+
 
 module.exports = router;
