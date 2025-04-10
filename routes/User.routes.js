@@ -9,6 +9,7 @@ router.post("/signup", userController.signupLocal);
 router.post("/login", userController.login);
 router.post("/forgot-password", userController.forgotPassword);
 router.post("/reset-password", userController.resetPassword);
+router.post("/logout", userController.logout);
 
 // Role-specific protected routes
 router.get("/admin", auth(["Admin"]), userController.getAdminDashboard);

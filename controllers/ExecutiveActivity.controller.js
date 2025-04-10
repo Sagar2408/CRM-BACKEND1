@@ -30,9 +30,12 @@ exports.startWork = async (req, res) => {
         leadSectionVisits: 0,
       });
     } else {
-      activity.workStartTime = new Date();
-      await activity.save();
+      if (!activity.workStartTime) {
+        activity.workStartTime = new Date();
+        await activity.save();
+      }
     }
+    
 
     res.json({ message: "Work session started", activity });
   } catch (error) {
