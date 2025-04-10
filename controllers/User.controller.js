@@ -31,6 +31,10 @@ const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // ✅ Mark user as online
+    user.is_online = true;
+    await user.save(); // Make sure this persists the isOnline change
+
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
@@ -52,6 +56,7 @@ const login = async (req, res) => {
         email: user.email,
         username: user.username,
         role: user.role,
+        is_online: user.is_online, // Optional: return online status in response
       },
     });
   } catch (error) {
@@ -417,6 +422,36 @@ const getAllTeamLeads = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+// NEW API: Get All Online Executives
+const getOnlineExecutives = async (req, res) => {
+  try {
+    const { role } = req.user;
+
+    // Only Admin and TL are allowed to check online executives
+    if (role !== "Admin" && role !== "TL") {
+      return res.status(403).json({
+        message: "Unauthorized: Only Admin and TL can view online executives",
+      });
+    }
+
+    const onlineExecutives = await Users.findAll({
+      where: {
+        role: "Executive",
+        is_online: true,
+      },
+      attributes: ["id", "username", "email", "is_online", "updatedAt"],
+    });
+
+    res.status(200).json({
+      message: "Online Executives fetched successfully",
+      onlineExecutives,
+    });
+  } catch (error) {
+    console.error("Error fetching online executives:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 // Export all controller methods
 module.exports = {
   login,
@@ -432,4 +467,5 @@ module.exports = {
   getAllExecutives,
   getExecutiveById,
   getAllTeamLeads,
+  getOnlineExecutives,
 };

@@ -48,6 +48,11 @@ module.exports = (sequelize) => {
         allowNull: false,
         defaultValue: "pending",
       },
+      is_online: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,

@@ -31,6 +31,7 @@
     "passport-twitter": "^1.0.4",
     "sequelize": "^6.37.5",
     "sequelize-mock": "^0.10.2",
+    "socket.io": "^4.8.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
