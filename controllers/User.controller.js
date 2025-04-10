@@ -317,15 +317,25 @@ const forgotPassword = async (req, res) => {
 // Logout user by clearing the cookie
 const logout = async (req, res) => {
   try {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
-    });
-    return res.status(200).json({ message: "Logout successful" });
+    const userId = req.user.id; // Assuming you have middleware to decode token and attach user to req
+
+    // Find the user and update is_online to false
+    const user = await Users.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.is_online = false;
+    await user.save();
+
+    // Clear the cookie
+    res.clearCookie("token");
+
+    res.status(200).json({ message: "Logout successful" });
   } catch (error) {
     console.error("Logout error:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
