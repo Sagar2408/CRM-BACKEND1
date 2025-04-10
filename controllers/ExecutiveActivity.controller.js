@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { ExecutiveActivity } = require("../config/sequelize");
+const { ExecutiveActivity, Users } = require("../config/sequelize");
 
 // ✅ Start Work Session
 exports.startWork = async (req, res) => {
@@ -35,7 +35,6 @@ exports.startWork = async (req, res) => {
         await activity.save();
       }
     }
-    
 
     res.json({ message: "Work session started", activity });
   } catch (error) {
@@ -78,17 +77,19 @@ exports.stopWork = async (req, res) => {
   }
 };
 
-// ✅ Start Break
 exports.startBreak = async (req, res) => {
   try {
     const { ExecutiveId } = req.body;
     if (!ExecutiveId)
       return res.status(400).json({ message: "ExecutiveId is required" });
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     let activity = await ExecutiveActivity.findOne({
       where: {
         ExecutiveId,
-        updatedAt: { [Op.gte]: new Date().setHours(0, 0, 0, 0) },
+        updatedAt: { [Op.gte]: today },
       },
     });
 
@@ -98,8 +99,12 @@ exports.startBreak = async (req, res) => {
     activity.breakStartTime = new Date();
     await activity.save();
 
+    // ✅ Set user offline
+    await Users.update({ is_online: false }, { where: { id: ExecutiveId } });
+
     res.json({ message: "Break started", activity });
   } catch (error) {
+    console.error("Error starting break:", error);
     res.status(500).json({ message: "Error starting break", error });
   }
 };
@@ -111,10 +116,13 @@ exports.stopBreak = async (req, res) => {
     if (!ExecutiveId)
       return res.status(400).json({ message: "ExecutiveId is required" });
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     let activity = await ExecutiveActivity.findOne({
       where: {
         ExecutiveId,
-        updatedAt: { [Op.gte]: new Date().setHours(0, 0, 0, 0) },
+        updatedAt: { [Op.gte]: today },
       },
     });
 
@@ -130,8 +138,12 @@ exports.stopBreak = async (req, res) => {
     activity.breakStartTime = null;
     await activity.save();
 
+    // ✅ Set user online
+    await Users.update({ is_online: true }, { where: { id: ExecutiveId } });
+
     res.json({ message: "Break stopped", breakDuration, activity });
   } catch (error) {
+    console.error("Error stopping break:", error);
     res.status(500).json({ message: "Error stopping break", error });
   }
 };
