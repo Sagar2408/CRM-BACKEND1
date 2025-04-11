@@ -1,6 +1,4 @@
-const db = require("../config/sequelize");
-const FollowUp = db.FollowUp;
-
+const { Followup } = require("../config/sequelize");
 
 // Create Follow Up
 exports.createFollowUp = async (req, res) => {
@@ -11,34 +9,34 @@ exports.createFollowUp = async (req, res) => {
       interaction_rating,
       reason_for_follow_up,
       follow_up_date,
-      follow_up_time
+      follow_up_time,
     } = req.body;
 
-    const followUp = await FollowUp.create({
+    const followUp = await Followup.create({
       connect_via,
       follow_up_type,
       interaction_rating,
       reason_for_follow_up,
       follow_up_date,
-      follow_up_time
+      follow_up_time,
     });
 
-    res.status(201).json({ message: 'Follow up created successfully', followUp });
+    res
+      .status(201)
+      .json({ message: "Follow up created successfully", followUp });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error creating follow up', error });
+    res.status(500).json({ message: "Error creating follow up", error });
   }
 };
 
 // Get All Follow Ups
 exports.getAllFollowUps = async (req, res) => {
   try {
-    const followUps = await FollowUp.findAll();
+    const followUps = await Followup.findAll();
     res.status(200).json(followUps);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error fetching follow ups', error });
+    res.status(500).json({ message: "Error fetching follow ups", error });
   }
 };
-
-

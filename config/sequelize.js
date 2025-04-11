@@ -39,7 +39,7 @@ db.ExecutiveActivity = require("../models/ExecutiveActivity.model")(
   sequelize,
   Sequelize
 );
-
+db.Followup = require("../models/Followup.model")(sequelize, Sequelize);
 // Define model relationships
 db.Lead.hasMany(db.Deal, { foreignKey: "leadId", onDelete: "CASCADE" }); // A lead can have multiple deals
 db.Deal.belongsTo(db.Lead, { foreignKey: "leadId" }); // Each deal belongs to a lead
