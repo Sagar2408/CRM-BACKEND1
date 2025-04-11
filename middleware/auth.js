@@ -2,8 +2,17 @@ const jwt = require("jsonwebtoken");
 
 const auth = (roles = []) => {
   return (req, res, next) => {
-    const token =
-      req.cookies?.token || req.headers["authorization"]?.split(" ")[1];
+    let token;
+
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      // If starts with "Bearer ", use the second part; otherwise use the full header
+      token = authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : authHeader;
+    } else if (req.cookies?.token) {
+      token = req.cookies.token;
+    }
 
     if (!token) {
       return res
@@ -22,7 +31,7 @@ const auth = (roles = []) => {
 
       next();
     } catch (error) {
-      res.status(403).json({ message: "Invalid token" });
+      return res.status(403).json({ message: "Invalid token" });
     }
   };
 };
