@@ -3,8 +3,16 @@ const express = require("express");
 const cors = require("cors");
 const http = require("http"); // Required for Socket.IO
 const { Server } = require("socket.io"); // Socket.IO
-const db = require("./config/sequelize");
 const cookieParser = require("cookie-parser");
+
+// DB Config
+const db = require("./config/sequelize");
+const sequelize = db.sequelize; // ✅ Fix: define sequelize
+const Sequelize = db.Sequelize; // ✅ Fix: define Sequelize
+
+// Models
+const Followup = require('./models/Followup.model')(sequelize, Sequelize.DataTypes);
+db.FollowUp = Followup;
 
 // Routes
 const userRoutes = require("./routes/User.routes");
@@ -16,6 +24,7 @@ const opportunityRoutes = require("./routes/Opportunity.routes");
 const invoiceRoutes = require("./routes/Invoices.routes");
 const chatbotRoutes = require("./routes/Chatbot.routes");
 const ExecutiveActivityRoutes = require("./routes/ExecutiveActivity.routes");
+const followupRoutes = require('./routes/Followup.routes');
 
 const app = express();
 const server = http.createServer(app); // HTTP server for Socket.IO
@@ -39,6 +48,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Routes
+app.use('/api/followup', followupRoutes);
 app.use("/api", userRoutes);
 app.use("/api/deals", dealRoutes);
 app.use("/api/leads", leadRoutes);
@@ -51,8 +61,8 @@ app.use("/api/executive-activities", ExecutiveActivityRoutes);
 
 // Sync Sequelize DB
 console.log("🔄 Starting server...");
-if (db.sequelize) {
-  db.sequelize
+if (sequelize) {
+  sequelize
     .sync({ alter: false })
     .then(() => console.log("✅ Database schema synchronized"))
     .catch((err) => console.error("❌ Schema synchronization failed:", err));
