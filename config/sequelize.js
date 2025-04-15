@@ -1,31 +1,31 @@
-require("dotenv").config(); // Load environment variables from the .env file
-const { Sequelize } = require("sequelize"); // Import Sequelize ORM
+require("dotenv").config(); // Load environment variables from .env
+const { Sequelize } = require("sequelize");
 
-// Initialize Sequelize with database credentials from environment variables
+// Initialize Sequelize
 const sequelize = new Sequelize(
-  process.env.DB_NAME, // Database name
-  process.env.DB_USER, // Database username
-  process.env.DB_PASSWORD, // Database password
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
   {
-    host: process.env.DB_HOST, // Database host (e.g., localhost or remote server)
-    dialect: "mysql", // Specify MySQL as the database dialect
-    port: process.env.DB_PORT, // Database port (from .env file)
-    logging: console.log, // Enable logging of SQL queries (can be disabled in production)
+    host: process.env.DB_HOST,
+    dialect: "mysql",
+    port: process.env.DB_PORT,
+    logging: console.log,
   }
 );
 
-// Test the database connection
+// Test connection
 sequelize
   .authenticate()
   .then(() => console.log("✅ Connected to MySQL database using Sequelize"))
   .catch((err) => console.error("❌ Unable to connect to the database:", err));
 
-// Initialize an empty object to store models
+// Initialize models
 const db = {};
-db.Sequelize = Sequelize; // Store Sequelize package reference
-db.sequelize = sequelize; // Store the Sequelize instance
+db.Sequelize = Sequelize;
+db.sequelize = sequelize;
 
-// Define models and associate them with the Sequelize instance
+// Import models
 db.Users = require("../models/User.model")(sequelize, Sequelize);
 db.Deal = require("../models/Deal.model")(sequelize, Sequelize);
 db.Lead = require("../models/Lead.model")(sequelize, Sequelize);
@@ -37,45 +37,85 @@ db.ExecutiveActivity = require("../models/ExecutiveActivity.model")(
   sequelize,
   Sequelize
 );
-db.FollowUp = require("../models/FollowUp.model")(sequelize, Sequelize); // Updated name to FollowUp
+db.FollowUp = require("../models/FollowUp.model")(sequelize, Sequelize);
 db.FreshLead = require("../models/FreshLead.model")(sequelize, Sequelize);
+db.ConvertedClient = require("../models/ConvertedClient.model")(
+  sequelize,
+  Sequelize
+);
+db.CloseLead = require("../models/CloseLead.model")(sequelize, Sequelize);
+db.Notification = require("../models/Notification.model")(sequelize, Sequelize);
 
-// Define model relationships
-db.Lead.hasMany(db.Deal, { foreignKey: "leadId", onDelete: "CASCADE" }); // A lead can have multiple deals
-db.Deal.belongsTo(db.Lead, { foreignKey: "leadId" }); // Each deal belongs to a lead
+// ------------------------
+// Define Associations
+// ------------------------
 
+// Users → ExecutiveActivity
 db.Users.hasMany(db.ExecutiveActivity, {
   foreignKey: "userId",
   onDelete: "CASCADE",
-}); // A user can have multiple executive activities
+});
 db.ExecutiveActivity.belongsTo(db.Users, { foreignKey: "userId" });
 
-db.FreshLead.belongsTo(db.Lead, {
-  foreignKey: "leadId",
-  onDelete: "CASCADE",
-});
-db.Lead.hasOne(db.FreshLead, {
-  foreignKey: "leadId",
-});
-
+// ClientLead → Lead
 db.ClientLead.hasMany(db.Lead, {
   foreignKey: "clientLeadId",
   onDelete: "CASCADE",
 });
 db.Lead.belongsTo(db.ClientLead, { foreignKey: "clientLeadId" });
 
-// Association for FollowUp
+// Lead → FreshLead
+db.Lead.hasOne(db.FreshLead, {
+  foreignKey: "leadId",
+});
+db.FreshLead.belongsTo(db.Lead, {
+  foreignKey: "leadId",
+  as: "Lead", // ✅ unique alias
+});
+
+// Lead → Deal
+db.Lead.hasMany(db.Deal, { foreignKey: "leadId", onDelete: "CASCADE" });
+db.Deal.belongsTo(db.Lead, { foreignKey: "leadId" });
+
+// FreshLead → FollowUps
 db.FreshLead.hasMany(db.FollowUp, {
-  foreignKey: "fresh_lead_id", // The foreign key for the relationship
-  onDelete: "CASCADE", // Delete associated follow-ups when a FreshLead is deleted
-  as: "followUps", // Alias for the association
+  foreignKey: "fresh_lead_id",
+  onDelete: "CASCADE",
+  as: "followUps",
 });
 db.FollowUp.belongsTo(db.FreshLead, {
-  foreignKey: "fresh_lead_id", // The foreign key for the relationship
-  as: "freshLead", // Alias for the association
+  foreignKey: "fresh_lead_id",
+  as: "freshLead",
 });
 
-// Debugging: Log the loaded models to verify correctness
+// FreshLead → ConvertedClient
+db.FreshLead.hasOne(db.ConvertedClient, {
+  foreignKey: "fresh_lead_id",
+});
+db.ConvertedClient.belongsTo(db.FreshLead, {
+  foreignKey: "fresh_lead_id",
+  as: "FreshLead",
+});
+
+db.FreshLead.hasOne(db.CloseLead, {
+  foreignKey: "freshLeadId",
+  onDelete: "CASCADE",
+  as: "closeLead",
+});
+db.CloseLead.belongsTo(db.FreshLead, {
+  foreignKey: "freshLeadId",
+  as: "freshLead",
+});
+db.Users.hasMany(db.Notification, {
+  foreignKey: "userId", // Define the foreign key on the Notification model
+  onDelete: "CASCADE", // If the user is deleted, delete related notifications
+});
+db.Notification.belongsTo(db.Users, {
+  foreignKey: "userId", // Foreign key to User model
+});
+// ------------------------
+// Debug
+// ------------------------
 console.log("📌 Loaded models:", Object.keys(db));
 
-module.exports = db; // Export the database object for use in other parts of the application
+module.exports = db;

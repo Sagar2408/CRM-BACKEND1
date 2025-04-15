@@ -4,7 +4,7 @@ const multer = require("multer"); // Multer for handling file uploads
 const xlsx = require("xlsx"); // XLSX module for processing Excel files
 const csv = require("csv-parser"); // CSV parser for handling CSV files
 
-const { ClientLead } = require("../config/sequelize"); // Importing the ClientLead model
+const { ClientLead, Notification, Users } = require("../config/sequelize"); // Importing the ClientLead model
 
 // Define possible dynamic field names for "name" and "phone" mapping
 const nameFields = [
@@ -124,30 +124,51 @@ const getClientLeads = async (req, res) => {
 // Function to assign an executive to a client lead
 const assignExecutive = async (req, res) => {
   try {
-    const { id } = req.params; // Extract lead ID from request parameters
-    const { executiveName } = req.body; // Extract executive name from request body
+    const { id } = req.params; // Lead ID
+    const { executiveName } = req.body;
 
     if (!executiveName) {
       return res.status(400).json({ message: "Executive name is required" });
     }
 
-    // Find the client lead by ID
+    // Find the lead by ID
     const lead = await ClientLead.findByPk(id);
     if (!lead) {
       return res.status(404).json({ message: "Client lead not found" });
     }
 
-    // Update the assignedToExecutive field
+    // Update lead with executive name
     lead.assignedToExecutive = executiveName;
     await lead.save();
 
-    res.status(200).json({ message: "Executive assigned successfully", lead });
+    // Find the executive in the Users table
+    const executive = await Users.findOne({
+      where: { username: executiveName, role: "Executive" },
+    });
+    if (!executive) {
+      return res.status(404).json({ message: "Executive not found" });
+    }
+
+    // Custom message with client name
+    const message = `You have been assigned a new lead: ${
+      lead.name || "Unnamed Client"
+    } (Lead ID: ${lead.id})`;
+
+    // Create the notification
+    await Notification.create({
+      userId: executive.id,
+      message: message,
+    });
+
+    res.status(200).json({
+      message: "Executive assigned and notified successfully",
+      lead,
+    });
   } catch (err) {
     console.error("Error assigning executive:", err);
     res.status(500).json({ message: "Failed to assign executive" });
   }
 };
-
 // Function to get client leads assigned to a specific executive
 const getLeadsByExecutive = async (req, res) => {
   try {

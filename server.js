@@ -1,16 +1,16 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const http = require("http"); // Required for Socket.IO
-const { Server } = require("socket.io"); // Socket.IO
+const http = require("http");
+const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
 
 // DB Config
 const db = require("./config/sequelize");
-const sequelize = db.sequelize; // ✅ Fix: define sequelize
-const Sequelize = db.Sequelize; // ✅ Fix: define Sequelize
+const sequelize = db.sequelize;
+const Sequelize = db.Sequelize;
 
-// Models
+const Notification = db.Notification; // ✅ Notification model
 
 // Routes
 const userRoutes = require("./routes/User.routes");
@@ -24,9 +24,13 @@ const chatbotRoutes = require("./routes/Chatbot.routes");
 const ExecutiveActivityRoutes = require("./routes/ExecutiveActivity.routes");
 const followupRoutes = require("./routes/Followup.routes");
 const FreshLeadRoutes = require("./routes/FreshLead.routes");
+const ConvertedClient = require("./routes/ConvertedClient.routes");
+const CloseLeadRoutes = require("./routes/CloseLead.routes");
 
 const app = express();
-const server = http.createServer(app); // HTTP server for Socket.IO
+const server = http.createServer(app);
+
+// ⏺️ SOCKET.IO SETUP
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -58,8 +62,10 @@ app.use("/api/invoice", invoiceRoutes);
 app.use("/api", chatbotRoutes);
 app.use("/api/executive-activities", ExecutiveActivityRoutes);
 app.use("/api/freshleads", FreshLeadRoutes);
+app.use("/api/converted", ConvertedClient);
+app.use("/api/close-leads", CloseLeadRoutes);
 
-// Sync Sequelize DB
+// Sequelize Sync
 console.log("🔄 Starting server...");
 if (sequelize) {
   sequelize
@@ -69,9 +75,11 @@ if (sequelize) {
 } else {
   console.error("❌ Sequelize instance not initialized.");
 }
-console.log("✅ Reached end of server.js");
 
-// ⏺️ Socket.IO logic: User Online Status
+// 🧠 Store connected users
+const connectedUsers = {};
+
+// 🔌 SOCKET.IO EVENTS
 io.on("connection", (socket) => {
   console.log("🟢 New socket connection:", socket.id);
 
@@ -80,8 +88,9 @@ io.on("connection", (socket) => {
       const User = db.Users;
       socket.userId = userId;
 
-      await User.update({ is_online: true }, { where: { id: userId } });
+      connectedUsers[userId] = socket.id;
 
+      await User.update({ is_online: true }, { where: { id: userId } });
       io.emit("status_update", { userId, is_online: true });
     } catch (err) {
       console.error("⚠️ Error setting user online:", err);
@@ -91,11 +100,11 @@ io.on("connection", (socket) => {
   socket.on("disconnect", async () => {
     const userId = socket.userId;
     if (userId) {
+      delete connectedUsers[userId];
+
       try {
         const User = db.Users;
-
         await User.update({ is_online: false }, { where: { id: userId } });
-
         io.emit("status_update", { userId, is_online: false });
         console.log("🔴 User disconnected:", userId);
       } catch (err) {
@@ -105,8 +114,21 @@ io.on("connection", (socket) => {
   });
 });
 
-// Export app for tests
-module.exports = app;
+// 🔔 Notification Helper Function
+const sendNotificationToUser = (userId, notification) => {
+  const socketId = connectedUsers[userId];
+  if (socketId) {
+    io.to(socketId).emit("new_notification", notification);
+    console.log(`📨 Sent notification to user ${userId}`);
+  } else {
+    console.log(`⚠️ User ${userId} not connected`);
+  }
+};
+
+module.exports = {
+  app,
+  sendNotificationToUser,
+};
 
 // Start Server
 if (process.env.NODE_ENV !== "test") {
