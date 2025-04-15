@@ -40,6 +40,7 @@ db.ExecutiveActivity = require("../models/ExecutiveActivity.model")(
   Sequelize
 );
 db.Followup = require("../models/Followup.model")(sequelize, Sequelize);
+db.FreshLead = require("../models/FreshLead.model")(sequelize, Sequelize);
 // Define model relationships
 db.Lead.hasMany(db.Deal, { foreignKey: "leadId", onDelete: "CASCADE" }); // A lead can have multiple deals
 db.Deal.belongsTo(db.Lead, { foreignKey: "leadId" }); // Each deal belongs to a lead
@@ -49,6 +50,18 @@ db.Users.hasMany(db.ExecutiveActivity, {
   onDelete: "CASCADE",
 }); // A user can have multiple executive activities
 db.ExecutiveActivity.belongsTo(db.Users, { foreignKey: "userId" });
+db.FreshLead.belongsTo(db.Lead, {
+  foreignKey: "leadId",
+  onDelete: "CASCADE",
+});
+db.Lead.hasOne(db.FreshLead, {
+  foreignKey: "leadId",
+});
+db.ClientLead.hasMany(db.Lead, {
+  foreignKey: "clientLeadId",
+  onDelete: "CASCADE",
+});
+db.Lead.belongsTo(db.ClientLead, { foreignKey: "clientLeadId" });
 // Debugging: Log the loaded models to verify correctness
 console.log("📌 Loaded models:", Object.keys(db));
 

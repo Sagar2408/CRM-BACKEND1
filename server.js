@@ -11,8 +11,6 @@ const sequelize = db.sequelize; // ✅ Fix: define sequelize
 const Sequelize = db.Sequelize; // ✅ Fix: define Sequelize
 
 // Models
-const Followup = require('./models/Followup.model')(sequelize, Sequelize.DataTypes);
-db.FollowUp = Followup;
 
 // Routes
 const userRoutes = require("./routes/User.routes");
@@ -24,7 +22,8 @@ const opportunityRoutes = require("./routes/Opportunity.routes");
 const invoiceRoutes = require("./routes/Invoices.routes");
 const chatbotRoutes = require("./routes/Chatbot.routes");
 const ExecutiveActivityRoutes = require("./routes/ExecutiveActivity.routes");
-const followupRoutes = require('./routes/Followup.routes');
+const followupRoutes = require("./routes/Followup.routes");
+const FreshLeadRoutes = require("./routes/FreshLead.routes");
 
 const app = express();
 const server = http.createServer(app); // HTTP server for Socket.IO
@@ -48,7 +47,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Routes
-app.use('/api/followup', followupRoutes);
+app.use("/api/followup", followupRoutes);
 app.use("/api", userRoutes);
 app.use("/api/deals", dealRoutes);
 app.use("/api/leads", leadRoutes);
@@ -58,6 +57,7 @@ app.use("/api/client-leads", clientLeadRoutes);
 app.use("/api/invoice", invoiceRoutes);
 app.use("/api", chatbotRoutes);
 app.use("/api/executive-activities", ExecutiveActivityRoutes);
+app.use("/api/freshleads", FreshLeadRoutes);
 
 // Sync Sequelize DB
 console.log("🔄 Starting server...");
