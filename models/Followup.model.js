@@ -37,6 +37,23 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TIME,
       allowNull: false,
     },
+    fresh_lead_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "FreshLeads", // Table name
+        key: "id", // Column in FreshLeads to reference
+      },
+      onDelete: "CASCADE", // Automatically delete follow-up records when the FreshLead is deleted
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
   });
 
   return FollowUp;

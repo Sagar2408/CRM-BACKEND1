@@ -1,11 +1,9 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const followUpController = require('../controllers/followup.controller');
+const followUpController = require("../controllers/Followup.controller");
 
 // Create follow-up
-router.post('/create', followUpController.createFollowUp);
-
-// Get all follow-ups
-router.get('/all', followUpController.getAllFollowUps);
+router.post("/create", followUpController.createFollowUp);
+router.put("/:id", followUpController.updateFollowUp);
 
 module.exports = router;

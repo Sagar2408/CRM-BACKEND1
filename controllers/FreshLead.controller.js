@@ -35,6 +35,28 @@ const createFreshLead = async (req, res) => {
   }
 };
 
+const updateFollowUp = async (req, res) => {
+  const { id } = req.params;
+  const { followUpDate, followUpStatus } = req.body;
+
+  try {
+    const lead = await FreshLead.findByPk(id);
+    if (!lead) {
+      return res.status(404).json({ error: "FreshLead not found" });
+    }
+
+    if (followUpDate !== undefined) lead.followUpDate = followUpDate;
+    if (followUpStatus !== undefined) lead.followUpStatus = followUpStatus;
+
+    await lead.save();
+
+    return res.json({ message: "Follow-up updated successfully", data: lead });
+  } catch (error) {
+    console.error("Error updating follow-up:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
 module.exports = {
   createFreshLead,
+  updateFollowUp,
 };
