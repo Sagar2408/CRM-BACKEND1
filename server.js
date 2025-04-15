@@ -1,4 +1,5 @@
 require("dotenv").config();
+require("./cron/notificationCleaner"); // Adjust the path as needed
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
@@ -26,6 +27,7 @@ const followupRoutes = require("./routes/Followup.routes");
 const FreshLeadRoutes = require("./routes/FreshLead.routes");
 const ConvertedClient = require("./routes/ConvertedClient.routes");
 const CloseLeadRoutes = require("./routes/CloseLead.routes");
+const NotificationRoutes = require("./routes/Notification.routes");
 
 const app = express();
 const server = http.createServer(app);
@@ -64,6 +66,7 @@ app.use("/api/executive-activities", ExecutiveActivityRoutes);
 app.use("/api/freshleads", FreshLeadRoutes);
 app.use("/api/converted", ConvertedClient);
 app.use("/api/close-leads", CloseLeadRoutes);
+app.use("/api/notification", NotificationRoutes);
 
 // Sequelize Sync
 console.log("🔄 Starting server...");
