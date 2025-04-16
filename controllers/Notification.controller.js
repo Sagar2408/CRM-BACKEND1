@@ -64,9 +64,25 @@ const deleteOldNotifications = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+const getAllNotificationsByUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const notifications = await Notification.findAll({
+      where: { userId },
+      order: [["createdAt", "DESC"]], // Optional: latest first
+    });
+
+    return res.status(200).json({ notifications });
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 module.exports = {
   markAsRead,
   deleteNotification,
   deleteOldNotifications,
+  getAllNotificationsByUser,
 };
