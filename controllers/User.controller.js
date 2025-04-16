@@ -36,7 +36,12 @@ const login = async (req, res) => {
     await user.save(); // Make sure this persists the isOnline change
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        username: user.username,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
