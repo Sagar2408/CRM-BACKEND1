@@ -1,4 +1,4 @@
-require("dotenv").config(); // Load environment variables from .env
+require("dotenv").config();
 const { Sequelize } = require("sequelize");
 
 // Initialize Sequelize
@@ -25,26 +25,20 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-// Import models
-db.Users = require("../models/User.model")(sequelize, Sequelize);
-db.Deal = require("../models/Deal.model")(sequelize, Sequelize);
-db.Lead = require("../models/Lead.model")(sequelize, Sequelize);
-db.Meeting = require("../models/Meeting.model")(sequelize, Sequelize);
-db.Opportunity = require("../models/Opportunity.model")(sequelize, Sequelize);
-db.ClientLead = require("../models/ClientLead.model")(sequelize, Sequelize);
-db.Invoice = require("../models/Invoice.model")(sequelize, Sequelize);
-db.ExecutiveActivity = require("../models/ExecutiveActivity.model")(
-  sequelize,
-  Sequelize
-);
-db.FollowUp = require("../models/FollowUp.model")(sequelize, Sequelize);
-db.FreshLead = require("../models/FreshLead.model")(sequelize, Sequelize);
-db.ConvertedClient = require("../models/ConvertedClient.model")(
-  sequelize,
-  Sequelize
-);
-db.CloseLead = require("../models/CloseLead.model")(sequelize, Sequelize);
-db.Notification = require("../models/Notification.model")(sequelize, Sequelize);
+// Import models with explicit tableName
+db.Users = require("../models/User.model")(sequelize, Sequelize, { tableName: "Users" });
+db.Deal = require("../models/Deal.model")(sequelize, Sequelize, { tableName: "Deals" });
+db.Lead = require("../models/Lead.model")(sequelize, Sequelize, { tableName: "Leads" });
+db.Meeting = require("../models/Meeting.model")(sequelize, Sequelize, { tableName: "Meetings" });
+db.Opportunity = require("../models/Opportunity.model")(sequelize, Sequelize, { tableName: "Opportunities" });
+db.ClientLead = require("../models/ClientLead.model")(sequelize, Sequelize, { tableName: "ClientLeads" });
+db.Invoice = require("../models/Invoice.model")(sequelize, Sequelize, { tableName: "Invoices" });
+db.ExecutiveActivity = require("../models/ExecutiveActivity.model")(sequelize, Sequelize, { tableName: "ExecutiveActivities" });
+db.FollowUp = require("../models/FollowUp.model")(sequelize, Sequelize, { tableName: "FollowUps" });
+db.FreshLead = require("../models/FreshLead.model")(sequelize, Sequelize, { tableName: "FreshLeads" });
+db.ConvertedClient = require("../models/ConvertedClient.model")(sequelize, Sequelize, { tableName: "ConvertedClients" });
+db.CloseLead = require("../models/CloseLead.model")(sequelize, Sequelize, { tableName: "CloseLeads" });
+db.Notification = require("../models/Notification.model")(sequelize, Sequelize, { tableName: "Notifications" });
 
 // ------------------------
 // Define Associations
@@ -67,17 +61,43 @@ db.Lead.belongsTo(db.ClientLead, { foreignKey: "clientLeadId" });
 // Lead → FreshLead
 db.Lead.hasOne(db.FreshLead, {
   foreignKey: "leadId",
+  onDelete: "CASCADE",
 });
 db.FreshLead.belongsTo(db.Lead, {
   foreignKey: "leadId",
-  as: "Lead", // ✅ unique alias
+  as: "lead",
+});
+
+// Lead → FollowUp
+db.Lead.hasMany(db.FollowUp, {
+  foreignKey: "leadId",
+  onDelete: "CASCADE",
+});
+db.FollowUp.belongsTo(db.Lead, {
+  foreignKey: "leadId",
+  as: "lead",
+});
+
+// Lead → ConvertedClient
+db.Lead.hasOne(db.ConvertedClient, {
+  foreignKey: "leadId",
+  onDelete: "CASCADE",
+});
+db.ConvertedClient.belongsTo(db.Lead, {
+  foreignKey: "leadId",
+  as: "lead",
 });
 
 // Lead → Deal
-db.Lead.hasMany(db.Deal, { foreignKey: "leadId", onDelete: "CASCADE" });
-db.Deal.belongsTo(db.Lead, { foreignKey: "leadId" });
+db.Lead.hasMany(db.Deal, {
+  foreignKey: "leadId",
+  onDelete: "CASCADE",
+});
+db.Deal.belongsTo(db.Lead, {
+  foreignKey: "leadId",
+});
 
-// FreshLead → FollowUps
+// FreshLead → FollowUps (optional)
 db.FreshLead.hasMany(db.FollowUp, {
   foreignKey: "fresh_lead_id",
   onDelete: "CASCADE",
@@ -88,15 +108,18 @@ db.FollowUp.belongsTo(db.FreshLead, {
   as: "freshLead",
 });
 
-// FreshLead → ConvertedClient
+// FreshLead → ConvertedClient (optional)
 db.FreshLead.hasOne(db.ConvertedClient, {
   foreignKey: "fresh_lead_id",
+  onDelete: "CASCADE",
+  as: "convertedClient",
 });
 db.ConvertedClient.belongsTo(db.FreshLead, {
   foreignKey: "fresh_lead_id",
-  as: "FreshLead",
+  as: "freshLead",
 });
 
+// FreshLead → CloseLead (optional)
 db.FreshLead.hasOne(db.CloseLead, {
   foreignKey: "freshLeadId",
   onDelete: "CASCADE",
@@ -106,13 +129,46 @@ db.CloseLead.belongsTo(db.FreshLead, {
   foreignKey: "freshLeadId",
   as: "freshLead",
 });
+
+// Users → Notifications
 db.Users.hasMany(db.Notification, {
-  foreignKey: "userId", // Define the foreign key on the Notification model
-  onDelete: "CASCADE", // If the user is deleted, delete related notifications
+  foreignKey: "userId",
+  onDelete: "CASCADE",
 });
 db.Notification.belongsTo(db.Users, {
-  foreignKey: "userId", // Foreign key to User model
+  foreignKey: "userId",
 });
+
+// ------------------------
+// Validate Schema
+// ------------------------
+async function validateSchema() {
+  try {
+    console.log("📌 Validating FollowUps table schema...");
+    const followUpSchema = await db.FollowUp.describe();
+    console.log("FollowUps schema:", followUpSchema);
+
+    // Check if FollowUps table exists
+    const [results] = await sequelize.query("SHOW TABLES LIKE 'FollowUps'");
+    if (results.length === 0) {
+      console.error("❌ FollowUps table does not exist in the database!");
+    } else {
+      console.log("✅ FollowUps table exists");
+    }
+  } catch (err) {
+    console.error("❌ Error validating schema:", err);
+  }
+}
+validateSchema();
+
+// ------------------------
+// Sync Models (Non-destructive)
+// ------------------------
+sequelize
+  .sync({ force: false })
+  .then(() => console.log("✅ Database tables synced"))
+  .catch((err) => console.error("❌ Error syncing database:", err));
+
 // ------------------------
 // Debug
 // ------------------------
