@@ -1,5 +1,5 @@
 const db = require("../config/sequelize"); // Import the database connection and models
-const { FollowUp, FreshLead } = db; // Destructure the required models
+const { FollowUp, FreshLead, Lead, ClientLead } = db; // Destructure the required models
 
 // Controller to create a new FollowUp record
 const createFollowUp = async (req, res) => {
@@ -34,6 +34,46 @@ const createFollowUp = async (req, res) => {
       return res.status(404).json({ message: "FreshLead not found" });
     }
 
+    // Check if a FollowUp record already exists for this fresh_lead_id
+    const existingFollowUp = await FollowUp.findOne({
+      where: { fresh_lead_id },
+      attributes: [
+        "id",
+        "connect_via",
+        "follow_up_type",
+        "interaction_rating",
+        "reason_for_follow_up",
+        "follow_up_date",
+        "follow_up_time",
+        "fresh_lead_id",
+        "createdAt",
+        "updatedAt",
+      ], // Explicitly select only valid columns
+    });
+    if (existingFollowUp) {
+      return res
+        .status(409)
+        .json({ message: "A follow-up already exists for this FreshLead" });
+    }
+
+    // Find the corresponding Lead record using leadId from FreshLead
+    const lead = await Lead.findOne({
+      where: { id: freshLead.leadId },
+    });
+    if (!lead) {
+      return res.status(404).json({ message: "Lead not found" });
+    }
+
+    // Find the corresponding ClientLead record using clientLeadId from Lead
+    const clientLead = await ClientLead.findByPk(lead.clientLeadId);
+    if (!clientLead) {
+      return res.status(404).json({ message: "ClientLead not found" });
+    }
+
+    // Update the ClientLead status to "Follow-Up"
+    clientLead.status = "Follow-Up";
+    await clientLead.save();
+
     // Create a new FollowUp record
     const newFollowUp = await FollowUp.create({
       connect_via,
@@ -54,7 +94,7 @@ const createFollowUp = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
+// Controller to update an existing FollowUp record
 const updateFollowUp = async (req, res) => {
   try {
     const { id } = req.params; // Get the FollowUp ID from the URL parameters
@@ -87,6 +127,24 @@ const updateFollowUp = async (req, res) => {
       return res.status(404).json({ message: "FreshLead not found" });
     }
 
+    // Find the corresponding Lead record using leadId from FreshLead
+    const lead = await Lead.findOne({
+      where: { id: freshLead.leadId },
+    });
+    if (!lead) {
+      return res.status(404).json({ message: "Lead not found" });
+    }
+
+    // Find the corresponding ClientLead record using clientLeadId from Lead
+    const clientLead = await ClientLead.findByPk(lead.clientLeadId);
+    if (!clientLead) {
+      return res.status(404).json({ message: "ClientLead not found" });
+    }
+
+    // Update the ClientLead status to "Follow-Up"
+    clientLead.status = "Follow-Up";
+    await clientLead.save();
+
     // Find the FollowUp record by ID
     const followUp = await FollowUp.findByPk(id);
     if (!followUp) {
@@ -114,6 +172,7 @@ const updateFollowUp = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // Export the controller functions
 module.exports = {
   createFollowUp,

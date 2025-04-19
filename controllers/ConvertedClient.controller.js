@@ -18,21 +18,39 @@ const createConvertedClient = async (req, res) => {
       where: { id: fresh_lead_id },
       include: {
         model: Lead,
-        as: "Lead",
+        as: "lead", // Match the association alias (lowercase 'lead')
         include: {
           model: ClientLead,
-          as: "ClientLead",
+          as: "ClientLead", // Match the association alias
         },
       },
     });
+    const existingConvertedClient = await ConvertedClient.findOne({
+      where: { fresh_lead_id },
+    });
+
+    if (existingConvertedClient) {
+      return res.status(409).json({
+        message: "A ConvertedClient already exists for this fresh_lead_id.",
+        data: existingConvertedClient,
+      });
+    }
 
     if (!freshLead) {
       return res.status(404).json({ message: "FreshLead not found." });
     }
 
-    const { name, phone, email } = freshLead;
-    const country = freshLead.Lead?.ClientLead?.country || null;
+    // Check if Lead and ClientLead exist
+    if (!freshLead.lead || !freshLead.lead.ClientLead) {
+      return res
+        .status(404)
+        .json({ message: "Lead or ClientLead not found for this FreshLead." });
+    }
 
+    const { name, phone, email } = freshLead;
+    const country = freshLead.lead.ClientLead.country || null;
+
+    // Create ConvertedClient
     const convertedClient = await ConvertedClient.create({
       fresh_lead_id,
       name,
@@ -41,6 +59,14 @@ const createConvertedClient = async (req, res) => {
       country,
       last_contacted: new Date(),
     });
+
+    // Update ClientLead status to "Converted"
+    await ClientLead.update(
+      { status: "Converted" },
+      {
+        where: { id: freshLead.lead.clientLeadId },
+      }
+    );
 
     res.status(201).json({
       message: "Converted client created successfully.",

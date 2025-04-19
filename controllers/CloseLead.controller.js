@@ -1,43 +1,71 @@
-const { CloseLead, FreshLead } = require("../config/sequelize");
+const {
+  CloseLead,
+  FreshLead,
+  ClientLead,
+  Lead,
+} = require("../config/sequelize");
 
 const createCloseLead = async (req, res) => {
   try {
-    const { freshLeadId } = req.body;
+    const { fresh_lead_id } = req.body;
 
-    if (!freshLeadId) {
-      return res.status(400).json({ message: "freshLeadId is required." });
+    if (!fresh_lead_id) {
+      return res.status(400).json({ message: "fresh_lead_id is required." });
     }
 
-    // Fetch the FreshLead
+    // Check if a CloseLead already exists for the fresh_lead_id
+    const existingCloseLead = await CloseLead.findOne({
+      where: { freshLeadId: fresh_lead_id },
+    });
+
+    if (existingCloseLead) {
+      return res.status(409).json({
+        message: "A CloseLead already exists for this fresh_lead_id.",
+        data: existingCloseLead,
+      });
+    }
+
+    // Get FreshLead with related Lead and ClientLead
     const freshLead = await FreshLead.findOne({
-      where: { id: freshLeadId },
+      where: { id: fresh_lead_id },
+      include: {
+        model: Lead,
+        as: "lead", // Match the association alias (lowercase 'lead')
+        include: {
+          model: ClientLead,
+          as: "ClientLead", // Match the association alias
+        },
+      },
     });
 
     if (!freshLead) {
       return res.status(404).json({ message: "FreshLead not found." });
     }
 
-    // Check for existing CloseLead
-    const existingCloseLead = await CloseLead.findOne({
-      where: { freshLeadId },
-    });
-
-    if (existingCloseLead) {
-      return res.status(409).json({
-        message: "CloseLead already exists for this FreshLead.",
-      });
+    // Check if Lead and ClientLead exist
+    if (!freshLead.lead || !freshLead.lead.ClientLead) {
+      return res
+        .status(404)
+        .json({ message: "Lead or ClientLead not found for this FreshLead." });
     }
 
-    // Destructure data from FreshLead
     const { name, phone, email } = freshLead;
 
     // Create CloseLead
     const closeLead = await CloseLead.create({
-      freshLeadId,
+      freshLeadId: fresh_lead_id,
       name,
       phone,
       email,
     });
+
+    // Update ClientLead status to "Closed"
+    await ClientLead.update(
+      { status: "Closed" },
+      {
+        where: { id: freshLead.lead.clientLeadId },
+      }
+    );
 
     res.status(201).json({
       message: "CloseLead created successfully.",
@@ -45,10 +73,25 @@ const createCloseLead = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({
-      message: "Something went wrong.",
-      error: err.message,
-    });
+    if (err.name === "SequelizeUniqueConstraintError") {
+      return res.status(409).json({
+        message: "A CloseLead already exists for this fresh_lead_id.",
+        error: err.message,
+      });
+    }
+    if (
+      err.name === "SequelizeDatabaseError" &&
+      err.original?.sqlMessage?.includes("Data truncated")
+    ) {
+      return res.status(500).json({
+        message:
+          "Invalid status value for ClientLead. Please check the database schema.",
+        error: err.message,
+      });
+    }
+    res
+      .status(500)
+      .json({ message: "Something went wrong.", error: err.message });
   }
 };
 const getAllCloseLeads = async (req, res) => {

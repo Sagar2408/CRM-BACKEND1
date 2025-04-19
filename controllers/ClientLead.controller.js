@@ -137,8 +137,9 @@ const assignExecutive = async (req, res) => {
       return res.status(404).json({ message: "Client lead not found" });
     }
 
-    // Update lead with executive name
+    // Update lead with executive name and status
     lead.assignedToExecutive = executiveName;
+    lead.status = "Assigned"; // Update status to Assigned
     await lead.save();
 
     // Find the executive in the Users table
@@ -195,7 +196,44 @@ const getLeadsByExecutive = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch leads by executive" });
   }
 };
+const getDealFunnel = async (req, res) => {
+  try {
+    // Fetch all client leads
+    const leads = await ClientLead.findAll();
 
+    // Initialize counters for total leads and status counts
+    const totalLeads = leads.length;
+    const statusCounts = {
+      New: 0,
+      Assigned: 0,
+      Converted: 0,
+      "Follow-Up": 0,
+      Closed: 0,
+      Rejected: 0,
+    };
+
+    // Count occurrences of each status
+    leads.forEach((lead) => {
+      if (statusCounts.hasOwnProperty(lead.status)) {
+        statusCounts[lead.status]++;
+      }
+    });
+
+    // Prepare response
+    const response = {
+      totalLeads,
+      statusCounts,
+    };
+
+    res.status(200).json({
+      message: "Deal funnel data retrieved successfully",
+      data: response,
+    });
+  } catch (err) {
+    console.error("Error fetching deal funnel data:", err);
+    res.status(500).json({ message: "Failed to fetch deal funnel data" });
+  }
+};
 // Export functions for use in other parts of the application
 module.exports = {
   upload,
@@ -203,4 +241,5 @@ module.exports = {
   getClientLeads,
   assignExecutive,
   getLeadsByExecutive,
+  getDealFunnel,
 };
