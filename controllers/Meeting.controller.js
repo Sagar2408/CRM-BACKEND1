@@ -1,10 +1,28 @@
 const { Meeting } = require("../config/sequelize");
 
-// 📌 Get all meetings
+// 📌 Get all meetings with pagination
 exports.getAllMeetings = async (req, res) => {
+  const { page = 1, limit = 20 } = req.query; // Default to page 1 and limit 20
+  const offset = (page - 1) * limit; // Calculate offset
+
   try {
-    const meetings = await Meeting.findAll();
-    res.status(200).json(meetings);
+    const { count, rows: meetings } = await Meeting.findAndCountAll({
+      limit: parseInt(limit), // Number of records to fetch
+      offset: parseInt(offset), // Number of records to skip
+      order: [["startTime", "DESC"]], // Optional: sort by startTime, latest first
+    });
+
+    const totalPages = Math.ceil(count / limit); // Calculate total pages
+
+    res.status(200).json({
+      meetings,
+      pagination: {
+        totalMeetings: count,
+        currentPage: parseInt(page),
+        totalPages,
+        limit: parseInt(limit),
+      },
+    });
   } catch (error) {
     console.error("Error fetching meetings:", error);
     res.status(500).json({ message: "Internal server error" });
