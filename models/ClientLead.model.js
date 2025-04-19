@@ -64,7 +64,7 @@ module.exports = (sequelize) => {
         type: DataTypes.ENUM(
           "New",
           "Assigned",
-          "In Progress",
+          "Converted",
           "Follow-Up",
           "Closed",
           "Rejected"
