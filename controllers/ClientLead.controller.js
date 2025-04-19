@@ -110,11 +110,35 @@ const uploadFile = async (req, res) => {
   }
 };
 
-// Function to retrieve all client leads from the database
+// Function to retrieve client leads with a limit of 10 or 20
 const getClientLeads = async (req, res) => {
   try {
-    const leads = await ClientLead.findAll();
-    res.status(200).json({ leads });
+    // Extract limit and offset from query parameters
+    const limit = parseInt(req.query.limit) === 20 ? 20 : 10; // Only allow 10 or 20, default to 10
+    const offset = parseInt(req.query.offset) || 0; // Default to 0 (no offset)
+
+    // Validate offset
+    if (offset < 0) {
+      return res.status(400).json({ message: "Invalid offset value" });
+    }
+
+    // Fetch leads with pagination
+    const { count, rows } = await ClientLead.findAndCountAll({
+      limit: limit,
+      offset: offset,
+    });
+
+    // Prepare response with leads and pagination metadata
+    res.status(200).json({
+      message: "Client leads retrieved successfully",
+      leads: rows,
+      pagination: {
+        total: count,
+        limit: limit,
+        offset: offset,
+        totalPages: Math.ceil(count / limit),
+      },
+    });
   } catch (err) {
     console.error("Error fetching client leads:", err);
     res.status(500).json({ message: "Failed to fetch client leads" });
@@ -170,6 +194,7 @@ const assignExecutive = async (req, res) => {
     res.status(500).json({ message: "Failed to assign executive" });
   }
 };
+
 // Function to get client leads assigned to a specific executive
 const getLeadsByExecutive = async (req, res) => {
   try {
@@ -196,6 +221,8 @@ const getLeadsByExecutive = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch leads by executive" });
   }
 };
+
+// Function to get deal funnel data
 const getDealFunnel = async (req, res) => {
   try {
     // Fetch all client leads
@@ -234,6 +261,7 @@ const getDealFunnel = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch deal funnel data" });
   }
 };
+
 // Export functions for use in other parts of the application
 module.exports = {
   upload,
