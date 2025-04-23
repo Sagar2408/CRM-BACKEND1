@@ -172,9 +172,55 @@ const updateFollowUp = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+const getFollowUps = async (req, res) => {
+  try {
+    const username = req.user.username; // from JWT token
 
+    // Find all leads assigned to this executive
+    const leads = await Lead.findAll({
+      where: { assignedToExecutive: username },
+      attributes: ["id"],
+    });
+
+    const leadIds = leads.map((lead) => lead.id);
+
+    if (leadIds.length === 0) {
+      return res.status(200).json({ message: "No follow-ups found", data: [] });
+    }
+
+    // Find all FreshLeads linked to these leads
+    const freshLeads = await FreshLead.findAll({
+      where: { leadId: leadIds },
+      attributes: ["id"],
+    });
+
+    const freshLeadIds = freshLeads.map((fl) => fl.id);
+
+    // Fetch FollowUps for the user's leads
+    const followUps = await FollowUp.findAll({
+      where: {
+        fresh_lead_id: freshLeadIds,
+      },
+      include: [
+        {
+          model: FreshLead,
+          attributes: ["name", "phone", "email"],
+        },
+      ],
+    });
+
+    return res.status(200).json({
+      message: "Follow-ups fetched successfully",
+      data: followUps,
+    });
+  } catch (err) {
+    console.error("Error fetching follow-ups:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 // Export the controller functions
 module.exports = {
   createFollowUp,
   updateFollowUp,
+  getFollowUps,
 };
