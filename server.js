@@ -29,7 +29,7 @@ const ConvertedClient = require("./routes/ConvertedClient.routes");
 const CloseLeadRoutes = require("./routes/CloseLead.routes");
 const NotificationRoutes = require("./routes/Notification.routes");
 const executiveDashboardRoutes = require("./routes/Executivedashboard.routes");
-
+const SettingsRoutes = require("./routes/Settings.routes");
 
 const app = express();
 const server = http.createServer(app);
@@ -70,7 +70,7 @@ app.use("/api/converted", ConvertedClient);
 app.use("/api/close-leads", CloseLeadRoutes);
 app.use("/api/notification", NotificationRoutes);
 app.use("/api/executive-dashboard", executiveDashboardRoutes);
-
+app.use("/api/settings", SettingsRoutes);
 
 // Sequelize Sync
 console.log("🔄 Starting server...");

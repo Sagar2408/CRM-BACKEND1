@@ -53,6 +53,37 @@ module.exports = (sequelize) => {
         allowNull: false,
         defaultValue: false,
       },
+
+      // New fields
+      firstname: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      lastname: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      country: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      city: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      state: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      postal_code: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      tax_id: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
