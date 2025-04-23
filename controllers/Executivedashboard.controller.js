@@ -50,6 +50,7 @@ const getExecutiveDashboardStats = async (req, res) => {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 const getExecutiveFollowUpStats = async (req, res) => {
   try {
     const executiveName = req.user.username;
