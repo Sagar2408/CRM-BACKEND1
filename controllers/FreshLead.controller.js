@@ -56,7 +56,42 @@ const updateFollowUp = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+const getFreshLeadsByExecutive = async (req, res) => {
+  const executiveUsername = req.user?.username; // assuming middleware sets this from token
+
+  if (!executiveUsername) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized: Executive username missing in token" });
+  }
+
+  try {
+    const freshLeads = await db.FreshLead.findAll({
+      include: [
+        {
+          model: db.Lead,
+          as: "lead", // must match your alias
+          where: { assignedToExecutive: executiveUsername },
+          attributes: ["assignedToExecutive", "status", "assignmentDate"],
+        },
+      ],
+    });
+
+    if (freshLeads.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No fresh leads found for this executive" });
+    }
+
+    return res.status(200).json({ data: freshLeads });
+  } catch (error) {
+    console.error("Error fetching fresh leads by executive:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   createFreshLead,
   updateFollowUp,
+  getFreshLeadsByExecutive,
 };
