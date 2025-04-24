@@ -6,6 +6,6 @@ const auth = require("../middleware/auth");
 // POST - Create a new fresh lead
 router.post("/", freshLeadController.createFreshLead);
 router.put("/update-followup/:id", freshLeadController.updateFollowUp);
-// router.get("/", auth(), freshLeadController.getFreshLeadsByExecutive);
+router.get("/", auth(), freshLeadController.getFreshLeadsByExecutive);
 
 module.exports = router;
