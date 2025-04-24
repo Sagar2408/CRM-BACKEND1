@@ -38,9 +38,9 @@ module.exports = (sequelize) => {
       },
       executiveId: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true, // ✅ Changed to true to support ON DELETE SET NULL
         references: {
-          model: "Users", // This should match the table name used by the User model
+          model: "Users", // ✅ Make sure this matches the table name (usually lowercase plural)
           key: "id",
         },
         onUpdate: "CASCADE",
@@ -49,6 +49,7 @@ module.exports = (sequelize) => {
     },
     {
       timestamps: true,
+      tableName: "Meetings", // optional but recommended if table name differs from model
     }
   );
 };
