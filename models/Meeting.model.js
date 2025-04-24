@@ -9,11 +9,22 @@ module.exports = (sequelize) => {
         autoIncrement: true,
         primaryKey: true,
       },
-      title: {
+      clientName: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      description: {
+      clientEmail: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+          isEmail: true,
+        },
+      },
+      clientPhone: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      reasonForFollowup: {
         type: DataTypes.TEXT,
         allowNull: true,
       },
@@ -23,15 +34,17 @@ module.exports = (sequelize) => {
       },
       endTime: {
         type: DataTypes.DATE,
+        allowNull: true,
+      },
+      executiveId: {
+        type: DataTypes.INTEGER,
         allowNull: false,
-      },
-      createdAt: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
-      updatedAt: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
+        references: {
+          model: "Users", // This should match the table name used by the User model
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
       },
     },
     {

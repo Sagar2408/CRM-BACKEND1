@@ -26,19 +26,51 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 // Import models with explicit tableName
-db.Users = require("../models/User.model")(sequelize, Sequelize, { tableName: "Users" });
-db.Deal = require("../models/Deal.model")(sequelize, Sequelize, { tableName: "Deals" });
-db.Lead = require("../models/Lead.model")(sequelize, Sequelize, { tableName: "Leads" });
-db.Meeting = require("../models/Meeting.model")(sequelize, Sequelize, { tableName: "Meetings" });
-db.Opportunity = require("../models/Opportunity.model")(sequelize, Sequelize, { tableName: "Opportunities" });
-db.ClientLead = require("../models/ClientLead.model")(sequelize, Sequelize, { tableName: "ClientLeads" });
-db.Invoice = require("../models/Invoice.model")(sequelize, Sequelize, { tableName: "Invoices" });
-db.ExecutiveActivity = require("../models/ExecutiveActivity.model")(sequelize, Sequelize, { tableName: "ExecutiveActivities" });
-db.FollowUp = require("../models/FollowUp.model")(sequelize, Sequelize, { tableName: "FollowUps" });
-db.FreshLead = require("../models/FreshLead.model")(sequelize, Sequelize, { tableName: "FreshLeads" });
-db.ConvertedClient = require("../models/ConvertedClient.model")(sequelize, Sequelize, { tableName: "ConvertedClients" });
-db.CloseLead = require("../models/CloseLead.model")(sequelize, Sequelize, { tableName: "CloseLeads" });
-db.Notification = require("../models/Notification.model")(sequelize, Sequelize, { tableName: "Notifications" });
+db.Users = require("../models/User.model")(sequelize, Sequelize, {
+  tableName: "Users",
+});
+db.Deal = require("../models/Deal.model")(sequelize, Sequelize, {
+  tableName: "Deals",
+});
+db.Lead = require("../models/Lead.model")(sequelize, Sequelize, {
+  tableName: "Leads",
+});
+db.Meeting = require("../models/Meeting.model")(sequelize, Sequelize, {
+  tableName: "Meetings",
+});
+db.Opportunity = require("../models/Opportunity.model")(sequelize, Sequelize, {
+  tableName: "Opportunities",
+});
+db.ClientLead = require("../models/ClientLead.model")(sequelize, Sequelize, {
+  tableName: "ClientLeads",
+});
+db.Invoice = require("../models/Invoice.model")(sequelize, Sequelize, {
+  tableName: "Invoices",
+});
+db.ExecutiveActivity = require("../models/ExecutiveActivity.model")(
+  sequelize,
+  Sequelize,
+  { tableName: "ExecutiveActivities" }
+);
+db.FollowUp = require("../models/FollowUp.model")(sequelize, Sequelize, {
+  tableName: "FollowUps",
+});
+db.FreshLead = require("../models/FreshLead.model")(sequelize, Sequelize, {
+  tableName: "FreshLeads",
+});
+db.ConvertedClient = require("../models/ConvertedClient.model")(
+  sequelize,
+  Sequelize,
+  { tableName: "ConvertedClients" }
+);
+db.CloseLead = require("../models/CloseLead.model")(sequelize, Sequelize, {
+  tableName: "CloseLeads",
+});
+db.Notification = require("../models/Notification.model")(
+  sequelize,
+  Sequelize,
+  { tableName: "Notifications" }
+);
 
 // ------------------------
 // Define Associations

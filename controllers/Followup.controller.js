@@ -172,23 +172,24 @@ const updateFollowUp = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 const getFollowUps = async (req, res) => {
   try {
     const username = req.user.username; // from JWT token
 
-    // Find all leads assigned to this executive
+    // Step 1: Find all leads assigned to this executive
     const leads = await Lead.findAll({
       where: { assignedToExecutive: username },
       attributes: ["id"],
     });
 
-    const leadIds = leads.map((lead) => lead.id);
+    const leadIds = leads.map((lead) => lead.id); // FIXED: define leadIds
 
     if (leadIds.length === 0) {
       return res.status(200).json({ message: "No follow-ups found", data: [] });
     }
 
-    // Find all FreshLeads linked to these leads
+    // Step 2: Find all FreshLeads linked to these leads
     const freshLeads = await FreshLead.findAll({
       where: { leadId: leadIds },
       attributes: ["id"],
@@ -196,7 +197,11 @@ const getFollowUps = async (req, res) => {
 
     const freshLeadIds = freshLeads.map((fl) => fl.id);
 
-    // Fetch FollowUps for the user's leads
+    if (freshLeadIds.length === 0) {
+      return res.status(200).json({ message: "No follow-ups found", data: [] });
+    }
+
+    // Step 3: Fetch FollowUps for the user's fresh leads
     const followUps = await FollowUp.findAll({
       where: {
         fresh_lead_id: freshLeadIds,
@@ -204,6 +209,7 @@ const getFollowUps = async (req, res) => {
       include: [
         {
           model: FreshLead,
+          as: "freshLead", // FIXED: added alias here
           attributes: ["name", "phone", "email"],
         },
       ],
