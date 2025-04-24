@@ -69,7 +69,7 @@ const getFreshLeadsByExecutive = async (req, res) => {
     const freshLeads = await db.FreshLead.findAll({
       include: [
         {
-          model: db.Lead,
+          model: Lead,
           as: "lead", // must match your alias
           where: { assignedToExecutive: executiveUsername },
           attributes: ["assignedToExecutive", "status", "assignmentDate"],

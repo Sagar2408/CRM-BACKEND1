@@ -44,6 +44,22 @@ exports.createLead = async (req, res) => {
       });
     }
 
+    // Check if a lead with the same clientLeadId and assignedToExecutive already exists
+    const existingLead = await Lead.findOne({
+      where: {
+        clientLeadId,
+        assignedToExecutive,
+      },
+    });
+
+    if (existingLead) {
+      return res.status(409).json({
+        message:
+          "Lead with this clientLeadId is already assigned to this executive.",
+      });
+    }
+
+    // Create new lead
     const lead = await Lead.create({
       email,
       status: "Assigned", // Default status if not provided
@@ -54,14 +70,6 @@ exports.createLead = async (req, res) => {
     res.status(201).json(lead);
   } catch (error) {
     console.error("Error creating lead:", error);
-
-    if (error.name === "SequelizeUniqueConstraintError") {
-      return res.status(409).json({
-        message:
-          "Lead with this clientLeadId is already assigned to this executive.",
-      });
-    }
-
     res.status(500).json({ message: "Internal server error" });
   }
 };
