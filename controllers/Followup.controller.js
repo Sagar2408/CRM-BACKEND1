@@ -183,7 +183,7 @@ const getFollowUps = async (req, res) => {
       attributes: ["id"],
     });
 
-    const leadIds = leads.map((lead) => lead.id); // FIXED: define leadIds
+    const leadIds = leads.map((lead) => lead.id);
 
     if (leadIds.length === 0) {
       return res.status(200).json({ message: "No follow-ups found", data: [] });
@@ -192,7 +192,7 @@ const getFollowUps = async (req, res) => {
     // Step 2: Find all FreshLeads linked to these leads
     const freshLeads = await FreshLead.findAll({
       where: { leadId: leadIds },
-      attributes: ["id"],
+      attributes: ["id", "leadId"], // Including leadId to later join with Lead
     });
 
     const freshLeadIds = freshLeads.map((fl) => fl.id);
@@ -201,7 +201,7 @@ const getFollowUps = async (req, res) => {
       return res.status(200).json({ message: "No follow-ups found", data: [] });
     }
 
-    // Step 3: Fetch FollowUps for the user's fresh leads
+    // Step 3: Fetch FollowUps for the user's fresh leads, with full nesting
     const followUps = await FollowUp.findAll({
       where: {
         fresh_lead_id: freshLeadIds,
@@ -209,21 +209,52 @@ const getFollowUps = async (req, res) => {
       include: [
         {
           model: FreshLead,
-          as: "freshLead", // FIXED: added alias here
+          as: "freshLead",
           attributes: ["name", "phone", "email"],
+          include: [
+            {
+              model: Lead,
+              as: "lead",
+              attributes: ["id", "clientLeadId"], // Including clientLeadId to join with ClientLead
+              include: [
+                {
+                  model: ClientLead,
+                  as: "clientLead", // Ensuring we include ClientLead to get the status
+                  attributes: ["status"], // Only fetching status here
+                },
+              ],
+            },
+          ],
         },
       ],
     });
 
+    // Step 4: Transform response to include ClientLead.status
+    const response = followUps.map((fu) => {
+      const freshLead = fu.freshLead;
+      const clientLeadStatus = freshLead?.lead?.clientLead?.status;
+
+      return {
+        ...fu.toJSON(),
+        freshLead: {
+          name: freshLead?.name,
+          phone: freshLead?.phone,
+          email: freshLead?.email,
+        },
+        clientLeadStatus: clientLeadStatus || null, // Include clientLeadStatus, or null if not found
+      };
+    });
+
     return res.status(200).json({
       message: "Follow-ups fetched successfully",
-      data: followUps,
+      data: response,
     });
   } catch (err) {
     console.error("Error fetching follow-ups:", err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 // Export the controller functions
 module.exports = {
   createFollowUp,

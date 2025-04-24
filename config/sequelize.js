@@ -88,7 +88,10 @@ db.ClientLead.hasMany(db.Lead, {
   foreignKey: "clientLeadId",
   onDelete: "CASCADE",
 });
-db.Lead.belongsTo(db.ClientLead, { foreignKey: "clientLeadId" });
+db.Lead.belongsTo(db.ClientLead, {
+  foreignKey: "clientLeadId",
+  as: "clientLead",
+});
 
 // Lead → FreshLead
 db.Lead.hasOne(db.FreshLead, {

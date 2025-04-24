@@ -56,8 +56,9 @@ const updateFollowUp = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
 const getFreshLeadsByExecutive = async (req, res) => {
-  const executiveUsername = req.user?.username; // assuming middleware sets this from token
+  const executiveUsername = req.user?.username;
 
   if (!executiveUsername) {
     return res
@@ -69,10 +70,17 @@ const getFreshLeadsByExecutive = async (req, res) => {
     const freshLeads = await db.FreshLead.findAll({
       include: [
         {
-          model: Lead,
-          as: "lead", // must match your alias
+          model: db.Lead,
+          as: "lead",
           where: { assignedToExecutive: executiveUsername },
-          attributes: ["assignedToExecutive", "status", "assignmentDate"],
+          attributes: ["id", "assignedToExecutive", "assignmentDate"],
+          include: [
+            {
+              model: db.ClientLead,
+              as: "clientLead",
+              attributes: ["id", "status", "name", "email"],
+            },
+          ],
         },
       ],
     });
@@ -83,7 +91,24 @@ const getFreshLeadsByExecutive = async (req, res) => {
         .json({ message: "No fresh leads found for this executive" });
     }
 
-    return res.status(200).json({ data: freshLeads });
+    const response = freshLeads.map((freshLead) => {
+      const lead = freshLead.lead;
+      const clientLead = lead?.clientLead;
+
+      return {
+        ...freshLead.toJSON(),
+        clientLead: clientLead
+          ? {
+              id: clientLead.id,
+              name: clientLead.name,
+              email: clientLead.email,
+              status: clientLead.status, // ✅ Only this status is included
+            }
+          : null,
+      };
+    });
+
+    return res.status(200).json({ data: response });
   } catch (error) {
     console.error("Error fetching fresh leads by executive:", error);
     return res.status(500).json({ error: "Internal server error" });
