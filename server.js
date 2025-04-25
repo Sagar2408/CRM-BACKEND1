@@ -30,6 +30,7 @@ const CloseLeadRoutes = require("./routes/CloseLead.routes");
 const NotificationRoutes = require("./routes/Notification.routes");
 const executiveDashboardRoutes = require("./routes/Executivedashboard.routes");
 const SettingsRoutes = require("./routes/Settings.routes");
+const FollowUpHistory = require("./routes/FollowUpHistory.routes");
 
 const app = express();
 const server = http.createServer(app);
@@ -71,6 +72,7 @@ app.use("/api/close-leads", CloseLeadRoutes);
 app.use("/api/notification", NotificationRoutes);
 app.use("/api/executive-dashboard", executiveDashboardRoutes);
 app.use("/api/settings", SettingsRoutes);
+app.use("/api/followuphistory", FollowUpHistory);
 
 // Sequelize Sync
 console.log("🔄 Starting server...");

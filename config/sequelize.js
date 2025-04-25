@@ -55,6 +55,13 @@ db.ExecutiveActivity = require("../models/ExecutiveActivity.model")(
 db.FollowUp = require("../models/FollowUp.model")(sequelize, Sequelize, {
   tableName: "FollowUps",
 });
+db.FollowUpHistory = require("../models/FollowUpHistory.model")(
+  sequelize,
+  Sequelize,
+  {
+    tableName: "FollowUpHistories",
+  }
+);
 db.FreshLead = require("../models/FreshLead.model")(sequelize, Sequelize, {
   tableName: "FreshLeads",
 });
@@ -132,7 +139,7 @@ db.Deal.belongsTo(db.Lead, {
   foreignKey: "leadId",
 });
 
-// FreshLead → FollowUps (optional)
+// FreshLead → FollowUps
 db.FreshLead.hasMany(db.FollowUp, {
   foreignKey: "fresh_lead_id",
   onDelete: "CASCADE",
@@ -143,7 +150,29 @@ db.FollowUp.belongsTo(db.FreshLead, {
   as: "freshLead",
 });
 
-// FreshLead → ConvertedClient (optional)
+// FreshLead → FollowUpHistory
+db.FreshLead.hasMany(db.FollowUpHistory, {
+  foreignKey: "fresh_lead_id",
+  onDelete: "CASCADE",
+  as: "followUpHistories",
+});
+db.FollowUpHistory.belongsTo(db.FreshLead, {
+  foreignKey: "fresh_lead_id",
+  as: "freshLead",
+});
+
+// FollowUp → FollowUpHistory
+db.FollowUp.hasMany(db.FollowUpHistory, {
+  foreignKey: "follow_up_id",
+  onDelete: "CASCADE",
+  as: "followUpHistories",
+});
+db.FollowUpHistory.belongsTo(db.FollowUp, {
+  foreignKey: "follow_up_id",
+  as: "followUp",
+});
+
+// FreshLead → ConvertedClient
 db.FreshLead.hasOne(db.ConvertedClient, {
   foreignKey: "fresh_lead_id",
   onDelete: "CASCADE",
@@ -154,7 +183,7 @@ db.ConvertedClient.belongsTo(db.FreshLead, {
   as: "freshLead",
 });
 
-// FreshLead → CloseLead (optional)
+// FreshLead → CloseLead
 db.FreshLead.hasOne(db.CloseLead, {
   foreignKey: "freshLeadId",
   onDelete: "CASCADE",
@@ -183,12 +212,30 @@ async function validateSchema() {
     const followUpSchema = await db.FollowUp.describe();
     console.log("FollowUps schema:", followUpSchema);
 
+    console.log("📌 Validating FollowUpHistories table schema...");
+    const followUpHistorySchema = await db.FollowUpHistory.describe();
+    console.log("FollowUpHistories schema:", followUpHistorySchema);
+
     // Check if FollowUps table exists
-    const [results] = await sequelize.query("SHOW TABLES LIKE 'FollowUps'");
-    if (results.length === 0) {
+    const [followUpResults] = await sequelize.query(
+      "SHOW TABLES LIKE 'FollowUps'"
+    );
+    if (followUpResults.length === 0) {
       console.error("❌ FollowUps table does not exist in the database!");
     } else {
       console.log("✅ FollowUps table exists");
+    }
+
+    // Check if FollowUpHistories table exists
+    const [followUpHistoryResults] = await sequelize.query(
+      "SHOW TABLES LIKE 'FollowUpHistories'"
+    );
+    if (followUpHistoryResults.length === 0) {
+      console.error(
+        "❌ FollowUpHistories table does not exist in the database!"
+      );
+    } else {
+      console.log("✅ FollowUpHistories table exists");
     }
   } catch (err) {
     console.error("❌ Error validating schema:", err);

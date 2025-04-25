@@ -1,10 +1,9 @@
-const db = require("../config/sequelize"); // Import the database connection and models
-const { FollowUp, FreshLead, Lead, ClientLead } = db; // Destructure the required models
+const db = require("../config/sequelize");
+const { FollowUp, FreshLead, Lead, ClientLead } = db;
 
-// Controller to create a new FollowUp record
+// Create a new FollowUp
 const createFollowUp = async (req, res) => {
   try {
-    // Extract data from the request body
     const {
       connect_via,
       follow_up_type,
@@ -12,10 +11,9 @@ const createFollowUp = async (req, res) => {
       reason_for_follow_up,
       follow_up_date,
       follow_up_time,
-      fresh_lead_id, // FreshLead ID should be provided
+      fresh_lead_id,
     } = req.body;
 
-    // Validate input data (simple validation)
     if (
       !connect_via ||
       !follow_up_type ||
@@ -28,53 +26,20 @@ const createFollowUp = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Check if the FreshLead ID exists in the database
     const freshLead = await FreshLead.findByPk(fresh_lead_id);
-    if (!freshLead) {
+    if (!freshLead)
       return res.status(404).json({ message: "FreshLead not found" });
-    }
 
-    // Check if a FollowUp record already exists for this fresh_lead_id
-    const existingFollowUp = await FollowUp.findOne({
-      where: { fresh_lead_id },
-      attributes: [
-        "id",
-        "connect_via",
-        "follow_up_type",
-        "interaction_rating",
-        "reason_for_follow_up",
-        "follow_up_date",
-        "follow_up_time",
-        "fresh_lead_id",
-        "createdAt",
-        "updatedAt",
-      ], // Explicitly select only valid columns
-    });
-    if (existingFollowUp) {
-      return res
-        .status(409)
-        .json({ message: "A follow-up already exists for this FreshLead" });
-    }
+    const lead = await Lead.findByPk(freshLead.leadId);
+    if (!lead) return res.status(404).json({ message: "Lead not found" });
 
-    // Find the corresponding Lead record using leadId from FreshLead
-    const lead = await Lead.findOne({
-      where: { id: freshLead.leadId },
-    });
-    if (!lead) {
-      return res.status(404).json({ message: "Lead not found" });
-    }
-
-    // Find the corresponding ClientLead record using clientLeadId from Lead
     const clientLead = await ClientLead.findByPk(lead.clientLeadId);
-    if (!clientLead) {
+    if (!clientLead)
       return res.status(404).json({ message: "ClientLead not found" });
-    }
 
-    // Update the ClientLead status to "Follow-Up"
     clientLead.status = "Follow-Up";
     await clientLead.save();
 
-    // Create a new FollowUp record
     const newFollowUp = await FollowUp.create({
       connect_via,
       follow_up_type,
@@ -82,22 +47,50 @@ const createFollowUp = async (req, res) => {
       reason_for_follow_up,
       follow_up_date,
       follow_up_time,
-      fresh_lead_id, // Associating the FollowUp with FreshLead
+      fresh_lead_id,
+      follow_up_history: [], // Initialize empty history array
     });
 
-    // Return the created FollowUp data as a response
-    return res
-      .status(201)
-      .json({ message: "Follow-up created successfully", data: newFollowUp });
+    return res.status(201).json({
+      message: "Follow-up created successfully",
+      data: newFollowUp,
+    });
   } catch (err) {
     console.error("Error creating FollowUp:", err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-// Controller to update an existing FollowUp record
+
 const updateFollowUp = async (req, res) => {
   try {
-    const { id } = req.params; // Get the FollowUp ID from the URL parameters
+    const id = req.params.id;
+    const existingFollowUp = await FollowUp.findByPk(id);
+
+    if (!existingFollowUp) {
+      return res.status(404).json({ message: "Follow-up not found" });
+    }
+
+    // Get current state to save in history
+    const previousState = {
+      connect_via: existingFollowUp.connect_via,
+      follow_up_type: existingFollowUp.follow_up_type,
+      interaction_rating: existingFollowUp.interaction_rating,
+      reason_for_follow_up: existingFollowUp.reason_for_follow_up,
+      follow_up_date: existingFollowUp.follow_up_date,
+      follow_up_time: existingFollowUp.follow_up_time,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Ensure history is an array
+    let history = existingFollowUp.follow_up_history || [];
+    if (typeof history === "string") {
+      history = JSON.parse(history); // In case it's stored as a JSON string
+    }
+
+    // Push old state into history
+    history.push(previousState);
+
+    // Update fields
     const {
       connect_via,
       follow_up_type,
@@ -105,107 +98,56 @@ const updateFollowUp = async (req, res) => {
       reason_for_follow_up,
       follow_up_date,
       follow_up_time,
-      fresh_lead_id, // FreshLead ID should be provided for the association
+      fresh_lead_id,
+      leadId,
     } = req.body;
 
-    // Validate input data (simple validation)
-    if (
-      !connect_via ||
-      !follow_up_type ||
-      !interaction_rating ||
-      !reason_for_follow_up ||
-      !follow_up_date ||
-      !follow_up_time ||
-      !fresh_lead_id
-    ) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
+    existingFollowUp.connect_via = connect_via;
+    existingFollowUp.follow_up_type = follow_up_type;
+    existingFollowUp.interaction_rating = interaction_rating;
+    existingFollowUp.reason_for_follow_up = reason_for_follow_up;
+    existingFollowUp.follow_up_date = follow_up_date;
+    existingFollowUp.follow_up_time = follow_up_time;
+    existingFollowUp.fresh_lead_id = fresh_lead_id;
+    existingFollowUp.leadId = leadId;
+    existingFollowUp.follow_up_history = history;
 
-    // Check if the FreshLead ID exists in the database
-    const freshLead = await FreshLead.findByPk(fresh_lead_id);
-    if (!freshLead) {
-      return res.status(404).json({ message: "FreshLead not found" });
-    }
+    await existingFollowUp.save();
 
-    // Find the corresponding Lead record using leadId from FreshLead
-    const lead = await Lead.findOne({
-      where: { id: freshLead.leadId },
+    return res.status(200).json({
+      message: "Follow-up updated and history recorded",
+      data: existingFollowUp,
     });
-    if (!lead) {
-      return res.status(404).json({ message: "Lead not found" });
-    }
-
-    // Find the corresponding ClientLead record using clientLeadId from Lead
-    const clientLead = await ClientLead.findByPk(lead.clientLeadId);
-    if (!clientLead) {
-      return res.status(404).json({ message: "ClientLead not found" });
-    }
-
-    // Update the ClientLead status to "Follow-Up"
-    clientLead.status = "Follow-Up";
-    await clientLead.save();
-
-    // Find the FollowUp record by ID
-    const followUp = await FollowUp.findByPk(id);
-    if (!followUp) {
-      return res.status(404).json({ message: "FollowUp not found" });
-    }
-
-    // Update the FollowUp record with new data
-    followUp.connect_via = connect_via;
-    followUp.follow_up_type = follow_up_type;
-    followUp.interaction_rating = interaction_rating;
-    followUp.reason_for_follow_up = reason_for_follow_up;
-    followUp.follow_up_date = follow_up_date;
-    followUp.follow_up_time = follow_up_time;
-    followUp.fresh_lead_id = fresh_lead_id;
-
-    // Save the updated record
-    await followUp.save();
-
-    // Return the updated FollowUp data as a response
-    return res
-      .status(200)
-      .json({ message: "Follow-up updated successfully", data: followUp });
   } catch (err) {
-    console.error("Error updating FollowUp:", err);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Error updating follow-up:", err);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
   }
 };
-
+// Get FollowUps for executive with history
 const getFollowUps = async (req, res) => {
   try {
-    const username = req.user.username; // from JWT token
+    const username = req.user.username;
 
-    // Step 1: Find all leads assigned to this executive
     const leads = await Lead.findAll({
       where: { assignedToExecutive: username },
       attributes: ["id"],
     });
-
     const leadIds = leads.map((lead) => lead.id);
+    if (leadIds.length === 0)
+      return res.status(200).json({ message: "No follow-ups", data: [] });
 
-    if (leadIds.length === 0) {
-      return res.status(200).json({ message: "No follow-ups found", data: [] });
-    }
-
-    // Step 2: Find all FreshLeads linked to these leads
     const freshLeads = await FreshLead.findAll({
       where: { leadId: leadIds },
-      attributes: ["id", "leadId"], // Including leadId to later join with Lead
+      attributes: ["id", "leadId"],
     });
-
     const freshLeadIds = freshLeads.map((fl) => fl.id);
+    if (freshLeadIds.length === 0)
+      return res.status(200).json({ message: "No follow-ups", data: [] });
 
-    if (freshLeadIds.length === 0) {
-      return res.status(200).json({ message: "No follow-ups found", data: [] });
-    }
-
-    // Step 3: Fetch FollowUps for the user's fresh leads, with full nesting
     const followUps = await FollowUp.findAll({
-      where: {
-        fresh_lead_id: freshLeadIds,
-      },
+      where: { fresh_lead_id: freshLeadIds },
       include: [
         {
           model: FreshLead,
@@ -215,12 +157,12 @@ const getFollowUps = async (req, res) => {
             {
               model: Lead,
               as: "lead",
-              attributes: ["id", "clientLeadId"], // Including clientLeadId to join with ClientLead
+              attributes: ["id", "clientLeadId"],
               include: [
                 {
                   model: ClientLead,
-                  as: "clientLead", // Ensuring we include ClientLead to get the status
-                  attributes: ["status"], // Only fetching status here
+                  as: "clientLead",
+                  attributes: ["status"],
                 },
               ],
             },
@@ -229,7 +171,6 @@ const getFollowUps = async (req, res) => {
       ],
     });
 
-    // Step 4: Transform response to include ClientLead.status
     const response = followUps.map((fu) => {
       const freshLead = fu.freshLead;
       const clientLeadStatus = freshLead?.lead?.clientLead?.status;
@@ -241,7 +182,7 @@ const getFollowUps = async (req, res) => {
           phone: freshLead?.phone,
           email: freshLead?.email,
         },
-        clientLeadStatus: clientLeadStatus || null, // Include clientLeadStatus, or null if not found
+        clientLeadStatus: clientLeadStatus || null,
       };
     });
 
@@ -255,7 +196,6 @@ const getFollowUps = async (req, res) => {
   }
 };
 
-// Export the controller functions
 module.exports = {
   createFollowUp,
   updateFollowUp,
