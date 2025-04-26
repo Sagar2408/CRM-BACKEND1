@@ -67,7 +67,8 @@ module.exports = (sequelize) => {
           "Converted",
           "Follow-Up",
           "Closed",
-          "Rejected"
+          "Rejected",
+          "Meeting"
         ),
         defaultValue: "New",
       },
