@@ -33,7 +33,14 @@ module.exports = (sequelize) => {
       allowNull: true,
     },
     followUpStatus: {
-      type: DataTypes.ENUM("Call Tomorrow", "Not Pick"),
+      type: DataTypes.ENUM(
+        "appointment",
+        "no response",
+        "interested",
+        "converted",
+        "not interested",
+        "close"
+      ),
       allowNull: true,
     },
     isChecked: {
