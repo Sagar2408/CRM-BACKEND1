@@ -38,18 +38,28 @@ module.exports = (sequelize) => {
       },
       executiveId: {
         type: DataTypes.INTEGER,
-        allowNull: true, // ✅ Changed to true to support ON DELETE SET NULL
+        allowNull: true,
         references: {
-          model: "Users", // ✅ Make sure this matches the table name (usually lowercase plural)
+          model: "Users",
           key: "id",
         },
         onUpdate: "CASCADE",
         onDelete: "SET NULL",
       },
+      fresh_lead_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: "FreshLeads",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
+      },
     },
     {
       timestamps: true,
-      tableName: "Meetings", // optional but recommended if table name differs from model
+      tableName: "Meetings",
     }
   );
 };
