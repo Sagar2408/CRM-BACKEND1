@@ -33,7 +33,7 @@ const createCloseLead = async (req, res) => {
         as: "lead", // Match the association alias (lowercase 'lead')
         include: {
           model: ClientLead,
-          as: "ClientLead", // Match the association alias
+          as: "clientLead", // Corrected alias to match the association
         },
       },
     });
@@ -43,7 +43,7 @@ const createCloseLead = async (req, res) => {
     }
 
     // Check if Lead and ClientLead exist
-    if (!freshLead.lead || !freshLead.lead.ClientLead) {
+    if (!freshLead.lead || !freshLead.lead.clientLead) {
       return res
         .status(404)
         .json({ message: "Lead or ClientLead not found for this FreshLead." });
@@ -94,6 +94,7 @@ const createCloseLead = async (req, res) => {
       .json({ message: "Something went wrong.", error: err.message });
   }
 };
+
 const getAllCloseLeads = async (req, res) => {
   try {
     const closeLeads = await CloseLead.findAll({
