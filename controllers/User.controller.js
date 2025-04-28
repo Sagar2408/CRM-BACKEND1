@@ -43,14 +43,14 @@ const login = async (req, res) => {
         username: user.username,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "12h" }
     );
 
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Lax",
-      maxAge: 3600000,
+      maxAge: 12 * 60 * 60 * 1000,
     });
 
     res.status(200).json({
