@@ -1,4 +1,10 @@
-const { Meeting, ClientLead, Lead, FreshLead } = require("../config/sequelize");
+const {
+  Meeting,
+  ClientLead,
+  Lead,
+  FreshLead,
+  Users,
+} = require("../config/sequelize");
 
 // 📌 Get all meetings with pagination
 exports.getAllMeetings = async (req, res) => {
@@ -29,17 +35,88 @@ exports.getAllMeetings = async (req, res) => {
   }
 };
 
-// 📌 Get meeting by ID
-exports.getMeetingById = async (req, res) => {
+exports.getMeetingByExecutive = async (req, res) => {
+  const executiveUsername = req.user?.username;
+
+  if (!executiveUsername) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized: Executive username missing in token" });
+  }
+
   try {
-    const meeting = await Meeting.findByPk(req.params.id);
+    // Find the executive's ID based on username
+    const executive = await Users.findOne({
+      where: { username: executiveUsername },
+      attributes: ["id"],
+    });
 
-    if (!meeting) return res.status(404).json({ message: "Meeting not found" });
+    if (!executive) {
+      return res.status(404).json({ error: "Executive not found" });
+    }
 
-    res.status(200).json(meeting);
+    const meetings = await Meeting.findAll({
+      where: { executiveId: executive.id },
+      attributes: [
+        "id",
+        "clientName",
+        "clientEmail",
+        "clientPhone",
+        "reasonForFollowup",
+        "startTime",
+        "endTime",
+      ],
+      include: [
+        {
+          model: FreshLead,
+          as: "freshLead",
+          attributes: ["id"],
+          include: [
+            {
+              model: Lead,
+              as: "lead",
+              attributes: ["id"],
+              include: [
+                {
+                  model: ClientLead,
+                  as: "clientLead",
+                  attributes: ["id", "status", "name", "email"],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (meetings.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No meetings found for this executive" });
+    }
+
+    const response = meetings.map((meeting) => {
+      const freshLead = meeting.freshLead;
+      const lead = freshLead?.lead;
+      const clientLead = lead?.clientLead;
+
+      return {
+        ...meeting.toJSON(),
+        clientLead: clientLead
+          ? {
+              id: clientLead.id,
+              name: clientLead.name,
+              email: clientLead.email,
+              status: clientLead.status,
+            }
+          : null,
+      };
+    });
+
+    return res.status(200).json({ data: response });
   } catch (error) {
-    console.error("Error fetching meeting:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error fetching meetings by executive:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 

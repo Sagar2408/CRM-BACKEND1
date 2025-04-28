@@ -203,6 +203,28 @@ db.Notification.belongsTo(db.Users, {
   foreignKey: "userId",
 });
 
+// Meeting → FreshLead
+db.Meeting.belongsTo(db.FreshLead, {
+  foreignKey: "fresh_lead_id",
+  as: "freshLead",
+  onUpdate: "CASCADE",
+  onDelete: "CASCADE",
+});
+
+// Meeting → Users
+db.Meeting.belongsTo(db.Users, {
+  foreignKey: "executiveId",
+  as: "executive",
+  onUpdate: "CASCADE",
+  onDelete: "SET NULL",
+});
+
+// Users → Meeting
+db.Users.hasMany(db.Meeting, {
+  foreignKey: "executiveId",
+  onDelete: "SET NULL",
+});
+
 // ------------------------
 // Validate Schema
 // ------------------------
