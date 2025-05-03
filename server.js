@@ -28,7 +28,7 @@ app.use(cookieParser());
 // Routes
 const auth = require("./middleware/auth");
 const tenantResolver = require("./middleware/tenantResolver");
-
+app.use("/api/company", require("./routes/Company.routes"));
 app.use("/api", auth(), tenantResolver, require("./routes/User.routes"));
 app.use("/api/deals", auth(), tenantResolver, require("./routes/Deal.routes"));
 app.use("/api/leads", auth(), tenantResolver, require("./routes/Lead.routes"));
