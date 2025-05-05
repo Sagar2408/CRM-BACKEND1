@@ -25,6 +25,7 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 db.Company = require("../models/Company.model")(sequelize, DataTypes);
+db.MasterUser = require("../models/MasterUser.model")(sequelize, DataTypes);
 
 // Sync schema (optional, safe for dev)
 sequelize

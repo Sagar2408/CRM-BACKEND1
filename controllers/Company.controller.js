@@ -1,5 +1,7 @@
 const { masterDB } = require("../config/masterDB"); // assuming masterDB is exported
 const { getTenantDB } = require("../config/sequelizeManager");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 const createCompany = async (req, res) => {
   const { name, db_name, db_host, db_user, db_password, db_port } = req.body;
@@ -40,6 +42,35 @@ const createCompany = async (req, res) => {
   }
 };
 
+const getCompaniesForMasterUser = async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "Authorization token required" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Optional: verify decoded email/role if needed
+    if (!decoded || !decoded.email) {
+      return res.status(403).json({ message: "Invalid master token" });
+    }
+
+    const Company = masterDB.models.Company;
+    const companies = await Company.findAll();
+
+    return res.status(200).json({
+      message: "Companies retrieved successfully",
+      companies,
+    });
+  } catch (error) {
+    console.error("Token verification or DB error:", error);
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
+};
+
 module.exports = {
   createCompany,
+  getCompaniesForMasterUser,
 };

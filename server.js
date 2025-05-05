@@ -25,10 +25,16 @@ app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-// Routes
+// 🔐 Middleware for protected routes
 const auth = require("./middleware/auth");
+const authMaster = require("./middleware/authMaster");
 const tenantResolver = require("./middleware/tenantResolver");
-app.use("/api/company", require("./routes/Company.routes"));
+
+// 📦 Routes
+app.use("/api/masteruser", require("./routes/MasterUser.routes")); // public login/signup
+app.use("/api/company", require("./routes/Company.routes")); // includes both public & protected (see below)
+
+// Tenant routes
 app.use("/api", auth(), tenantResolver, require("./routes/User.routes"));
 app.use("/api/deals", auth(), tenantResolver, require("./routes/Deal.routes"));
 app.use("/api/leads", auth(), tenantResolver, require("./routes/Lead.routes"));
@@ -112,7 +118,7 @@ app.use(
   require("./routes/FollowUpHistory.routes")
 );
 
-// Store connected users
+// 🧠 Store connected users
 const connectedUsers = {};
 
 // 🔌 SOCKET.IO EVENTS
