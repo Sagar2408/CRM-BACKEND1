@@ -35,7 +35,7 @@ app.use("/api/masteruser", require("./routes/MasterUser.routes")); // public log
 app.use("/api/company", require("./routes/Company.routes")); // includes both public & protected (see below)
 
 // Tenant routes
-app.use("/api", auth(), tenantResolver, require("./routes/User.routes"));
+app.use("/api", tenantResolver, require("./routes/User.routes"));
 app.use("/api/deals", auth(), tenantResolver, require("./routes/Deal.routes"));
 app.use("/api/leads", auth(), tenantResolver, require("./routes/Lead.routes"));
 app.use(

@@ -20,6 +20,8 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    const Users = req.db.Users;
+
     const user = await Users.findOne({ where: { email } });
 
     if (!user) {
@@ -115,7 +117,7 @@ const getUserProfile = async (req, res) => {
 const signupLocal = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
-
+    const Users = req.db.Users;
     // Only allow valid roles
     const validRoles = ["Admin", "TL", "Executive"];
     if (!username || !password || !role || !validRoles.includes(role)) {
