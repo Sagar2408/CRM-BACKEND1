@@ -1,12 +1,6 @@
-const {
-  FollowUpHistory,
-  FollowUp,
-  FreshLead,
-  Lead,
-} = require("../config/sequelize");
 const { Op } = require("sequelize");
 
-// Create a new FollowUpHistory record
+// 📌 Create a new FollowUpHistory record
 exports.createFollowUpHistory = async (req, res) => {
   try {
     const {
@@ -19,6 +13,8 @@ exports.createFollowUpHistory = async (req, res) => {
       follow_up_time,
       fresh_lead_id,
     } = req.body;
+
+    const { FollowUpHistory, FollowUp, FreshLead } = req.db; // ✅ Dynamic DB injection
 
     // Validate required fields
     if (
@@ -34,19 +30,17 @@ exports.createFollowUpHistory = async (req, res) => {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Check if FollowUp exists
+    // Validate FollowUp and FreshLead existence
     const followUp = await FollowUp.findByPk(follow_up_id);
     if (!followUp) {
       return res.status(404).json({ error: "FollowUp not found" });
     }
 
-    // Check if FreshLead exists
     const freshLead = await FreshLead.findByPk(fresh_lead_id);
     if (!freshLead) {
       return res.status(404).json({ error: "FreshLead not found" });
     }
 
-    // Create FollowUpHistory record
     const followUpHistory = await FollowUpHistory.create({
       follow_up_id,
       connect_via,
@@ -68,17 +62,17 @@ exports.createFollowUpHistory = async (req, res) => {
   }
 };
 
-// Get all FollowUpHistory records
+// 📌 Get all FollowUpHistory records for a specific executive
 exports.getFollowUpHistoriesByExecutive = async (req, res) => {
   try {
-    // Extract username from the token (assuming auth middleware adds it to req.user)
-    const username = req.user.username;
+    const { FollowUpHistory, FollowUp, FreshLead, Lead } = req.db; // ✅ Dynamic DB injection
+
+    const username = req.user?.username;
 
     if (!username) {
       return res.status(400).json({ error: "Username not found in token" });
     }
 
-    // Fetch FollowUpHistory records by joining with FreshLead and Lead
     const followUpHistories = await FollowUpHistory.findAll({
       include: [
         {
@@ -93,7 +87,7 @@ exports.getFollowUpHistoriesByExecutive = async (req, res) => {
               model: Lead,
               as: "lead",
               where: {
-                assignedToExecutive: username, // Filter by executive username
+                assignedToExecutive: username,
               },
             },
           ],
@@ -102,9 +96,9 @@ exports.getFollowUpHistoriesByExecutive = async (req, res) => {
     });
 
     if (!followUpHistories.length) {
-      return res
-        .status(404)
-        .json({ error: "No follow-up history found for this executive" });
+      return res.status(404).json({
+        error: "No follow-up history found for this executive",
+      });
     }
 
     return res.status(200).json(followUpHistories);

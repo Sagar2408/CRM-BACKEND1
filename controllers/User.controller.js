@@ -74,6 +74,7 @@ const login = async (req, res) => {
 
 const getUserProfile = async (req, res) => {
   try {
+    const Users = req.db.Users; // ✅ Dynamically selected DB
     const { id, role } = req.user;
 
     if (role === "Admin") {
@@ -83,7 +84,9 @@ const getUserProfile = async (req, res) => {
         },
       });
       return res.json(users);
-    } else if (role === "TL") {
+    }
+
+    if (role === "TL") {
       // Team Lead can see their team (Executives) and their own profile
       const users = await Users.findAll({
         where: {
@@ -96,7 +99,7 @@ const getUserProfile = async (req, res) => {
       return res.json(users);
     }
 
-    // Executives can only see their own profile
+    // Executive: see only own profile
     const user = await Users.findByPk(id, {
       attributes: {
         exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
@@ -172,11 +175,14 @@ const signupLocal = async (req, res) => {
 };
 const getAdminDashboard = async (req, res) => {
   try {
+    const Users = req.db.Users; // ✅ Dynamic database selection
+
     const users = await Users.findAll({
       attributes: {
         exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
       },
     });
+
     res.json({
       message: "Welcome to Admin Dashboard",
       users,
@@ -194,6 +200,8 @@ const getAdminDashboard = async (req, res) => {
 
 const getTLDashboard = async (req, res) => {
   try {
+    const Users = req.db.Users; // ✅ Use dynamic database
+
     const users = await Users.findAll({
       where: {
         [Op.or]: [{ id: req.user.id }, { role: "Executive" }],
@@ -202,6 +210,7 @@ const getTLDashboard = async (req, res) => {
         exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
       },
     });
+
     res.json({
       message: "Welcome to Team Lead Dashboard",
       teamMembers: users,
@@ -216,16 +225,20 @@ const getTLDashboard = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 const getExecutiveDashboard = async (req, res) => {
   try {
+    const Users = req.db.Users; // ✅ Use the dynamically selected DB
+
     const user = await Users.findByPk(req.user.id, {
       attributes: {
         exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
       },
     });
+
     res.json({
       message: "Welcome to Executive Dashboard",
-      user: user,
+      user,
     });
   } catch (error) {
     console.error("Executive dashboard error:", error);
@@ -235,10 +248,11 @@ const getExecutiveDashboard = async (req, res) => {
 /*-------------------Executive Profile---------------------*/
 const getExecutiveById = async (req, res) => {
   try {
+    const Users = req.db.Users; // ✅ Dynamic database selection
     const userId = req.params.id;
-    const requestingUser = req.user; // from auth middleware
+    const requestingUser = req.user;
 
-    // Check access
+    // Restrict Executive from accessing other Executive profiles
     if (
       requestingUser.role === "Executive" &&
       requestingUser.id !== parseInt(userId, 10)
@@ -246,7 +260,6 @@ const getExecutiveById = async (req, res) => {
       return res.status(403).json({ message: "Access denied." });
     }
 
-    // Find user
     const executive = await Users.findOne({
       where: { id: userId, role: "Executive" },
       attributes: ["id", "username", "email", "role", "createdAt"],
@@ -265,7 +278,9 @@ const getExecutiveById = async (req, res) => {
 /*----------------------------Admin profile------------------*/
 const getAdminById = async (req, res) => {
   try {
-    const adminId = req.user.id; // ✅ Take from authenticated token
+    const Users = req.db.Users; // ✅ Dynamic DB selection
+
+    const adminId = req.user.id;
 
     const admin = await Users.findOne({
       where: { id: adminId, role: "Admin" },
@@ -286,6 +301,7 @@ const getAdminById = async (req, res) => {
 /*-------------------------Forgot Password--------------*/
 const forgotPassword = async (req, res) => {
   try {
+    const Users = req.db.Users; // ✅ Use dynamic database
     const { email } = req.body;
 
     if (!email) {
@@ -293,12 +309,13 @@ const forgotPassword = async (req, res) => {
     }
 
     const user = await Users.findOne({ where: { email } });
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
-    const resetTokenExpiry = Date.now() + 3600000; // 1 hour expiry
+    const resetTokenExpiry = Date.now() + 3600000; // 1 hour from now
 
     await user.update({
       resetPasswordToken: resetToken,
@@ -314,6 +331,7 @@ const forgotPassword = async (req, res) => {
     };
 
     await transporter.sendMail(mailOptions);
+
     res.status(200).json({ message: "Password reset link sent to your email" });
   } catch (error) {
     console.error("Forgot password error:", error);
@@ -324,9 +342,9 @@ const forgotPassword = async (req, res) => {
 // Logout user by clearing the cookie
 const logout = async (req, res) => {
   try {
-    const userId = req.user.id; // Assuming you have middleware to decode token and attach user to req
+    const Users = req.db.Users; // ✅ Use dynamic database
+    const userId = req.user.id;
 
-    // Find the user and update is_online to false
     const user = await Users.findByPk(userId);
 
     if (!user) {
@@ -336,7 +354,6 @@ const logout = async (req, res) => {
     user.is_online = false;
     await user.save();
 
-    // Clear the cookie
     res.clearCookie("token");
 
     res.status(200).json({ message: "Logout successful" });
@@ -349,6 +366,7 @@ const logout = async (req, res) => {
 /*-------------------------Reset Password--------------*/
 const resetPassword = async (req, res) => {
   try {
+    const Users = req.db.Users; // ✅ Use dynamic database
     const { token, newPassword } = req.body;
 
     if (!token || !newPassword) {
@@ -360,7 +378,9 @@ const resetPassword = async (req, res) => {
     const user = await Users.findOne({
       where: {
         resetPasswordToken: token,
-        resetPasswordExpiry: { [Op.gt]: Date.now() },
+        resetPasswordExpiry: {
+          [Op.gt]: Date.now(), // Token must not be expired
+        },
       },
     });
 
@@ -386,9 +406,10 @@ const resetPassword = async (req, res) => {
 // NEW API: Get all Executives
 const getAllExecutives = async (req, res) => {
   try {
+    const Users = req.db.Users; // ✅ Dynamic DB selection
     const { role } = req.user;
 
-    // Only Admin and TL can access this endpoint
+    // Access control: Only Admin and TL can fetch all executives
     if (role !== "Admin" && role !== "TL") {
       return res.status(403).json({
         message: "Unauthorized: Only Admin and TL can view all executives",
@@ -404,7 +425,7 @@ const getAllExecutives = async (req, res) => {
 
     res.status(200).json({
       message: "Executives retrieved successfully",
-      executives: executives,
+      executives,
     });
   } catch (error) {
     console.error("Error fetching executives:", error);
@@ -414,9 +435,10 @@ const getAllExecutives = async (req, res) => {
 // NEW API: Get all Team Leads
 const getAllTeamLeads = async (req, res) => {
   try {
+    const Users = req.db.Users; // ✅ Use dynamic DB
     const { role } = req.user;
 
-    // Only Admin can access this endpoint
+    // Access control: Only Admin can access
     if (role !== "Admin") {
       return res.status(403).json({
         message: "Unauthorized: Only Admin can view all team leads",
@@ -432,7 +454,7 @@ const getAllTeamLeads = async (req, res) => {
 
     res.status(200).json({
       message: "Team Leads retrieved successfully",
-      teamLeads: teamLeads,
+      teamLeads,
     });
   } catch (error) {
     console.error("Error fetching team leads:", error);
@@ -442,9 +464,10 @@ const getAllTeamLeads = async (req, res) => {
 // NEW API: Get All Online Executives
 const getOnlineExecutives = async (req, res) => {
   try {
+    const Users = req.db.Users; // ✅ Dynamic database access
     const { role } = req.user;
 
-    // Only Admin and TL are allowed to check online executives
+    // Authorization: Only Admin and TL are allowed
     if (role !== "Admin" && role !== "TL") {
       return res.status(403).json({
         message: "Unauthorized: Only Admin and TL can view online executives",

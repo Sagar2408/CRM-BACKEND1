@@ -1,23 +1,19 @@
-const db = require("../config/sequelize");
-const { FreshLead, Lead, ClientLead } = db;
-
+// 📌 Create a fresh lead
 const createFreshLead = async (req, res) => {
   try {
+    const { FreshLead, Lead, ClientLead } = req.db; // ✅ Dynamic DB
     const { leadId } = req.body;
 
-    // Check if the lead exists
     const lead = await Lead.findByPk(leadId);
     if (!lead) {
       return res.status(404).json({ error: "Lead not found" });
     }
 
-    // Find the associated client lead
     const clientLead = await ClientLead.findByPk(lead.clientLeadId);
     if (!clientLead) {
       return res.status(404).json({ error: "Client lead not found" });
     }
 
-    // Create a new fresh lead
     const newFreshLead = await FreshLead.create({
       leadId: lead.id,
       name: clientLead.name,
@@ -35,11 +31,14 @@ const createFreshLead = async (req, res) => {
   }
 };
 
+// 📌 Update follow-up info on a fresh lead
 const updateFollowUp = async (req, res) => {
   const { id } = req.params;
   const { followUpDate, followUpStatus } = req.body;
 
   try {
+    const FreshLead = req.db.FreshLead; // ✅ Dynamic DB
+
     const lead = await FreshLead.findByPk(id);
     if (!lead) {
       return res.status(404).json({ error: "FreshLead not found" });
@@ -57,6 +56,7 @@ const updateFollowUp = async (req, res) => {
   }
 };
 
+// 📌 Get all fresh leads assigned to the logged-in executive
 const getFreshLeadsByExecutive = async (req, res) => {
   const executiveUsername = req.user?.username;
 
@@ -67,16 +67,18 @@ const getFreshLeadsByExecutive = async (req, res) => {
   }
 
   try {
-    const freshLeads = await db.FreshLead.findAll({
+    const { FreshLead, Lead, ClientLead } = req.db; // ✅ Dynamic DB
+
+    const freshLeads = await FreshLead.findAll({
       include: [
         {
-          model: db.Lead,
+          model: Lead,
           as: "lead",
           where: { assignedToExecutive: executiveUsername },
           attributes: ["id", "assignedToExecutive", "assignmentDate"],
           include: [
             {
-              model: db.ClientLead,
+              model: ClientLead,
               as: "clientLead",
               attributes: ["id", "status", "name", "email"],
             },
@@ -102,7 +104,7 @@ const getFreshLeadsByExecutive = async (req, res) => {
               id: clientLead.id,
               name: clientLead.name,
               email: clientLead.email,
-              status: clientLead.status, // ✅ Only this status is included
+              status: clientLead.status,
             }
           : null,
       };

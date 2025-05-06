@@ -1,14 +1,13 @@
 const { Op } = require("sequelize");
-const { ExecutiveActivity, Users } = require("../config/sequelize");
 
 // ✅ Start Work Session
 exports.startWork = async (req, res) => {
   try {
     const { ExecutiveId } = req.body;
+    const { ExecutiveActivity } = req.db;
+
     if (!ExecutiveId)
       return res.status(400).json({ message: "ExecutiveId is required" });
-
-    console.log("Received ExecutiveId:", ExecutiveId);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -29,11 +28,9 @@ exports.startWork = async (req, res) => {
         dailyCallTime: 0,
         leadSectionVisits: 0,
       });
-    } else {
-      if (!activity.workStartTime) {
-        activity.workStartTime = new Date();
-        await activity.save();
-      }
+    } else if (!activity.workStartTime) {
+      activity.workStartTime = new Date();
+      await activity.save();
     }
 
     res.json({ message: "Work session started", activity });
@@ -46,6 +43,8 @@ exports.startWork = async (req, res) => {
 exports.stopWork = async (req, res) => {
   try {
     const { ExecutiveId } = req.body;
+    const { ExecutiveActivity } = req.db;
+
     if (!ExecutiveId)
       return res.status(400).json({ message: "ExecutiveId is required" });
 
@@ -77,9 +76,12 @@ exports.stopWork = async (req, res) => {
   }
 };
 
+// ✅ Start Break
 exports.startBreak = async (req, res) => {
   try {
     const { ExecutiveId } = req.body;
+    const { ExecutiveActivity, Users } = req.db;
+
     if (!ExecutiveId)
       return res.status(400).json({ message: "ExecutiveId is required" });
 
@@ -99,7 +101,6 @@ exports.startBreak = async (req, res) => {
     activity.breakStartTime = new Date();
     await activity.save();
 
-    // ✅ Set user offline
     await Users.update({ is_online: false }, { where: { id: ExecutiveId } });
 
     res.json({ message: "Break started", activity });
@@ -113,6 +114,8 @@ exports.startBreak = async (req, res) => {
 exports.stopBreak = async (req, res) => {
   try {
     const { ExecutiveId } = req.body;
+    const { ExecutiveActivity, Users } = req.db;
+
     if (!ExecutiveId)
       return res.status(400).json({ message: "ExecutiveId is required" });
 
@@ -138,7 +141,6 @@ exports.stopBreak = async (req, res) => {
     activity.breakStartTime = null;
     await activity.save();
 
-    // ✅ Set user online
     await Users.update({ is_online: true }, { where: { id: ExecutiveId } });
 
     res.json({ message: "Break stopped", breakDuration, activity });
@@ -152,16 +154,21 @@ exports.stopBreak = async (req, res) => {
 exports.updateCallTime = async (req, res) => {
   try {
     const { ExecutiveId, callDuration } = req.body;
+    const { ExecutiveActivity } = req.db;
+
     if (!ExecutiveId || isNaN(callDuration) || callDuration < 0) {
       return res
         .status(400)
         .json({ message: "Invalid callDuration or ExecutiveId" });
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     let activity = await ExecutiveActivity.findOne({
       where: {
         ExecutiveId,
-        updatedAt: { [Op.gte]: new Date().setHours(0, 0, 0, 0) },
+        updatedAt: { [Op.gte]: today },
       },
     });
 
@@ -170,11 +177,11 @@ exports.updateCallTime = async (req, res) => {
         ExecutiveId,
         workTime: 0,
         breakTime: 0,
-        dailyCallTime: callDuration * 60, // Convert minutes to seconds
+        dailyCallTime: callDuration * 60,
         leadSectionVisits: 0,
       });
     } else {
-      activity.dailyCallTime += callDuration * 60; // Convert minutes to seconds
+      activity.dailyCallTime += callDuration * 60;
       await activity.save();
     }
 
@@ -183,17 +190,23 @@ exports.updateCallTime = async (req, res) => {
     res.status(500).json({ message: "Error updating call time", error });
   }
 };
+
 // ✅ Track Lead Visit
 exports.trackLeadVisit = async (req, res) => {
   try {
     const { ExecutiveId } = req.body;
+    const { ExecutiveActivity } = req.db;
+
     if (!ExecutiveId)
       return res.status(400).json({ message: "ExecutiveId is required" });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     let activity = await ExecutiveActivity.findOne({
       where: {
         ExecutiveId,
-        updatedAt: { [Op.gte]: new Date().setHours(0, 0, 0, 0) },
+        updatedAt: { [Op.gte]: today },
       },
     });
 
@@ -219,6 +232,7 @@ exports.trackLeadVisit = async (req, res) => {
 // ✅ Get Admin Dashboard
 exports.getAdminDashboard = async (req, res) => {
   try {
+    const { ExecutiveActivity } = req.db;
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 

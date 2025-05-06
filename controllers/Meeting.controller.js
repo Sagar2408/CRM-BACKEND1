@@ -8,17 +8,19 @@ const {
 
 // 📌 Get all meetings with pagination
 exports.getAllMeetings = async (req, res) => {
-  const { page = 1, limit = 20 } = req.query; // Default to page 1 and limit 20
-  const offset = (page - 1) * limit; // Calculate offset
+  const Meeting = req.db.Meeting;
+
+  const { page = 1, limit = 20 } = req.query;
+  const offset = (page - 1) * limit;
 
   try {
     const { count, rows: meetings } = await Meeting.findAndCountAll({
-      limit: parseInt(limit), // Number of records to fetch
-      offset: parseInt(offset), // Number of records to skip
-      order: [["startTime", "DESC"]], // Optional: sort by startTime, latest first
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [["startTime", "DESC"]],
     });
 
-    const totalPages = Math.ceil(count / limit); // Calculate total pages
+    const totalPages = Math.ceil(count / limit);
 
     res.status(200).json({
       meetings,
@@ -35,7 +37,14 @@ exports.getAllMeetings = async (req, res) => {
   }
 };
 
+// 📌 Get meetings by executive
 exports.getMeetingByExecutive = async (req, res) => {
+  const Meeting = req.db.Meeting;
+  const Users = req.db.Users;
+  const FreshLead = req.db.FreshLead;
+  const Lead = req.db.Lead;
+  const ClientLead = req.db.ClientLead;
+
   const executiveUsername = req.user?.username;
 
   if (!executiveUsername) {
@@ -45,7 +54,6 @@ exports.getMeetingByExecutive = async (req, res) => {
   }
 
   try {
-    // Find the executive's ID based on username
     const executive = await Users.findOne({
       where: { username: executiveUsername },
       attributes: ["id"],
@@ -121,8 +129,12 @@ exports.getMeetingByExecutive = async (req, res) => {
 };
 
 // 📌 Create a new meeting
-
 exports.createMeeting = async (req, res) => {
+  const Meeting = req.db.Meeting;
+  const FreshLead = req.db.FreshLead;
+  const Lead = req.db.Lead;
+  const ClientLead = req.db.ClientLead;
+
   try {
     const {
       clientName,
@@ -133,9 +145,8 @@ exports.createMeeting = async (req, res) => {
       endTime,
       fresh_lead_id,
     } = req.body;
-    const executiveId = req.user.id; // Extract executiveId from decoded token
+    const executiveId = req.user.id;
 
-    // Validate required fields
     if (
       !clientName ||
       !clientEmail ||
@@ -149,61 +160,40 @@ exports.createMeeting = async (req, res) => {
       });
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(clientEmail)) {
       return res.status(400).json({ message: "Invalid email format" });
     }
 
-    // Validate startTime format and ensure it's a future date
     const startDate = new Date(startTime);
-    if (isNaN(startDate.getTime())) {
-      return res.status(400).json({ message: "Invalid startTime format" });
-    }
-    if (startDate < new Date()) {
-      return res
-        .status(400)
-        .json({ message: "startTime must be in the future" });
+    if (isNaN(startDate.getTime()) || startDate < new Date()) {
+      return res.status(400).json({ message: "Invalid or past startTime" });
     }
 
-    // Validate endTime if provided
     if (endTime) {
       const endDate = new Date(endTime);
-      if (isNaN(endDate.getTime())) {
-        return res.status(400).json({ message: "Invalid endTime format" });
-      }
-      if (endDate <= startDate) {
+      if (isNaN(endDate.getTime()) || endDate <= startDate) {
         return res
           .status(400)
           .json({ message: "endTime must be after startTime" });
       }
     }
 
-    // Find the related FreshLead
     const freshLead = await FreshLead.findByPk(fresh_lead_id);
-    if (!freshLead) {
+    if (!freshLead)
       return res.status(404).json({ message: "FreshLead not found" });
-    }
 
-    // Find the related Lead
     const lead = await Lead.findByPk(freshLead.leadId);
-    if (!lead) {
-      return res.status(404).json({ message: "Lead not found" });
-    }
+    if (!lead) return res.status(404).json({ message: "Lead not found" });
 
-    // Find the related ClientLead
     const clientLead = await ClientLead.findByPk(lead.clientLeadId);
-    if (!clientLead) {
+    if (!clientLead)
       return res.status(404).json({ message: "ClientLead not found" });
-    }
 
-    // Use a transaction to ensure data consistency
     const transaction = await Meeting.sequelize.transaction();
     try {
-      // Update ClientLead status to "Meeting"
       await clientLead.update({ status: "Meeting" }, { transaction });
 
-      // Create the meeting
       const meeting = await Meeting.create(
         {
           clientName,
@@ -218,7 +208,6 @@ exports.createMeeting = async (req, res) => {
         { transaction }
       );
 
-      // Commit the transaction
       await transaction.commit();
 
       res.status(201).json({
@@ -226,7 +215,6 @@ exports.createMeeting = async (req, res) => {
         data: meeting,
       });
     } catch (error) {
-      // Rollback the transaction on error
       await transaction.rollback();
       throw error;
     }
@@ -235,9 +223,10 @@ exports.createMeeting = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 // 📌 Update a meeting
 exports.updateMeeting = async (req, res) => {
+  const Meeting = req.db.Meeting;
+
   try {
     const { title, description, startTime, endTime } = req.body;
 
@@ -245,6 +234,7 @@ exports.updateMeeting = async (req, res) => {
     if (!meeting) return res.status(404).json({ message: "Meeting not found" });
 
     await meeting.update({ title, description, startTime, endTime });
+
     res.status(200).json(meeting);
   } catch (error) {
     console.error("Error updating meeting:", error);
@@ -254,6 +244,8 @@ exports.updateMeeting = async (req, res) => {
 
 // 📌 Delete a meeting
 exports.deleteMeeting = async (req, res) => {
+  const Meeting = req.db.Meeting;
+
   try {
     const meeting = await Meeting.findByPk(req.params.id);
     if (!meeting) return res.status(404).json({ message: "Meeting not found" });

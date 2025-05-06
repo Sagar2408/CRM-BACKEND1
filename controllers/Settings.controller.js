@@ -1,9 +1,9 @@
-const { Users } = require("../config/sequelize"); // Adjust path as needed
-
 // Update user settings
-exports.updateUserSettings = async (req, res) => {
+const updateUserSettings = async (req, res) => {
   try {
-    const userId = req.user.id; // Assumes user is authenticated and ID is available
+    const Users = req.db.Users; // ✅ Dynamic DB
+    const userId = req.user.id;
+
     const {
       firstname,
       lastname,
@@ -16,11 +16,12 @@ exports.updateUserSettings = async (req, res) => {
     } = req.body;
 
     const user = await Users.findByPk(userId);
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Update the fields
+    // Update user fields if provided
     user.firstname = firstname ?? user.firstname;
     user.lastname = lastname ?? user.lastname;
     user.country = country ?? user.country;
@@ -42,9 +43,11 @@ exports.updateUserSettings = async (req, res) => {
   }
 };
 
-exports.getUserDetails = async (req, res) => {
+// Get user details
+const getUserDetails = async (req, res) => {
   try {
-    const userId = req.user.id; // Assuming user is authenticated
+    const Users = req.db.Users; // ✅ Dynamic DB
+    const userId = req.user.id;
 
     const user = await Users.findByPk(userId, {
       attributes: {
@@ -61,4 +64,9 @@ exports.getUserDetails = async (req, res) => {
     console.error("Error fetching user details:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
+};
+
+module.exports = {
+  updateUserSettings,
+  getUserDetails,
 };

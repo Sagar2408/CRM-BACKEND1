@@ -1,7 +1,4 @@
-const db = require("../config/sequelize");
-const { FollowUp, FreshLead, Lead, ClientLead } = db;
-
-// Create a new FollowUp
+// 📌 Create a new FollowUp
 const createFollowUp = async (req, res) => {
   try {
     const {
@@ -13,6 +10,8 @@ const createFollowUp = async (req, res) => {
       follow_up_time,
       fresh_lead_id,
     } = req.body;
+
+    const { FollowUp, FreshLead, Lead, ClientLead } = req.db; // ✅ Dynamic DB
 
     if (
       !connect_via ||
@@ -48,7 +47,7 @@ const createFollowUp = async (req, res) => {
       follow_up_date,
       follow_up_time,
       fresh_lead_id,
-      follow_up_history: [], // Initialize empty history array
+      follow_up_history: [],
     });
 
     return res.status(201).json({
@@ -61,8 +60,10 @@ const createFollowUp = async (req, res) => {
   }
 };
 
+// 📌 Update FollowUp with historical tracking
 const updateFollowUp = async (req, res) => {
   try {
+    const { FollowUp } = req.db; // ✅ Dynamic DB
     const id = req.params.id;
     const existingFollowUp = await FollowUp.findByPk(id);
 
@@ -70,7 +71,6 @@ const updateFollowUp = async (req, res) => {
       return res.status(404).json({ message: "Follow-up not found" });
     }
 
-    // Get current state to save in history
     const previousState = {
       connect_via: existingFollowUp.connect_via,
       follow_up_type: existingFollowUp.follow_up_type,
@@ -81,16 +81,13 @@ const updateFollowUp = async (req, res) => {
       updatedAt: new Date().toISOString(),
     };
 
-    // Ensure history is an array
     let history = existingFollowUp.follow_up_history || [];
     if (typeof history === "string") {
-      history = JSON.parse(history); // In case it's stored as a JSON string
+      history = JSON.parse(history);
     }
 
-    // Push old state into history
     history.push(previousState);
 
-    // Update fields
     const {
       connect_via,
       follow_up_type,
@@ -102,15 +99,17 @@ const updateFollowUp = async (req, res) => {
       leadId,
     } = req.body;
 
-    existingFollowUp.connect_via = connect_via;
-    existingFollowUp.follow_up_type = follow_up_type;
-    existingFollowUp.interaction_rating = interaction_rating;
-    existingFollowUp.reason_for_follow_up = reason_for_follow_up;
-    existingFollowUp.follow_up_date = follow_up_date;
-    existingFollowUp.follow_up_time = follow_up_time;
-    existingFollowUp.fresh_lead_id = fresh_lead_id;
-    existingFollowUp.leadId = leadId;
-    existingFollowUp.follow_up_history = history;
+    Object.assign(existingFollowUp, {
+      connect_via,
+      follow_up_type,
+      interaction_rating,
+      reason_for_follow_up,
+      follow_up_date,
+      follow_up_time,
+      fresh_lead_id,
+      leadId,
+      follow_up_history: history,
+    });
 
     await existingFollowUp.save();
 
@@ -125,25 +124,29 @@ const updateFollowUp = async (req, res) => {
       .json({ message: "Server error", error: err.message });
   }
 };
-// Get FollowUps for executive with history
+
+// 📌 Get FollowUps for executive
 const getFollowUps = async (req, res) => {
   try {
+    const { FollowUp, FreshLead, Lead, ClientLead } = req.db; // ✅ Dynamic DB
     const username = req.user.username;
 
     const leads = await Lead.findAll({
       where: { assignedToExecutive: username },
       attributes: ["id"],
     });
+
     const leadIds = leads.map((lead) => lead.id);
-    if (leadIds.length === 0)
+    if (!leadIds.length)
       return res.status(200).json({ message: "No follow-ups", data: [] });
 
     const freshLeads = await FreshLead.findAll({
       where: { leadId: leadIds },
       attributes: ["id", "leadId"],
     });
+
     const freshLeadIds = freshLeads.map((fl) => fl.id);
-    if (freshLeadIds.length === 0)
+    if (!freshLeadIds.length)
       return res.status(200).json({ message: "No follow-ups", data: [] });
 
     const followUps = await FollowUp.findAll({

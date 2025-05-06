@@ -3,9 +3,13 @@ const { Lead, Deal } = require("../config/sequelize");
 // 📌 Get all leads
 exports.getAllLeads = async (req, res) => {
   try {
+    const Lead = req.db.Lead;
+    const Deal = req.db.Deal;
+
     const leads = await Lead.findAll({
-      include: [{ model: Deal, attributes: ["revenue", "profit", "status"] }], // Include Deals
+      include: [{ model: Deal, attributes: ["revenue", "profit", "status"] }],
     });
+
     res.status(200).json(leads);
   } catch (error) {
     console.error("Error fetching leads:", error);
@@ -16,7 +20,9 @@ exports.getAllLeads = async (req, res) => {
 // 📌 Get lead by ID
 exports.getLeadById = async (req, res) => {
   try {
-    const { leadId } = req.params; // Ensure this is passed correctly
+    const Lead = req.db.Lead;
+    const { leadId } = req.params;
+
     const lead = await Lead.findByPk(leadId);
 
     if (!lead) {
@@ -35,16 +41,15 @@ exports.getLeadById = async (req, res) => {
 // 📌 Create a new lead
 exports.createLead = async (req, res) => {
   try {
+    const Lead = req.db.Lead;
     const { email, assignedToExecutive, clientLeadId } = req.body;
 
-    // Validate required fields
     if (!clientLeadId || !assignedToExecutive) {
       return res.status(400).json({
         message: "clientLeadId and assignedToExecutive are required.",
       });
     }
 
-    // Check if a lead with the same clientLeadId and assignedToExecutive already exists
     const existingLead = await Lead.findOne({
       where: {
         clientLeadId,
@@ -59,10 +64,9 @@ exports.createLead = async (req, res) => {
       });
     }
 
-    // Create new lead
     const lead = await Lead.create({
       email,
-      status: "Assigned", // Default status if not provided
+      status: "Assigned",
       assignedToExecutive,
       clientLeadId,
     });
@@ -77,12 +81,14 @@ exports.createLead = async (req, res) => {
 // 📌 Update a lead
 exports.updateLead = async (req, res) => {
   try {
+    const Lead = req.db.Lead;
     const { name, email, phone, status } = req.body;
 
-    let lead = await Lead.findByPk(req.params.id);
+    const lead = await Lead.findByPk(req.params.id);
     if (!lead) return res.status(404).json({ message: "Lead not found" });
 
     await lead.update({ name, email, phone, status });
+
     res.status(200).json(lead);
   } catch (error) {
     console.error("Error updating lead:", error);
@@ -93,10 +99,13 @@ exports.updateLead = async (req, res) => {
 // 📌 Delete a lead
 exports.deleteLead = async (req, res) => {
   try {
+    const Lead = req.db.Lead;
+
     const lead = await Lead.findByPk(req.params.id);
     if (!lead) return res.status(404).json({ message: "Lead not found" });
 
     await lead.destroy();
+
     res.status(200).json({ message: "Lead deleted successfully" });
   } catch (error) {
     console.error("Error deleting lead:", error);
@@ -104,29 +113,27 @@ exports.deleteLead = async (req, res) => {
   }
 };
 
+// 📌 Reassign a lead
 exports.reassignLead = async (req, res) => {
   try {
+    const Lead = req.db.Lead;
     const { leadId, newExecutive } = req.body;
 
-    // Find the lead
     const lead = await Lead.findByPk(leadId);
     if (!lead) {
       return res.status(404).json({ message: "Lead not found" });
     }
 
-    // Save previous executive (make sure this is captured before any updates)
     const previousAssignedTo = lead.assignedToExecutive;
 
-    // Update the lead with a new executive
     lead.assignedToExecutive = newExecutive;
     await lead.save();
 
-    // Return the lead with the previousAssignedTo explicitly included
     res.json({
       message: "Lead reassigned successfully",
       lead: {
-        ...lead.toJSON(), // Spread the lead object's attributes
-        previousAssignedTo: previousAssignedTo, // Explicitly add the previous executive
+        ...lead.toJSON(),
+        previousAssignedTo,
       },
     });
   } catch (error) {

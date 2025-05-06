@@ -1,19 +1,12 @@
-const {
-  CloseLead,
-  FreshLead,
-  ClientLead,
-  Lead,
-} = require("../config/sequelize");
-
 const createCloseLead = async (req, res) => {
   try {
+    const { CloseLead, FreshLead, ClientLead, Lead } = req.db;
     const { fresh_lead_id } = req.body;
 
     if (!fresh_lead_id) {
       return res.status(400).json({ message: "fresh_lead_id is required." });
     }
 
-    // Check if a CloseLead already exists for the fresh_lead_id
     const existingCloseLead = await CloseLead.findOne({
       where: { freshLeadId: fresh_lead_id },
     });
@@ -25,15 +18,14 @@ const createCloseLead = async (req, res) => {
       });
     }
 
-    // Get FreshLead with related Lead and ClientLead
     const freshLead = await FreshLead.findOne({
       where: { id: fresh_lead_id },
       include: {
         model: Lead,
-        as: "lead", // Match the association alias (lowercase 'lead')
+        as: "lead",
         include: {
           model: ClientLead,
-          as: "clientLead", // Corrected alias to match the association
+          as: "clientLead",
         },
       },
     });
@@ -42,16 +34,14 @@ const createCloseLead = async (req, res) => {
       return res.status(404).json({ message: "FreshLead not found." });
     }
 
-    // Check if Lead and ClientLead exist
     if (!freshLead.lead || !freshLead.lead.clientLead) {
-      return res
-        .status(404)
-        .json({ message: "Lead or ClientLead not found for this FreshLead." });
+      return res.status(404).json({
+        message: "Lead or ClientLead not found for this FreshLead.",
+      });
     }
 
     const { name, phone, email } = freshLead;
 
-    // Create CloseLead
     const closeLead = await CloseLead.create({
       freshLeadId: fresh_lead_id,
       name,
@@ -59,7 +49,6 @@ const createCloseLead = async (req, res) => {
       email,
     });
 
-    // Update ClientLead status to "Closed"
     await ClientLead.update(
       { status: "Closed" },
       {
@@ -97,6 +86,8 @@ const createCloseLead = async (req, res) => {
 
 const getAllCloseLeads = async (req, res) => {
   try {
+    const { CloseLead, FreshLead } = req.db;
+
     const closeLeads = await CloseLead.findAll({
       include: {
         model: FreshLead,
@@ -118,11 +109,12 @@ const getAllCloseLeads = async (req, res) => {
     });
   }
 };
+
 const getCloseLeadById = async (req, res) => {
   try {
+    const { CloseLead, FreshLead } = req.db;
     const { id } = req.params;
 
-    // Fetch CloseLead by ID
     const closeLead = await CloseLead.findByPk(id, {
       include: {
         model: FreshLead,
@@ -147,6 +139,7 @@ const getCloseLeadById = async (req, res) => {
     });
   }
 };
+
 module.exports = {
   createCloseLead,
   getAllCloseLeads,

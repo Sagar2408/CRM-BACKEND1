@@ -3,26 +3,27 @@ const { Notification } = require("../config/sequelize"); // Adjust path if neede
 
 // Get all notifications for a user with pagination
 const getAllNotificationsByUser = async (req, res) => {
+  const Notification = req.db.Notification; // ✅ Dynamic DB
   const { userId } = req.params;
-  const { page = 1 } = req.query; // Default to page 1 if not provided
-  const limit = 20; // Fixed limit of 20 notifications per page
-  const offset = (page - 1) * limit; // Calculate offset
+  const { page = 1 } = req.query;
+  const limit = 20;
+  const offset = (page - 1) * limit;
 
   try {
     const { count, rows: notifications } = await Notification.findAndCountAll({
       where: { userId },
-      order: [["createdAt", "DESC"]], // Latest first
-      limit, // Number of records to fetch
-      offset, // Number of records to skip
+      order: [["createdAt", "DESC"]],
+      limit,
+      offset,
     });
 
-    const totalPages = Math.ceil(count / limit); // Calculate total pages
+    const totalPages = Math.ceil(count / limit);
 
     return res.status(200).json({
       notifications,
       pagination: {
         totalNotifications: count,
-        currentPage: parseInt(page),
+        currentPage: parseInt(page, 10),
         totalPages,
         limit,
       },
@@ -35,6 +36,7 @@ const getAllNotificationsByUser = async (req, res) => {
 
 // Other functions remain unchanged
 const markAsRead = async (req, res) => {
+  const Notification = req.db.Notification; // ✅ Dynamic DB
   const { id } = req.params;
 
   try {
@@ -57,6 +59,7 @@ const markAsRead = async (req, res) => {
 };
 
 const deleteNotification = async (req, res) => {
+  const Notification = req.db.Notification; // ✅ Dynamic DB
   const { id } = req.params;
 
   try {
@@ -72,8 +75,8 @@ const deleteNotification = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
 const deleteOldNotifications = async (req, res) => {
+  const Notification = req.db.Notification; // ✅ Dynamic DB
   const threeMonthsAgo = new Date();
   threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 

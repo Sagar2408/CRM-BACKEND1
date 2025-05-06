@@ -1,30 +1,24 @@
-const {
-  ConvertedClient,
-  FreshLead,
-  Lead,
-  ClientLead,
-} = require("../config/sequelize");
-
 const createConvertedClient = async (req, res) => {
   try {
+    const { ConvertedClient, FreshLead, Lead, ClientLead } = req.db;
     const { fresh_lead_id } = req.body;
 
     if (!fresh_lead_id) {
       return res.status(400).json({ message: "fresh_lead_id is required." });
     }
 
-    // Get FreshLead with related Lead and ClientLead
     const freshLead = await FreshLead.findOne({
       where: { id: fresh_lead_id },
       include: {
         model: Lead,
-        as: "lead", // Match the association alias (lowercase 'lead')
+        as: "lead",
         include: {
           model: ClientLead,
-          as: "clientLead", // Corrected alias to match association
+          as: "clientLead",
         },
       },
     });
+
     const existingConvertedClient = await ConvertedClient.findOne({
       where: { fresh_lead_id },
     });
@@ -40,17 +34,15 @@ const createConvertedClient = async (req, res) => {
       return res.status(404).json({ message: "FreshLead not found." });
     }
 
-    // Check if Lead and ClientLead exist
     if (!freshLead.lead || !freshLead.lead.clientLead) {
-      return res
-        .status(404)
-        .json({ message: "Lead or ClientLead not found for this FreshLead." });
+      return res.status(404).json({
+        message: "Lead or ClientLead not found for this FreshLead.",
+      });
     }
 
     const { name, phone, email } = freshLead;
-    const country = freshLead.lead.clientLead.country || null; // Updated to use clientLead
+    const country = freshLead.lead.clientLead.country || null;
 
-    // Create ConvertedClient
     const convertedClient = await ConvertedClient.create({
       fresh_lead_id,
       name,
@@ -60,7 +52,6 @@ const createConvertedClient = async (req, res) => {
       last_contacted: new Date(),
     });
 
-    // Update ClientLead status to "Converted"
     await ClientLead.update(
       { status: "Converted" },
       {
@@ -80,9 +71,10 @@ const createConvertedClient = async (req, res) => {
   }
 };
 
-// Get all converted clients
 const getAllConvertedClients = async (req, res) => {
   try {
+    const { ConvertedClient } = req.db;
+
     const clients = await ConvertedClient.findAll();
     res.status(200).json({
       message: "All converted clients fetched successfully.",
@@ -96,10 +88,11 @@ const getAllConvertedClients = async (req, res) => {
   }
 };
 
-// Get a single converted client by ID
 const getConvertedClientById = async (req, res) => {
   try {
+    const { ConvertedClient } = req.db;
     const { id } = req.params;
+
     const client = await ConvertedClient.findByPk(id);
 
     if (!client) {
@@ -120,9 +113,8 @@ const getConvertedClientById = async (req, res) => {
 
 const getConvertedClientByExecutive = async (req, res) => {
   try {
-    // Extract executive name from req.user (set by auth middleware)
-    const executiveName = req.user.username; // Adjust based on your token payload
-    console.log("Executive Name:", executiveName); // Debug the executive name
+    const { ConvertedClient, FreshLead, Lead, ClientLead } = req.db;
+    const executiveName = req.user.username;
 
     if (!executiveName) {
       return res
@@ -130,23 +122,22 @@ const getConvertedClientByExecutive = async (req, res) => {
         .json({ message: "Executive name not found in token." });
     }
 
-    // Query ConvertedClient with associated FreshLead, Lead, and ClientLead
     const clients = await ConvertedClient.findAll({
       include: [
         {
           model: FreshLead,
           as: "freshLead",
-          required: true, // Require FreshLead to exist
+          required: true,
           include: [
             {
               model: Lead,
               as: "lead",
-              required: true, // Require Lead to exist
+              required: true,
               include: [
                 {
                   model: ClientLead,
                   as: "clientLead",
-                  required: true, // Require ClientLead to exist and match the condition
+                  required: true,
                   where: { assignedToExecutive: executiveName },
                   attributes: ["status"],
                 },
@@ -157,14 +148,12 @@ const getConvertedClientByExecutive = async (req, res) => {
       ],
     });
 
-    // Check if any clients were found
     if (!clients || clients.length === 0) {
       return res.status(404).json({
         message: "No converted clients found for this executive.",
       });
     }
 
-    // Format response to include status
     const formattedClients = clients.map((client) => ({
       id: client.id,
       fresh_lead_id: client.fresh_lead_id,

@@ -1,8 +1,9 @@
 const { Opportunity } = require("../config/sequelize");
 
 // 📌 Get all opportunities
-exports.getAllOpportunities = async (req, res) => {
+const getAllOpportunities = async (req, res) => {
   try {
+    const Opportunity = req.db.Opportunity; // ✅ Dynamic DB
     const opportunities = await Opportunity.findAll();
     res.status(200).json(opportunities);
   } catch (error) {
@@ -12,12 +13,14 @@ exports.getAllOpportunities = async (req, res) => {
 };
 
 // 📌 Get opportunity by ID
-exports.getOpportunityById = async (req, res) => {
+const getOpportunityById = async (req, res) => {
   try {
+    const Opportunity = req.db.Opportunity; // ✅ Dynamic DB
     const opportunity = await Opportunity.findByPk(req.params.id);
 
-    if (!opportunity)
+    if (!opportunity) {
       return res.status(404).json({ message: "Opportunity not found" });
+    }
 
     res.status(200).json(opportunity);
   } catch (error) {
@@ -27,8 +30,9 @@ exports.getOpportunityById = async (req, res) => {
 };
 
 // 📌 Create a new opportunity
-exports.createOpportunity = async (req, res) => {
+const createOpportunity = async (req, res) => {
   try {
+    const Opportunity = req.db.Opportunity; // ✅ Dynamic DB
     const { leadId, stage } = req.body;
 
     const opportunity = await Opportunity.create({ leadId, stage });
@@ -40,13 +44,15 @@ exports.createOpportunity = async (req, res) => {
 };
 
 // 📌 Update an opportunity
-exports.updateOpportunity = async (req, res) => {
+const updateOpportunity = async (req, res) => {
   try {
+    const Opportunity = req.db.Opportunity; // ✅ Dynamic DB
     const { leadId, stage } = req.body;
 
-    let opportunity = await Opportunity.findByPk(req.params.id);
-    if (!opportunity)
+    const opportunity = await Opportunity.findByPk(req.params.id);
+    if (!opportunity) {
       return res.status(404).json({ message: "Opportunity not found" });
+    }
 
     await opportunity.update({ leadId, stage });
     res.status(200).json(opportunity);
@@ -57,11 +63,13 @@ exports.updateOpportunity = async (req, res) => {
 };
 
 // 📌 Delete an opportunity
-exports.deleteOpportunity = async (req, res) => {
+const deleteOpportunity = async (req, res) => {
   try {
+    const Opportunity = req.db.Opportunity; // ✅ Dynamic DB
     const opportunity = await Opportunity.findByPk(req.params.id);
-    if (!opportunity)
+    if (!opportunity) {
       return res.status(404).json({ message: "Opportunity not found" });
+    }
 
     await opportunity.destroy();
     res.status(200).json({ message: "Opportunity deleted successfully" });
@@ -69,4 +77,11 @@ exports.deleteOpportunity = async (req, res) => {
     console.error("Error deleting opportunity:", error);
     res.status(500).json({ message: "Internal server error" });
   }
+};
+module.exports = {
+  getAllOpportunities,
+  getOpportunityById,
+  createOpportunity,
+  updateOpportunity,
+  deleteOpportunity,
 };

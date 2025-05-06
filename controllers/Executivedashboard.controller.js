@@ -1,12 +1,6 @@
-const {
-  FreshLead,
-  Lead,
-  ConvertedClient,
-  FollowUp,
-} = require("../config/sequelize");
-
 const getExecutiveDashboardStats = async (req, res) => {
   try {
+    const { FreshLead, Lead } = req.db; // ✅ Dynamic DB
     const executiveName = req.user.username;
 
     if (!executiveName) {
@@ -16,7 +10,6 @@ const getExecutiveDashboardStats = async (req, res) => {
       });
     }
 
-    // Count fresh leads
     let freshLeadsCount = 0;
     try {
       freshLeadsCount =
@@ -29,16 +22,13 @@ const getExecutiveDashboardStats = async (req, res) => {
             },
           ],
         })) || 0;
+
       console.log(`FreshLeadsCount for ${executiveName}:`, freshLeadsCount);
-    } catch (freshLeadError) {
-      console.error(
-        `Error counting FreshLeads for ${executiveName}:`,
-        freshLeadError
-      );
-      freshLeadsCount = 0; // Fallback to 0
+    } catch (error) {
+      console.error(`Error counting FreshLeads for ${executiveName}:`, error);
+      freshLeadsCount = 0;
     }
 
-    // Respond with data
     res.status(200).json({
       success: true,
       data: {
@@ -53,6 +43,7 @@ const getExecutiveDashboardStats = async (req, res) => {
 
 const getExecutiveFollowUpStats = async (req, res) => {
   try {
+    const { FollowUp, FreshLead, Lead } = req.db; // ✅ Dynamic DB
     const executiveName = req.user.username;
 
     if (!executiveName) {
@@ -62,7 +53,6 @@ const getExecutiveFollowUpStats = async (req, res) => {
       });
     }
 
-    // Count follow-ups
     let followUpsCount = 0;
     try {
       followUpsCount =
@@ -81,16 +71,13 @@ const getExecutiveFollowUpStats = async (req, res) => {
             },
           ],
         })) || 0;
+
       console.log(`FollowUpsCount for ${executiveName}:`, followUpsCount);
-    } catch (followUpError) {
-      console.error(
-        `Error counting FollowUps for ${executiveName}:`,
-        followUpError
-      );
-      followUpsCount = 0; // Fallback to 0
+    } catch (error) {
+      console.error(`Error counting FollowUps for ${executiveName}:`, error);
+      followUpsCount = 0;
     }
 
-    // Respond with data
     res.status(200).json({
       success: true,
       data: {
@@ -105,6 +92,7 @@ const getExecutiveFollowUpStats = async (req, res) => {
 
 const getConvertedClientStats = async (req, res) => {
   try {
+    const { ConvertedClient, FreshLead, Lead } = req.db; // ✅ Dynamic DB
     const executiveName = req.user.username;
 
     if (!executiveName) {
@@ -121,11 +109,11 @@ const getConvertedClientStats = async (req, res) => {
           include: [
             {
               model: FreshLead,
-              as: "freshLead", // Make sure alias matches association
+              as: "freshLead",
               include: [
                 {
                   model: Lead,
-                  as: "lead", // Make sure alias matches association
+                  as: "lead",
                   where: { assignedToExecutive: executiveName },
                 },
               ],
@@ -137,10 +125,10 @@ const getConvertedClientStats = async (req, res) => {
         `ConvertedClientCount for ${executiveName}:`,
         convertedClientCount
       );
-    } catch (countError) {
+    } catch (error) {
       console.error(
         `Error counting ConvertedClients for ${executiveName}:`,
-        countError
+        error
       );
       convertedClientCount = 0;
     }
@@ -156,6 +144,7 @@ const getConvertedClientStats = async (req, res) => {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 module.exports = {
   getExecutiveDashboardStats,
   getExecutiveFollowUpStats,

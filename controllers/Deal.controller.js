@@ -1,11 +1,12 @@
-const { Deal, Lead } = require("../config/sequelize");
-
 // 📌 Get all deals
 exports.getAllDeals = async (req, res) => {
   try {
+    const { Deal, Lead } = req.db; // ✅ Dynamic DB models
+
     const deals = await Deal.findAll({
-      include: [{ model: Lead, attributes: ["name", "email"] }], // Include Lead info
+      include: [{ model: Lead, attributes: ["name", "email"] }],
     });
+
     res.status(200).json(deals);
   } catch (error) {
     console.error("Error fetching deals:", error);
@@ -16,8 +17,10 @@ exports.getAllDeals = async (req, res) => {
 // 📌 Get deal by ID
 exports.getDealById = async (req, res) => {
   try {
+    const { Deal, Lead } = req.db; // ✅ Dynamic DB models
+
     const deal = await Deal.findByPk(req.params.id, {
-      include: [{ model: Lead, attributes: ["name", "email"] }], // Include Lead info
+      include: [{ model: Lead, attributes: ["name", "email"] }],
     });
 
     if (!deal) return res.status(404).json({ message: "Deal not found" });
@@ -32,9 +35,10 @@ exports.getDealById = async (req, res) => {
 // 📌 Create a new deal
 exports.createDeal = async (req, res) => {
   try {
+    const { Deal, Lead } = req.db; // ✅ Dynamic DB models
+
     const { leadId, revenue, profit, status } = req.body;
 
-    // Validate lead existence
     const lead = await Lead.findByPk(leadId);
     if (!lead) return res.status(404).json({ message: "Lead not found" });
 
@@ -49,6 +53,8 @@ exports.createDeal = async (req, res) => {
 // 📌 Update a deal
 exports.updateDeal = async (req, res) => {
   try {
+    const { Deal } = req.db; // ✅ Dynamic DB model
+
     const { leadId, revenue, profit, status } = req.body;
 
     let deal = await Deal.findByPk(req.params.id);
@@ -65,6 +71,8 @@ exports.updateDeal = async (req, res) => {
 // 📌 Delete a deal
 exports.deleteDeal = async (req, res) => {
   try {
+    const { Deal } = req.db; // ✅ Dynamic DB model
+
     const deal = await Deal.findByPk(req.params.id);
     if (!deal) return res.status(404).json({ message: "Deal not found" });
 
