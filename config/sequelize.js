@@ -167,22 +167,6 @@ module.exports = function initializeModels(sequelize) {
   });
 
   // ------------------------
-  // Schema Validation (optional)
-  // ------------------------
-
-  async function validateSchema() {
-    try {
-      const followUpSchema = await db.FollowUp.describe();
-      const followUpHistorySchema = await db.FollowUpHistory.describe();
-      console.log("✅ Schema validation successful");
-    } catch (err) {
-      console.error("❌ Schema validation failed:", err);
-    }
-  }
-
-  validateSchema();
-
-  // ------------------------
   // Sync Models (optional per-tenant)
   // ------------------------
   sequelize
