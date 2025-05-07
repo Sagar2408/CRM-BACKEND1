@@ -62,7 +62,7 @@ app.use(
   tenantResolver,
   require("./routes/Invoices.routes")
 );
-app.use("/api", auth(), tenantResolver, require("./routes/Chatbot.routes"));
+app.use("/api", tenantResolver, require("./routes/Chatbot.routes"));
 app.use(
   "/api/executive-activities",
   auth(),
