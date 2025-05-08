@@ -55,7 +55,7 @@ const loginMasterUser = async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
+      process.env.MASTER_JWT_SECRET,
       { expiresIn: "12h" }
     );
 
@@ -80,7 +80,30 @@ const loginMasterUser = async (req, res) => {
   }
 };
 
+/*-----------------------Master User Logout---------------------*/
+const logoutMasterUser = (req, res) => {
+  try {
+    // Access the user ID directly from the `req.masterUser` object (set by authMaster middleware)
+    const userId = req.masterUser.id;
+
+    // Clear the token from the cookie (client-side logout)
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Secure cookies in production
+      sameSite: "Lax",
+    });
+
+    return res.status(200).json({
+      message: "Logout successful",
+      userId: userId, // Optionally returning the userId in the response
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 module.exports = {
   signupMasterUser,
   loginMasterUser,
+  logoutMasterUser,
 };
