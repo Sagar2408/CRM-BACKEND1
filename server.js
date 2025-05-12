@@ -117,6 +117,11 @@ app.use(
   tenantResolver,
   require("./routes/FollowUpHistory.routes")
 );
+app.use(
+  "/api/processperson",
+  tenantResolver,
+  require("./routes/ProcessPerson.routes")
+);
 
 // 🧠 Store connected users
 const connectedUsers = {};
