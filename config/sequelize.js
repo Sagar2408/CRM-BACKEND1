@@ -58,6 +58,30 @@ module.exports = function initializeModels(sequelize) {
     Sequelize,
     { tableName: "Notifications" }
   );
+  db.Customer = require("../models/Customer.model")(sequelize, Sequelize, {
+    tableName: "customers",
+  });
+  db.CustomerDetails = require("../models/CustomerDetails.model")(
+    sequelize,
+    Sequelize,
+    {
+      tableName: "customer_details",
+    }
+  );
+  db.ProcessPerson = require("../models/ProcessPerson.model")(
+    sequelize,
+    Sequelize,
+    {
+      tableName: "process_persons",
+    }
+  );
+  db.CustomerStages = require("../models/CustomerStages.model")(
+    sequelize,
+    Sequelize,
+    {
+      tableName: "customer_stages",
+    }
+  );
 
   // ------------------------
   // Define Associations
@@ -164,6 +188,20 @@ module.exports = function initializeModels(sequelize) {
   db.Users.hasMany(db.Meeting, {
     foreignKey: "executiveId",
     onDelete: "SET NULL",
+  });
+  db.Customer.hasOne(db.CustomerDetails, {
+    foreignKey: "customerId",
+    onDelete: "CASCADE",
+  });
+  db.CustomerDetails.belongsTo(db.Customer, {
+    foreignKey: "customerId",
+  });
+  db.Customer.hasOne(db.CustomerStages, {
+    foreignKey: "customerId",
+    onDelete: "CASCADE",
+  });
+  db.CustomerStages.belongsTo(db.Customer, {
+    foreignKey: "customerId",
   });
 
   // ------------------------
