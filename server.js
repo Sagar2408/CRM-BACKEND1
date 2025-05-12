@@ -123,6 +123,7 @@ app.use(
   require("./routes/ProcessPerson.routes")
 );
 app.use("/api/customer", tenantResolver, require("./routes/Customer.routes"));
+app.use("/api/email", tenantResolver, require("./routes/Email.routes"));
 // 🧠 Store connected users
 const connectedUsers = {};
 
