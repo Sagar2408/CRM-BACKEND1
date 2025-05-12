@@ -82,6 +82,13 @@ module.exports = function initializeModels(sequelize) {
       tableName: "customer_stages",
     }
   );
+  db.RevenueChart = require("../models/RevenueChart.model")(
+    sequelize,
+    Sequelize,
+    {
+      tableName: "revenue_chart",
+    }
+  );
 
   // ------------------------
   // Define Associations

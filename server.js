@@ -124,6 +124,11 @@ app.use(
 );
 app.use("/api/customer", tenantResolver, require("./routes/Customer.routes"));
 app.use("/api/email", tenantResolver, require("./routes/Email.routes"));
+app.use(
+  "/api/revenue",
+  tenantResolver,
+  require("./routes/RevenueChart.routes")
+);
 // 🧠 Store connected users
 const connectedUsers = {};
 
