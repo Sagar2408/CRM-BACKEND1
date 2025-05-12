@@ -122,7 +122,7 @@ app.use(
   tenantResolver,
   require("./routes/ProcessPerson.routes")
 );
-
+app.use("/api/customer", tenantResolver, require("./routes/Customer.routes"));
 // 🧠 Store connected users
 const connectedUsers = {};
 
