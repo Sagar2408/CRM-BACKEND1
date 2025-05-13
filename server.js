@@ -129,6 +129,18 @@ app.use(
   tenantResolver,
   require("./routes/RevenueChart.routes")
 );
+app.use(
+  "/api/customer-details",
+  auth(),
+  tenantResolver,
+  require("./routes/CustomerDetails.routes")
+);
+app.use(
+  "/api/customer-stages",
+  auth(),
+  tenantResolver,
+  require("./routes/CustomerStages.routes")
+);
 // 🧠 Store connected users
 const connectedUsers = {};
 
