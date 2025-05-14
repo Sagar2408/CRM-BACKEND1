@@ -18,6 +18,11 @@ module.exports = (sequelize) => {
         },
         onDelete: "CASCADE", // If the user is deleted, delete their notifications
       },
+      targetRole: {
+        type: DataTypes.STRING,
+        allowNull: false, // 'admin' or 'executive'
+        defaultValue: "executive",
+      },
       message: {
         type: DataTypes.STRING,
         allowNull: false,
