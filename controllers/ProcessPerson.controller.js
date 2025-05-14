@@ -104,8 +104,42 @@ const loginProcessPerson = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+const logoutProcessPerson = async (req, res) => {
+  try {
+    const ProcessPerson = req.db.ProcessPerson; // ✅ Use dynamic DB injection
+    const personId = req.user?.id;
+
+    if (!personId) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: token missing or invalid" });
+    }
+
+    const person = await ProcessPerson.findByPk(personId);
+
+    if (!person) {
+      return res.status(404).json({ message: "ProcessPerson not found" });
+    }
+
+    // Optional: Mark as offline (if you have is_online or similar)
+    // person.is_online = false;
+    // await person.save();
+
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
+    });
+
+    return res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 module.exports = {
   loginProcessPerson,
   signupProcessPerson,
+  logoutProcessPerson,
 };

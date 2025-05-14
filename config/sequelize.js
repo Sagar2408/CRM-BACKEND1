@@ -89,6 +89,12 @@ module.exports = function initializeModels(sequelize) {
       tableName: "revenue_chart",
     }
   );
+  db.Team = require("../models/Team.model")(sequelize, Sequelize, {
+    tableName: "Teams",
+  });
+  db.Manager = require("../models/Manager.model")(sequelize, Sequelize, {
+    tableName: "Managers",
+  });
 
   // ------------------------
   // Define Associations
@@ -211,11 +217,32 @@ module.exports = function initializeModels(sequelize) {
     foreignKey: "customerId",
   });
 
+  db.Team.hasMany(db.Users, {
+    foreignKey: "team_id",
+    onDelete: "SET NULL",
+    as: "executives", // or "members" if you prefer
+  });
+
+  db.Users.belongsTo(db.Team, {
+    foreignKey: "team_id",
+    as: "team",
+  });
+
+  db.Manager.hasMany(db.Team, {
+    foreignKey: "manager_id",
+    onDelete: "SET NULL",
+    as: "teams",
+  });
+
+  db.Team.belongsTo(db.Manager, {
+    foreignKey: "manager_id",
+    as: "manager",
+  });
   // ------------------------
   // Sync Models (optional per-tenant)
   // ------------------------
   sequelize
-    .sync({ force: false })
+    .sync({ alter: true })
     .then(() => console.log("✅ Tenant DB tables synced"))
     .catch((err) => console.error("❌ Error syncing tenant DB:", err));
 

@@ -113,7 +113,32 @@ const signupCustomer = async (req, res) => {
   }
 };
 
+const logoutCustomer = async (req, res) => {
+  try {
+    const Customer = req.db.Customer; // ✅ Use dynamic tenant database
+    const customerId = req.user.id; // Assumes authentication middleware adds `req.user`
+
+    const customer = await Customer.findByPk(customerId);
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
+    });
+
+    res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   loginCustomer,
   signupCustomer,
+  logoutCustomer,
 };

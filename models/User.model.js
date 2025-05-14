@@ -54,7 +54,18 @@ module.exports = (sequelize) => {
         defaultValue: false,
       },
 
-      // New fields
+      // Link to Team
+      team_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "Teams",
+          key: "id",
+        },
+        onDelete: "SET NULL",
+      },
+
+      // Additional Profile Info
       firstname: {
         type: DataTypes.STRING,
         allowNull: true,
