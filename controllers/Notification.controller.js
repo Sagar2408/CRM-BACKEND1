@@ -1,9 +1,10 @@
 const { Op } = require("sequelize");
-const { Notification } = require("../config/sequelize"); // Adjust path if needed
 
 // Get all notifications for a user (admin or executive) with pagination
 const getAllNotificationsByUser = async (req, res) => {
-  const { userRole, userId } = req.body;
+  const Notification = req.db.Notification; // 👈 dynamically get model
+  const { userRole } = req.body;
+  const userId = req.user?.id;
   const { page = 1 } = req.query;
 
   const limit = 20;
@@ -15,6 +16,11 @@ const getAllNotificationsByUser = async (req, res) => {
     if (userRole?.toLowerCase() === "admin") {
       whereClause = { targetRole: "admin" };
     } else if (userRole?.toLowerCase() === "executive") {
+      if (!userId) {
+        return res
+          .status(401)
+          .json({ message: "Unauthorized: Missing user ID" });
+      }
       whereClause = { userId, targetRole: "executive" };
     } else {
       return res.status(400).json({ message: "Invalid user role" });
