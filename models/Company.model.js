@@ -37,8 +37,8 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "Companies", // Ensure it matches your actual table name
-      timestamps: false, // Disable if your DB doesn't use createdAt/updatedAt
+      tableName: "Companies",
+      timestamps: true, // ✅ Enable Sequelize to auto-manage createdAt & updatedAt
     }
   );
 
