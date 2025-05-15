@@ -2,8 +2,25 @@ const { getTenantDB } = require("../config/sequelizeManager");
 
 const skipTenantPaths = ["/api/masteruser/login", "/api/masteruser/signup"];
 
+/**
+ * Utility: Extract and clean companyId from req
+ */
+function extractCompanyId(req) {
+  const sources = [
+    req.body?.companyId,
+    req.query?.companyId,
+    req.headers["x-company-id"],
+  ];
+  for (let id of sources) {
+    if (typeof id === "string") {
+      return id.trim().replace(/[^a-z0-9\-]/gi, "");
+    }
+  }
+  return null;
+}
+
 module.exports = async (req, res, next) => {
-  // ⏭️ Skip tenant check for master routes
+  // ⏭️ Skip middleware for master-level endpoints
   if (skipTenantPaths.some((path) => req.originalUrl.startsWith(path))) {
     if (process.env.NODE_ENV !== "production") {
       console.log(`🏁 [TENANT] Skipping tenantResolver for ${req.originalUrl}`);
@@ -12,43 +29,41 @@ module.exports = async (req, res, next) => {
   }
 
   try {
-    // 🧪 Step 1: Extract and sanitize companyId
-    const rawCompanyId =
-      req.body.companyId || req.query.companyId || req.headers["x-company-id"];
-    const companyId =
-      typeof rawCompanyId === "string"
-        ? rawCompanyId.trim().replace(/[^a-z0-9\-]/gi, "")
-        : null;
+    // 🔍 Extract and clean companyId
+    const companyId = extractCompanyId(req);
 
-    console.log("📦 Resolved companyId:", companyId);
+    if (process.env.NODE_ENV !== "production") {
+      console.log("📦 Raw companyId resolved from request:", companyId);
+    }
 
-    // ❌ Step 2: Validate
     if (!companyId) {
       console.warn("⚠️ [TENANT] Missing or invalid companyId");
       return res.status(400).json({ message: "Missing or invalid companyId" });
     }
 
-    // 🔌 Step 3: Connect to tenant DB
+    // 🔌 Connect to tenant DB
     const tenantDB = await getTenantDB(companyId);
 
     if (!tenantDB) {
-      console.error("❌ [TENANT] No tenant DB returned from getTenantDB");
+      console.error(
+        "❌ [TENANT] No DB returned from getTenantDB for:",
+        companyId
+      );
       return res
         .status(404)
-        .json({ message: "Invalid companyId or DB not configured" });
+        .json({ message: "Invalid companyId or tenant DB not configured" });
     }
 
-    // 💾 Step 4: Attach DB to request
+    // 💾 Attach DB and companyId to request
     req.db = tenantDB;
     req.companyId = companyId;
 
     console.log(`✅ [TENANT] Tenant DB resolved for companyId: ${companyId}`);
     return next();
   } catch (err) {
-    // 🛑 Step 5: Handle DB or connection errors
     console.error("❌ [TENANT] Error resolving tenant:", err.message || err);
     if (process.env.NODE_ENV !== "production") {
-      console.error("📋 Stack:", err);
+      console.error("📋 Stack trace:", err);
     }
     return res
       .status(500)
