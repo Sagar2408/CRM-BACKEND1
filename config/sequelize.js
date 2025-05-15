@@ -34,7 +34,7 @@ module.exports = function initializeModels(sequelize) {
     Sequelize,
     { tableName: "ExecutiveActivities" }
   );
-  db.FollowUp = require("../models/FollowUp.model")(sequelize, Sequelize, {
+  db.FollowUp = require("../models/Followup.model")(sequelize, Sequelize, {
     tableName: "FollowUps",
   });
   db.FollowUpHistory = require("../models/FollowUpHistory.model")(
