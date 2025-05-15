@@ -10,7 +10,8 @@ async function getTenantDB(companyId) {
 
   // Get company record from MasterDB
   const company = await Company.findByPk(companyId);
-  if (!company) throw new Error("❌ Company not found");
+  console.log("🔍 Tenant Resolver - Incoming companyId:", companyId);
+  if (!companyId) return next(new Error("❌ No companyId provided"));
 
   // Create tenant-specific Sequelize instance
   const sequelize = new Sequelize(
