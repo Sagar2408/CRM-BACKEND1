@@ -31,9 +31,5 @@ module.exports = (sequelize) => {
     }
   );
 
-  Manager.associate = (models) => {
-    Manager.hasMany(models.Team, { foreignKey: "manager_id" });
-  };
-
   return Manager;
 };

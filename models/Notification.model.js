@@ -11,31 +11,32 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "Users", // Referencing the Users table
+        model: "Users", // This assumes "Users" table exists and is correctly synced
         key: "id",
       },
-      onDelete: "CASCADE", // If the user is deleted, delete their notifications
+      onDelete: "CASCADE",
     },
     targetRole: {
       type: DataTypes.STRING,
-      allowNull: false, // 'admin' or 'executive'
+      allowNull: false,
       defaultValue: "executive",
     },
     message: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255), // Ensure this fits your message length
       allowNull: false,
     },
     is_read: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false, // By default, set to unread
+      allowNull: false,
+      defaultValue: false,
     },
     createdAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW, // Automatically set creation date
+      type: DataTypes.DATEONLY,
+      defaultValue: DataTypes.NOW,
     },
     updatedAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW, // Automatically set the update date
+      type: DataTypes.DATEONLY,
+      defaultValue: DataTypes.NOW,
     },
   });
 

@@ -58,7 +58,6 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: "followups", // ✅ Explicit table name to match DB
       timestamps: true, // Optional: if you're using createdAt/updatedAt
     }
   );

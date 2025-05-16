@@ -40,7 +40,6 @@ module.exports = (sequelize) => {
     },
     {
       timestamps: true,
-      tableName: "process_persons",
     }
   );
 
