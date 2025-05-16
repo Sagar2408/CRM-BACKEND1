@@ -125,8 +125,7 @@ const getClientLeads = async (req, res) => {
 const assignExecutive = async (req, res) => {
   try {
     const { ClientLead, Users, Notification } = req.db;
-    const { id } = req.params;
-    const { executiveName } = req.body;
+    const { executiveName, id } = req.body;
 
     if (!executiveName)
       return res.status(400).json({ message: "Executive name is required" });

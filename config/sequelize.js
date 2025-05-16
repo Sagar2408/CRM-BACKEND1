@@ -242,7 +242,7 @@ module.exports = function initializeModels(sequelize) {
   // Sync Models (optional per-tenant)
   // ------------------------
   sequelize
-    .sync({ alter: true })
+    .sync({ alter: false })
     .then(() => console.log("✅ Tenant DB tables synced"))
     .catch((err) => console.error("❌ Error syncing tenant DB:", err));
 
