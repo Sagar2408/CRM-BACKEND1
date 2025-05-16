@@ -1,3 +1,4 @@
+const { DataTypes } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   const FollowUpHistory = sequelize.define("FollowUpHistory", {
     id: {
