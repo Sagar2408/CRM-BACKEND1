@@ -1,4 +1,6 @@
-module.exports = (sequelize, DataTypes) => {
+const { DataTypes } = require("sequelize");
+
+module.exports = (sequelize) => {
   const FollowUp = sequelize.define(
     "FollowUp",
     {
@@ -43,10 +45,21 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "freshleads", // ⚠️ Must match the actual lowercase table name in DB
+          model: "freshleads", // ✅ must match table name exactly
           key: "id",
         },
         onDelete: "CASCADE",
+        onUpdate: "CASCADE",
+      },
+      leadId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "Leads",
+          key: "id",
+        },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -58,7 +71,9 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
-      timestamps: true, // Optional: if you're using createdAt/updatedAt
+      tableName: "followups",
+      freezeTableName: true,
+      timestamps: true,
     }
   );
 

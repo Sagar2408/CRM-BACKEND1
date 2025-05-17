@@ -63,8 +63,8 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "FreshLeads",
-      freezeTableName: true,
+      tableName: "freshleads", // ✅ lowercase to match FK reference
+      freezeTableName: true, // ✅ prevent Sequelize from auto-pluralizing
     }
   );
 
