@@ -8,32 +8,32 @@ module.exports = function initializeModels(sequelize) {
   // Load models with table names
   db.Users = require("../models/User.model")(sequelize, Sequelize, {
     tableName: "Users",
-  });
+  }); //checked
   db.Deal = require("../models/Deal.model")(sequelize, Sequelize, {
     tableName: "Deals",
-  });
+  }); //checked
   db.Lead = require("../models/Lead.model")(sequelize, Sequelize, {
     tableName: "Leads",
-  });
+  }); //checked
   db.Meeting = require("../models/Meeting.model")(sequelize, Sequelize, {
     tableName: "Meetings",
-  });
+  }); //checked
   db.Opportunity = require("../models/Opportunity.model")(
     sequelize,
     Sequelize,
     { tableName: "Opportunities" }
-  );
+  ); //checked
   db.ClientLead = require("../models/ClientLead.model")(sequelize, Sequelize, {
     tableName: "ClientLeads",
-  });
+  }); //checked
   db.Invoice = require("../models/Invoice.model")(sequelize, Sequelize, {
     tableName: "Invoices",
-  });
+  }); //checked
   db.ExecutiveActivity = require("../models/ExecutiveActivity.model")(
     sequelize,
     Sequelize,
     { tableName: "ExecutiveActivities" }
-  );
+  ); //checked
   db.FollowUp = require("../models/Followup.model")(sequelize, Sequelize, {
     tableName: "FollowUps",
   });
@@ -44,7 +44,7 @@ module.exports = function initializeModels(sequelize) {
   );
   db.FreshLead = require("../models/FreshLead.model")(sequelize, Sequelize, {
     tableName: "FreshLeads",
-  });
+  }); //checked
   db.ConvertedClient = require("../models/ConvertedClient.model")(
     sequelize,
     Sequelize,
@@ -91,10 +91,10 @@ module.exports = function initializeModels(sequelize) {
   );
   db.Team = require("../models/Team.model")(sequelize, Sequelize, {
     tableName: "Teams",
-  });
+  }); //checked
   db.Manager = require("../models/Manager.model")(sequelize, Sequelize, {
     tableName: "Managers",
-  });
+  }); //checked
 
   // ------------------------
   // Define Associations
@@ -242,7 +242,7 @@ module.exports = function initializeModels(sequelize) {
   // Sync Models (optional per-tenant)
   // ------------------------
   sequelize
-    .sync({ alter: false })
+    .sync({ alter: true })
     .then(() => console.log("✅ Tenant DB tables synced"))
     .catch((err) => console.error("❌ Error syncing tenant DB:", err));
 
