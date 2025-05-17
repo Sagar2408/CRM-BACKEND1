@@ -13,10 +13,11 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "Leads",
+          model: "leads", // ✅ lowercase to match the actual table
           key: "id",
         },
         onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
       stage: {
         type: DataTypes.ENUM(
@@ -39,7 +40,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      timestamps: true,
+      tableName: "opportunities", // ✅ consistent lowercase name
+      freezeTableName: true, // ✅ disables auto-pluralization
+      timestamps: true, // ✅ manages createdAt and updatedAt
     }
   );
 };

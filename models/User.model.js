@@ -59,10 +59,11 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: "Teams",
+          model: "teams", // ✅ lowercase to match actual table
           key: "id",
         },
         onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
 
       // Additional Profile Info
@@ -105,7 +106,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      timestamps: true,
+      tableName: "users", // ✅ matches schema convention
+      freezeTableName: true, // ✅ disables auto-pluralization
+      timestamps: true, // ✅ enables Sequelize time tracking
     }
   );
 };

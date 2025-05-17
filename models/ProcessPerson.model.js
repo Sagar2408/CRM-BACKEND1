@@ -39,7 +39,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      timestamps: true,
+      tableName: "process_persons", // ✅ lower_case and consistent
+      freezeTableName: true, // ✅ disables Sequelize renaming
+      timestamps: true, // ✅ enables automatic timestamps
     }
   );
 

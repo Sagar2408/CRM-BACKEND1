@@ -45,7 +45,7 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "freshleads", // ✅ must match table name exactly
+          model: "freshleads", // ✅ matches table name
           key: "id",
         },
         onDelete: "CASCADE",
@@ -55,7 +55,7 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: "Leads",
+          model: "leads", // ✅ lowercase to match correct table name
           key: "id",
         },
         onDelete: "CASCADE",
@@ -71,9 +71,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "followups",
-      freezeTableName: true,
-      timestamps: true,
+      tableName: "followups", // ✅ lowercase & consistent
+      freezeTableName: true, // ✅ avoids Sequelize auto-pluralization
+      timestamps: true, // ✅ enables auto-managed fields
     }
   );
 

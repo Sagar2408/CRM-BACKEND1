@@ -13,10 +13,11 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "Leads",
+          model: "leads", // ✅ lowercase to match actual table name
           key: "id",
         },
         onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
       name: {
         type: DataTypes.STRING,
@@ -63,8 +64,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "freshleads", // ✅ lowercase to match FK reference
-      freezeTableName: true, // ✅ prevent Sequelize from auto-pluralizing
+      tableName: "freshleads", // ✅ lowercase for consistency
+      freezeTableName: true, // ✅ disables auto-pluralization
+      timestamps: true, // ✅ enables Sequelize time tracking
     }
   );
 
