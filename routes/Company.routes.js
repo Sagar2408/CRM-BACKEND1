@@ -4,7 +4,7 @@ const {
   createCompany,
   getCompaniesForMasterUser,
 } = require("../controllers/Company.controller");
-const authMaster = require("./middleware/authMaster");
+const authMaster = require("../middleware/authMaster");
 
 // No auth or tenantResolver needed
 router.post("/create-company", createCompany);
