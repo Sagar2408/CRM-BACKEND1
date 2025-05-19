@@ -148,6 +148,11 @@ app.use(
   tenantResolver,
   require("./routes/CustomerStages.routes")
 );
+app.use(
+  "/api/eod-report",
+  tenantResolver,
+  require("./routes/EodReport.routes")
+);
 // 🧠 Store connected users
 const connectedUsers = {};
 
