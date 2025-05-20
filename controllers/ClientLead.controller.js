@@ -227,7 +227,7 @@ const getDealFunnel = async (req, res) => {
     });
 
     res.status(200).json({
-      message: "Deal funnel data retrieved successfully",
+      message: "Deal funnel data retrieved successfu  lly",
       data: { totalLeads, statusCounts },
     });
   } catch (err) {

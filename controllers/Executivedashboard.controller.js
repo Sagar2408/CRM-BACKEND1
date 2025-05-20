@@ -1,6 +1,8 @@
+const { Sequelize } = require("sequelize");
+
 const getExecutiveStats = async (req, res) => {
   try {
-    const { FreshLead, FollowUp, ConvertedClient, Lead } = req.db;
+    const { FreshLead, FollowUp, ConvertedClient, Lead, ClientLead } = req.db;
     const executiveName = req.user.username;
 
     if (!executiveName) {
@@ -14,23 +16,33 @@ const getExecutiveStats = async (req, res) => {
     let followUpsCount = 0;
     let convertedClientCount = 0;
 
-    // Fresh Leads Count (linked Lead must be assigned to this executive)
+    // ✅ Fresh Leads: ClientLead.status = "New" or "Assigned"
     try {
       freshLeadsCount = await FreshLead.count({
         include: [
           {
             model: Lead,
             as: "lead",
-            where: { assignedToExecutive: executiveName },
-            required: true, // ✅ ensures filtering works
+            required: true,
+            include: [
+              {
+                model: ClientLead,
+                as: "clientLead",
+                where: {
+                  assignedToExecutive: executiveName,
+                  status: { [Sequelize.Op.in]: ["New", "Assigned"] },
+                },
+                required: true,
+              },
+            ],
           },
         ],
       });
     } catch (error) {
-      console.error(`Error counting FreshLeads:`, error);
+      console.error("Error counting FreshLeads:", error);
     }
 
-    // Follow Ups Count (linked FreshLead -> Lead must match executive)
+    // ✅ Follow Ups: ClientLead.status = "Follow-Up"
     try {
       followUpsCount = await FollowUp.count({
         include: [
@@ -42,18 +54,28 @@ const getExecutiveStats = async (req, res) => {
               {
                 model: Lead,
                 as: "lead",
-                where: { assignedToExecutive: executiveName },
-                required: true, // ✅ nested required
+                required: true,
+                include: [
+                  {
+                    model: ClientLead,
+                    as: "clientLead",
+                    where: {
+                      assignedToExecutive: executiveName,
+                      status: "Follow-Up",
+                    },
+                    required: true,
+                  },
+                ],
               },
             ],
           },
         ],
       });
     } catch (error) {
-      console.error(`Error counting FollowUps:`, error);
+      console.error("Error counting FollowUps:", error);
     }
 
-    // Converted Clients Count (linked FreshLead -> Lead must match executive)
+    // ✅ Converted Clients: ClientLead.status = "Converted"
     try {
       convertedClientCount = await ConvertedClient.count({
         include: [
@@ -65,15 +87,25 @@ const getExecutiveStats = async (req, res) => {
               {
                 model: Lead,
                 as: "lead",
-                where: { assignedToExecutive: executiveName },
-                required: true, // ✅ nested required
+                required: true,
+                include: [
+                  {
+                    model: ClientLead,
+                    as: "clientLead",
+                    where: {
+                      assignedToExecutive: executiveName,
+                      status: "Converted",
+                    },
+                    required: true,
+                  },
+                ],
               },
             ],
           },
         ],
       });
     } catch (error) {
-      console.error(`Error counting ConvertedClients:`, error);
+      console.error("Error counting ConvertedClients:", error);
     }
 
     res.status(200).json({
@@ -89,7 +121,6 @@ const getExecutiveStats = async (req, res) => {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
-
 module.exports = {
   getExecutiveStats,
 };
