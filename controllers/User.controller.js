@@ -21,13 +21,19 @@ const transporter = nodemailer.createTransport({
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const Users = req.db.Users;
 
     const user = await Users.findOne({ where: { email } });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // ✳️ Block login if can_login is false
+    if (!user.can_login) {
+      return res
+        .status(403)
+        .json({ message: "Login access is disabled. Please contact admin." });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -37,7 +43,7 @@ const login = async (req, res) => {
 
     // ✅ Mark user as online
     user.is_online = true;
-    await user.save(); // Make sure this persists the isOnline change
+    await user.save();
 
     const token = jwt.sign(
       {
@@ -65,11 +71,48 @@ const login = async (req, res) => {
         email: user.email,
         username: user.username,
         role: user.role,
-        is_online: user.is_online, // Optional: return online status in response
+        is_online: user.is_online,
       },
     });
   } catch (error) {
     console.error("Login error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+/*---------------- Admin: Toggle can_login ----------------*/
+const toggleUserLoginAccess = async (req, res) => {
+  try {
+    const Users = req.db.Users;
+
+    // ✳️ Only Admins are allowed
+    if (req.user.role !== "Admin") {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized: Only Admin can change login access." });
+    }
+
+    const { userId, can_login } = req.body;
+
+    const user = await Users.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    user.can_login = can_login;
+    await user.save();
+
+    res.status(200).json({
+      message: `User login access updated to '${can_login}'`,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        can_login: user.can_login,
+      },
+    });
+  } catch (error) {
+    console.error("Error toggling login access:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -527,4 +570,5 @@ module.exports = {
   getExecutiveById,
   getAllTeamLeads,
   getOnlineExecutives,
+  toggleUserLoginAccess,
 };
