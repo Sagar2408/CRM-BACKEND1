@@ -137,9 +137,29 @@ const logoutProcessPerson = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+const getAllConvertedClients = async (req, res) => {
+  try {
+    const ClientLead = req.db.ClientLead; // Dynamically selected model
+
+    const convertedClients = await ClientLead.findAll({
+      where: { status: "Converted" },
+      order: [["updatedAt", "DESC"]], // Optional: order by recent conversions
+    });
+
+    res.status(200).json({
+      message: "Converted clients retrieved successfully",
+      count: convertedClients.length,
+      clients: convertedClients,
+    });
+  } catch (error) {
+    console.error("Error fetching converted clients:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 module.exports = {
   loginProcessPerson,
   signupProcessPerson,
   logoutProcessPerson,
+  getAllConvertedClients,
 };

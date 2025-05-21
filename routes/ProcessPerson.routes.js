@@ -4,6 +4,7 @@ const {
   loginProcessPerson,
   signupProcessPerson,
   logoutProcessPerson,
+  getAllConvertedClients,
 } = require("../controllers/ProcessPerson.controller");
 const auth = require("../middleware/auth");
 
@@ -14,5 +15,7 @@ router.post("/login", loginProcessPerson);
 router.post("/signup", signupProcessPerson);
 
 router.post("/logout", auth(), logoutProcessPerson);
+
+router.get("/convertedclients", auth(), getAllConvertedClients);
 
 module.exports = router;
