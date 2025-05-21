@@ -30,7 +30,7 @@ const getExecutiveStats = async (req, res) => {
                 as: "clientLead",
                 where: {
                   assignedToExecutive: executiveName,
-                  status: { [Sequelize.Op.in]: ["New", "Assigned"] },
+                  status: { [Sequelize.Op.in]: ["Assigned"] },
                 },
                 required: true,
               },

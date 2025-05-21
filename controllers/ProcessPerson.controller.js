@@ -157,9 +157,66 @@ const getAllConvertedClients = async (req, res) => {
   }
 };
 
+const importConvertedClientsToCustomers = async (req, res) => {
+  try {
+    const ClientLead = req.db.ClientLead;
+    const Customer = req.db.Customer;
+
+    const convertedLeads = await ClientLead.findAll({
+      where: { status: "Converted" },
+    });
+
+    let importedCount = 0;
+    let skippedCount = 0;
+    const errors = [];
+
+    for (const lead of convertedLeads) {
+      if (!lead.email || !lead.phone) {
+        skippedCount++;
+        continue;
+      }
+
+      const existingCustomer = await Customer.findOne({
+        where: { email: lead.email },
+      });
+
+      if (existingCustomer) {
+        skippedCount++;
+        continue;
+      }
+
+      try {
+        const hashedPassword = await bcrypt.hash(lead.phone, 10);
+
+        await Customer.create({
+          fullName: lead.name,
+          email: lead.email,
+          password: hashedPassword,
+          status: "pending",
+        });
+
+        importedCount++;
+      } catch (err) {
+        errors.push({ email: lead.email, error: err.message });
+      }
+    }
+
+    res.status(200).json({
+      message: "Import completed",
+      imported: importedCount,
+      skipped: skippedCount,
+      errors,
+    });
+  } catch (error) {
+    console.error("Import error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   loginProcessPerson,
   signupProcessPerson,
   logoutProcessPerson,
   getAllConvertedClients,
+  importConvertedClientsToCustomers,
 };
