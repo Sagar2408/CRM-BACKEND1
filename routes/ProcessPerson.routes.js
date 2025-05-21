@@ -19,10 +19,6 @@ router.post("/logout", auth(), logoutProcessPerson);
 
 router.get("/convertedclients", auth(), getAllConvertedClients);
 
-router.post(
-  "/import-converted-customer",
-  auth(),
-  importConvertedClientsToCustomers
-);
+router.post("/import-converted-customer", importConvertedClientsToCustomers);
 
 module.exports = router;

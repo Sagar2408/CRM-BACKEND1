@@ -13,12 +13,15 @@ const getExecutiveStats = async (req, res) => {
     }
 
     let freshLeadsCount = 0;
+    let freshLeadsData = [];
     let followUpsCount = 0;
+    let followUpsData = [];
     let convertedClientCount = 0;
+    let convertedClientsData = [];
 
-    // ✅ Fresh Leads: ClientLead.status = "New" or "Assigned"
+    // ✅ Fresh Leads
     try {
-      freshLeadsCount = await FreshLead.count({
+      const freshLeads = await FreshLead.findAll({
         include: [
           {
             model: Lead,
@@ -38,13 +41,15 @@ const getExecutiveStats = async (req, res) => {
           },
         ],
       });
+      freshLeadsData = freshLeads;
+      freshLeadsCount = freshLeads.length;
     } catch (error) {
-      console.error("Error counting FreshLeads:", error);
+      console.error("Error fetching FreshLeads:", error);
     }
 
-    // ✅ Follow Ups: ClientLead.status = "Follow-Up"
+    // ✅ Follow Ups
     try {
-      followUpsCount = await FollowUp.count({
+      const followUps = await FollowUp.findAll({
         include: [
           {
             model: FreshLead,
@@ -71,13 +76,15 @@ const getExecutiveStats = async (req, res) => {
           },
         ],
       });
+      followUpsData = followUps;
+      followUpsCount = followUps.length;
     } catch (error) {
-      console.error("Error counting FollowUps:", error);
+      console.error("Error fetching FollowUps:", error);
     }
 
-    // ✅ Converted Clients: ClientLead.status = "Converted"
+    // ✅ Converted Clients
     try {
-      convertedClientCount = await ConvertedClient.count({
+      const convertedClients = await ConvertedClient.findAll({
         include: [
           {
             model: FreshLead,
@@ -104,16 +111,27 @@ const getExecutiveStats = async (req, res) => {
           },
         ],
       });
+      convertedClientsData = convertedClients;
+      convertedClientCount = convertedClients.length;
     } catch (error) {
-      console.error("Error counting ConvertedClients:", error);
+      console.error("Error fetching ConvertedClients:", error);
     }
 
     res.status(200).json({
       success: true,
       data: {
-        freshLeads: freshLeadsCount,
-        followUps: followUpsCount,
-        convertedClients: convertedClientCount,
+        freshLeads: {
+          count: freshLeadsCount,
+          records: freshLeadsData,
+        },
+        followUps: {
+          count: followUpsCount,
+          records: followUpsData,
+        },
+        convertedClients: {
+          count: convertedClientCount,
+          records: convertedClientsData,
+        },
       },
     });
   } catch (error) {
@@ -121,6 +139,7 @@ const getExecutiveStats = async (req, res) => {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 module.exports = {
   getExecutiveStats,
 };
