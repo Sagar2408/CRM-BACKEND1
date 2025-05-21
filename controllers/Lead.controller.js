@@ -117,8 +117,10 @@ exports.deleteLead = async (req, res) => {
 exports.reassignLead = async (req, res) => {
   try {
     const Lead = req.db.Lead;
+    const ClientLead = req.db.ClientLead;
     const { leadId, newExecutive } = req.body;
 
+    // Fetch the lead
     const lead = await Lead.findByPk(leadId);
     if (!lead) {
       return res.status(404).json({ message: "Lead not found" });
@@ -126,8 +128,18 @@ exports.reassignLead = async (req, res) => {
 
     const previousAssignedTo = lead.assignedToExecutive;
 
+    // Update the lead's assigned executive
     lead.assignedToExecutive = newExecutive;
     await lead.save();
+
+    // Update the associated client lead, if exists
+    if (lead.clientLeadId) {
+      const clientLead = await ClientLead.findByPk(lead.clientLeadId);
+      if (clientLead) {
+        clientLead.assignedToExecutive = newExecutive;
+        await clientLead.save();
+      }
+    }
 
     res.json({
       message: "Lead reassigned successfully",
