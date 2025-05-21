@@ -199,7 +199,7 @@ module.exports = function initializeModels(sequelize) {
   // Sync Models
   // ------------------------
   sequelize
-    .sync({ alter: false }) // only once for full rebuild
+    .sync({ alter: true }) // only once for full rebuild
     .then(() => console.log("✅ Tenant DB tables synced"))
     .catch((err) => console.error("❌ Error syncing tenant DB:", err));
 
