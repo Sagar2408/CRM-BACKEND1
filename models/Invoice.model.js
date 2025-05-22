@@ -104,7 +104,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      timestamps: true,
+      tableName: "invoices", // ✅ consistent lowercase name
+      freezeTableName: true, // ✅ prevents Sequelize from changing it to 'Invoices'
+      timestamps: true, // ✅ enables auto `createdAt` / `updatedAt`
     }
   );
 };

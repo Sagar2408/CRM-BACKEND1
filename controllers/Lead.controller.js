@@ -117,27 +117,49 @@ exports.deleteLead = async (req, res) => {
 exports.reassignLead = async (req, res) => {
   try {
     const Lead = req.db.Lead;
+    const ClientLead = req.db.ClientLead;
     const { leadId, newExecutive } = req.body;
 
+    // Fetch the lead
     const lead = await Lead.findByPk(leadId);
     if (!lead) {
       return res.status(404).json({ message: "Lead not found" });
     }
 
+    // Capture the current executive BEFORE making any changes
     const previousAssignedTo = lead.assignedToExecutive;
 
+    console.log(`Reassigning Lead ID ${leadId} from ${previousAssignedTo} to ${newExecutive}`);
+
+    // Update the lead's assigned executive
     lead.assignedToExecutive = newExecutive;
     await lead.save();
 
+    // Update the associated client lead, if it exists
+    let clientLeadUpdate = null;
+    if (lead.clientLeadId) {
+      const clientLead = await ClientLead.findByPk(lead.clientLeadId);
+      if (clientLead) {
+        clientLead.assignedToExecutive = newExecutive;
+        await clientLead.save();
+        clientLeadUpdate = clientLead.toJSON();
+      }
+    }
+
     res.json({
       message: "Lead reassigned successfully",
-      lead: {
-        ...lead.toJSON(),
+      lead: lead.toJSON(),
+      reassignment: {
         previousAssignedTo,
+        newAssignedTo: newExecutive
       },
+      clientLeadUpdate
     });
+
   } catch (error) {
     console.error("Error reassigning lead:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
+
+

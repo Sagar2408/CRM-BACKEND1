@@ -39,8 +39,9 @@ module.exports = (sequelize) => {
       },
     },
     {
+      tableName: "customers", // ✅ lowercase to match your convention
+      freezeTableName: true, // ✅ ensures table name stays 'customers'
       timestamps: true,
-      tableName: "customers",
     }
   );
 

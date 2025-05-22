@@ -13,10 +13,11 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "customers",
+          model: "customers", // ✅ Must match Customer table name
           key: "id",
         },
         onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
 
       // Stage 1
@@ -119,8 +120,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      timestamps: true,
-      tableName: "customer_stages",
+      tableName: "customer_stages", // ✅ Explicit table name
+      freezeTableName: true, // ✅ Prevents Sequelize from changing the name
+      timestamps: true, // ✅ Ensures automatic createdAt/updatedAt
     }
   );
 

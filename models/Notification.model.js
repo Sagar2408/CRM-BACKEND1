@@ -13,35 +13,39 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "Users", // Referencing the Users table
+          model: "users", // ✅ lowercase to match Users table
           key: "id",
         },
-        onDelete: "CASCADE", // If the user is deleted, delete their notifications
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
       targetRole: {
         type: DataTypes.STRING,
-        allowNull: false, // 'admin' or 'executive'
+        allowNull: false,
         defaultValue: "executive",
       },
       message: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(255),
         allowNull: false,
       },
       is_read: {
         type: DataTypes.BOOLEAN,
-        defaultValue: false, // By default, set to unread
+        allowNull: false,
+        defaultValue: false,
       },
       createdAt: {
         type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW, // Automatically set creation date
+        defaultValue: DataTypes.NOW,
       },
       updatedAt: {
         type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW, // Automatically set the update date
+        defaultValue: DataTypes.NOW,
       },
     },
     {
-      tableName: "Notifications", // Specify the table name if needed
+      tableName: "notifications", // ✅ lowercase and consistent
+      freezeTableName: true, // ✅ avoids Sequelize renaming
+      timestamps: true, // ✅ ensures correct tracking
     }
   );
 

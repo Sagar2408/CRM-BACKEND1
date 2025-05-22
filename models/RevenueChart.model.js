@@ -31,7 +31,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      timestamps: true,
+      tableName: "revenue_chart", // ✅ matches naming convention
+      freezeTableName: true, // ✅ avoids Sequelize renaming
+      timestamps: true, // ✅ enables createdAt/updatedAt tracking
     }
   );
 };

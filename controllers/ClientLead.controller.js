@@ -124,16 +124,26 @@ const getClientLeads = async (req, res) => {
 // Assign executive to lead
 const assignExecutive = async (req, res) => {
   try {
-    const { ClientLead, Users, Notification } = req.db;
-    const { id } = req.params;
-    const { executiveName } = req.body;
+    if (!req.db) {
+      return res
+        .status(500)
+        .json({ message: "Database connection not found in request" });
+    }
 
-    if (!executiveName)
-      return res.status(400).json({ message: "Executive name is required" });
+    const { ClientLead, Users, Notification } = req.db;
+    const { executiveName, id } = req.body;
+
+    if (!executiveName || !id) {
+      return res
+        .status(400)
+        .json({ message: "Executive name and lead ID are required" });
+    }
 
     const lead = await ClientLead.findByPk(id);
-    if (!lead)
+    if (!lead) {
+      console.log("Lead not found for ID:", id);
       return res.status(404).json({ message: "Client lead not found" });
+    }
 
     lead.assignedToExecutive = executiveName;
     lead.status = "Assigned";
@@ -143,8 +153,10 @@ const assignExecutive = async (req, res) => {
       where: { username: executiveName, role: "Executive" },
     });
 
-    if (!executive)
+    if (!executive) {
+      console.log("Executive not found:", executiveName);
       return res.status(404).json({ message: "Executive not found" });
+    }
 
     const message = `You have been assigned a new lead: ${
       lead.name || "Unnamed Client"
@@ -159,7 +171,10 @@ const assignExecutive = async (req, res) => {
       .status(200)
       .json({ message: "Executive assigned and notified successfully", lead });
   } catch (err) {
-    res.status(500).json({ message: "Failed to assign executive" });
+    console.error("Error assigning executive:", err);
+    res
+      .status(500)
+      .json({ message: "Failed to assign executive", error: err.message });
   }
 };
 
@@ -212,7 +227,7 @@ const getDealFunnel = async (req, res) => {
     });
 
     res.status(200).json({
-      message: "Deal funnel data retrieved successfully",
+      message: "Deal funnel data retrieved successfu  lly",
       data: { totalLeads, statusCounts },
     });
   } catch (err) {

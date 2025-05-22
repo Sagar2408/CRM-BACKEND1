@@ -29,7 +29,7 @@ db.MasterUser = require("../models/MasterUser.model")(sequelize, DataTypes);
 
 // Sync schema (optional, safe for dev)
 sequelize
-  .sync({ force: false })
+  .sync({ alter: true})
   .then(() => console.log("✅ MasterDB tables synced"))
   .catch((err) => console.error("❌ Error syncing MasterDB tables:", err));
 

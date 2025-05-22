@@ -15,6 +15,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "https://crm-frontend-atozeevisas.vercel.app",
   "https://crm-frontend-live.vercel.app",
+  "https://crm-frontend-eta-olive.vercel.app",
 ];
 const io = new Server(server, {
   cors: {
@@ -27,6 +28,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.options("*", cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -41,6 +43,7 @@ app.use("/api/company", require("./routes/Company.routes")); // includes both pu
 
 // Tenant routes
 app.use("/api", tenantResolver, require("./routes/User.routes"));
+app.use("/api/manager", tenantResolver, require("./routes/Manager.routes"));
 app.use("/api/deals", auth(), tenantResolver, require("./routes/Deal.routes"));
 app.use("/api/leads", auth(), tenantResolver, require("./routes/Lead.routes"));
 app.use(
@@ -147,11 +150,18 @@ app.use(
   require("./routes/CustomerStages.routes")
 );
 app.use(
-  "/api", 
-  auth(), 
-  tenantResolver, 
+  "/api/eod-report",
+  tenantResolver,
+  require("./routes/EodReport.routes")
+);
+
+app.use(
+  "/api",
+  auth(),
+  tenantResolver,
   require("./routes/UserStatus.routes")
 );
+
 // 🧠 Store connected users
 const connectedUsers = {};
 

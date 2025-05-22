@@ -137,9 +137,154 @@ const logoutProcessPerson = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+const getAllConvertedClients = async (req, res) => {
+  try {
+    const ClientLead = req.db.ClientLead; // Dynamically selected model
+
+    const convertedClients = await ClientLead.findAll({
+      where: { status: "Converted" },
+      order: [["updatedAt", "DESC"]], // Optional: order by recent conversions
+    });
+
+    res.status(200).json({
+      message: "Converted clients retrieved successfully",
+      count: convertedClients.length,
+      clients: convertedClients,
+    });
+  } catch (error) {
+    console.error("Error fetching converted clients:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const importConvertedClientsToCustomers = async (req, res) => {
+  try {
+    const ClientLead = req.db.ClientLead;
+    const Customer = req.db.Customer;
+
+    const convertedLeads = await ClientLead.findAll({
+      where: { status: "Converted" },
+    });
+
+    let importedCount = 0;
+    let skippedCount = 0;
+    const errors = [];
+
+    for (const lead of convertedLeads) {
+      if (!lead.email || !lead.phone) {
+        skippedCount++;
+        continue;
+      }
+
+      const existingCustomer = await Customer.findOne({
+        where: { email: lead.email },
+      });
+
+      if (existingCustomer) {
+        skippedCount++;
+        continue;
+      }
+
+      try {
+        const hashedPassword = await bcrypt.hash(lead.phone, 10);
+
+        await Customer.create({
+          fullName: lead.name,
+          email: lead.email,
+          password: hashedPassword,
+          status: "pending",
+        });
+
+        importedCount++;
+      } catch (err) {
+        errors.push({ email: lead.email, error: err.message });
+      }
+    }
+
+    res.status(200).json({
+      message: "Import completed",
+      imported: importedCount,
+      skipped: skippedCount,
+      errors,
+    });
+  } catch (error) {
+    console.error("Import error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// GET: Get current settings for logged-in ProcessPerson
+const getProcessSettings = async (req, res) => {
+  try {
+    const ProcessPerson = req.db.ProcessPerson;
+    const personId = req.user?.id;
+
+    if (!personId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const person = await ProcessPerson.findByPk(personId, {
+      attributes: [
+        "fullName", "email", "nationality", "dob", "phone",
+        "passportNumber", "profession", "location"
+      ],
+    });
+
+    if (!person) {
+      return res.status(404).json({ message: "ProcessPerson not found" });
+    }
+
+    res.status(200).json({ settings: person });
+  } catch (error) {
+    console.error("Error fetching process settings:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// PUT: Update settings for logged-in ProcessPerson
+const updateProcessSettings = async (req, res) => {
+  try {
+    const ProcessPerson = req.db.ProcessPerson;
+    const personId = req.user?.id;
+
+    if (!personId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const updateFields = [
+      "fullName", "phone", "dob", "nationality",
+      "passportNumber", "profession", "location"
+    ];
+
+    const updates = {};
+    updateFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    });
+
+    const [updatedRows] = await ProcessPerson.update(updates, {
+      where: { id: personId },
+    });
+
+    if (updatedRows === 0) {
+      return res.status(404).json({ message: "ProcessPerson not found or no changes made" });
+    }
+
+    res.status(200).json({ message: "Settings updated successfully" });
+  } catch (error) {
+    console.error("Error updating process settings:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 
 module.exports = {
   loginProcessPerson,
   signupProcessPerson,
   logoutProcessPerson,
+  getAllConvertedClients,
+  importConvertedClientsToCustomers,
+  getProcessSettings,    
+  updateProcessSettings, 
 };

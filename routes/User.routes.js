@@ -14,6 +14,11 @@ router.post("/logout", auth(), userController.logout);
 // Role-specific protected routes
 router.get("/admin", auth(["Admin"]), userController.getAdminDashboard);
 router.get("/tl", auth(["TL"]), userController.getTLDashboard);
+router.post(
+  "/admin/toggle-login",
+  auth(),
+  userController.toggleUserLoginAccess
+);
 router.get(
   "/executive",
   auth(["Executive"]),

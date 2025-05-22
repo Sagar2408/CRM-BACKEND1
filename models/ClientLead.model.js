@@ -82,6 +82,8 @@ module.exports = (sequelize) => {
       },
     },
     {
+      tableName: "clientleads", // ✅ Explicit lowercase table name
+      freezeTableName: true, // ✅ Prevents Sequelize from pluralizing
       timestamps: true,
     }
   );

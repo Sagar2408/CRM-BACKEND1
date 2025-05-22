@@ -40,7 +40,7 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: "Users",
+          model: "users", // ✅ lowercase to match actual table name
           key: "id",
         },
         onUpdate: "CASCADE",
@@ -50,16 +50,25 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "FreshLeads",
+          model: "freshleads", // ✅ lowercase to match table name
           key: "id",
         },
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
+      createdAt: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+      updatedAt: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
     },
     {
-      timestamps: true,
-      tableName: "Meetings",
+      tableName: "meetings", // ✅ standardized lowercase name
+      freezeTableName: true, // ✅ disables Sequelize renaming
+      timestamps: true, // ✅ enables automatic time tracking
     }
   );
 };

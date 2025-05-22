@@ -17,13 +17,25 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: "Managers",
+          model: "managers", // ✅ lowercase to match actual table name
           key: "id",
         },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
+      createdAt: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+      updatedAt: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
       },
     },
     {
-      timestamps: true,
+      tableName: "teams", // ✅ consistent lowercase naming
+      freezeTableName: true, // ✅ prevents Sequelize renaming
+      timestamps: true, // ✅ enables Sequelize time tracking
     }
   );
 

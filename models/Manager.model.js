@@ -25,15 +25,21 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      createdAt: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+      updatedAt: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
     },
     {
-      timestamps: true,
+      tableName: "managers", // ✅ consistent lowercase table name
+      freezeTableName: true, // ✅ avoids auto-pluralization
+      timestamps: true, // ✅ manages createdAt & updatedAt
     }
   );
-
-  Manager.associate = (models) => {
-    Manager.hasMany(models.Team, { foreignKey: "manager_id" });
-  };
 
   return Manager;
 };

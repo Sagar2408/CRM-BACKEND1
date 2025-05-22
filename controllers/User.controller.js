@@ -4,6 +4,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const { sendExecutiveSignupEmail } = require("../services/signUpemailService"); // Adjust if path is different
+
 require("dotenv").config();
 
 // Email transporter
@@ -27,10 +29,11 @@ const login = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (!user.can_login) {
-      return res.status(403).json({ message: "Login disabled by admin" });
+if (!user.can_login) {
+      return res
+        .status(403)
+        .json({ message: "Login access is disabled. Please contact admin." });
     }
-
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -70,6 +73,43 @@ const login = async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+/*---------------- Admin: Toggle can_login ----------------*/
+const toggleUserLoginAccess = async (req, res) => {
+  try {
+    const Users = req.db.Users;
+
+    // ✳️ Only Admins are allowed
+    if (req.user.role !== "Admin") {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized: Only Admin can change login access." });
+    }
+
+    const { userId, can_login } = req.body;
+
+    const user = await Users.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    user.can_login = can_login;
+    await user.save();
+
+    res.status(200).json({
+      message: `User login access updated to '${can_login}'`,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        can_login: user.can_login,
+      },
+    });
+  } catch (error) {
+    console.error("Error toggling login access:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -123,31 +163,39 @@ const signupLocal = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
     const Users = req.db.Users;
-    // Only allow valid roles
+
     const validRoles = ["Admin", "TL", "Executive"];
+
     if (!username || !password || !role || !validRoles.includes(role)) {
       return res.status(400).json({
         error:
-          "Username, password, and valid role (Admin, TL, or Executive) are required",
+          "Username, password, and a valid role (Admin, TL, or Executive) are required.",
       });
     }
 
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ error: "Invalid email format" });
+      return res.status(400).json({ error: "Invalid email format." });
     }
 
+    // Check if username or email already exists
     const existingUser = await Users.findOne({
       where: { [Op.or]: [{ username }, { email }] },
     });
 
     if (existingUser) {
+      let conflictField = "Username or email";
+      if (existingUser.username === username) conflictField = "Username";
+      else if (existingUser.email === email) conflictField = "Email";
+
       return res
         .status(400)
-        .json({ error: "Username or email already exists" });
+        .json({ error: `${conflictField} already exists.` });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create user
     const user = await Users.create({
       username,
       email,
@@ -155,8 +203,16 @@ const signupLocal = async (req, res) => {
       role,
     });
 
+    // Send welcome email only for Executives
+    if (role === "Executive") {
+      const emailResult = await sendExecutiveSignupEmail(email, username);
+      if (!emailResult.success) {
+        console.warn("Signup email failed:", emailResult.message);
+      }
+    }
+
     return res.status(201).json({
-      message: "User created successfully",
+      message: "User created successfully.",
       user: {
         id: user.id,
         username: user.username,
@@ -166,15 +222,16 @@ const signupLocal = async (req, res) => {
     });
   } catch (error) {
     console.error("Signup error:", error);
-    let errorMessage = "Internal server error";
+    let errorMessage = "Internal server error.";
     if (error.name === "SequelizeValidationError") {
       errorMessage = error.errors.map((e) => e.message).join(", ");
     } else if (error.name === "SequelizeUniqueConstraintError") {
-      errorMessage = "Username or email already exists";
+      errorMessage = "Username or email already exists.";
     }
     return res.status(500).json({ error: errorMessage });
   }
 };
+
 const getAdminDashboard = async (req, res) => {
   try {
     const Users = req.db.Users; // ✅ Dynamic database selection
@@ -510,4 +567,5 @@ module.exports = {
   getExecutiveById,
   getAllTeamLeads,
   getOnlineExecutives,
+  toggleUserLoginAccess,
 };

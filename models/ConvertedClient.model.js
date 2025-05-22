@@ -1,4 +1,6 @@
-module.exports = (sequelize, DataTypes) => {
+const { DataTypes } = require("sequelize");
+
+module.exports = (sequelize) => {
   const ConvertedClient = sequelize.define(
     "ConvertedClient",
     {
@@ -11,12 +13,13 @@ module.exports = (sequelize, DataTypes) => {
       fresh_lead_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        unique: true, // Ensure uniqueness per converted client
+        unique: true, // Each FreshLead can be converted only once
         references: {
-          model: "FreshLeads", // Table name (as defined in your model)
+          model: "freshleads", // ✅ must match actual table name in DB
           key: "id",
         },
         onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
       name: {
         type: DataTypes.STRING(100),
@@ -48,7 +51,9 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: "ConvertedClients",
+      tableName: "convertedclients", // ✅ lowercased consistent name
+      freezeTableName: true, // ✅ disables Sequelize pluralization
+      timestamps: true,
     }
   );
 

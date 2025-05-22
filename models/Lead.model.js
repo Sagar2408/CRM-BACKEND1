@@ -18,7 +18,7 @@ module.exports = (sequelize) => {
         allowNull: false,
       },
       previousAssignedTo: {
-        type: DataTypes.STRING, // ✅ Add this field
+        type: DataTypes.STRING,
         allowNull: true,
       },
       assignmentDate: {
@@ -47,7 +47,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      timestamps: true,
+      tableName: "leads", // ✅ explicitly set lowercase name
+      freezeTableName: true, // ✅ prevents Sequelize from altering table name
+      timestamps: true, // ✅ automatic timestamp handling
     }
   );
 

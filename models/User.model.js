@@ -63,10 +63,11 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: "Teams",
+          model: "teams", // ✅ lowercase to match actual table
           key: "id",
         },
         onDelete: "SET NULL",
+        onUpdate: "CASCADE",
       },
 
       // Additional Profile Info
@@ -98,7 +99,11 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-
+      can_login: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      },
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
@@ -109,7 +114,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      timestamps: true,
+      tableName: "users", // ✅ matches schema convention
+      freezeTableName: true, // ✅ disables auto-pluralization
+      timestamps: true, // ✅ enables Sequelize time tracking
     }
   );
 };

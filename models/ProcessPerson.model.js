@@ -25,6 +25,30 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      nationality: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      dob: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      phone: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      passportNumber: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      profession: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      location: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       isActive: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
@@ -39,8 +63,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      timestamps: true,
       tableName: "process_persons",
+      freezeTableName: true,
+      timestamps: true,
     }
   );
 

@@ -1,4 +1,6 @@
-module.exports = (sequelize, DataTypes) => {
+const { DataTypes } = require("sequelize");
+
+module.exports = (sequelize) => {
   const FollowUpHistory = sequelize.define(
     "FollowUpHistory",
     {
@@ -12,10 +14,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "FollowUps", // Table name of FollowUp
-          key: "id", // Column in FollowUps to reference
+          model: "followups", // ✅ must match FollowUp's actual table name
+          key: "id",
         },
-        onDelete: "CASCADE", // Automatically delete history records when the FollowUp is deleted
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
       connect_via: {
         type: DataTypes.ENUM("Call", "Email", "Call/Email"),
@@ -52,10 +55,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "FreshLeads", // Table name
-          key: "id", // Column in FreshLeads to reference
+          model: "freshleads", // ✅ must match FreshLead table name
+          key: "id",
         },
-        onDelete: "CASCADE", // Automatically delete history records when the FreshLead is deleted
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -67,7 +71,9 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: "FollowUpHistories",
+      tableName: "followuphistories", // ✅ consistent with table naming convention
+      freezeTableName: true,
+      timestamps: true,
     }
   );
 

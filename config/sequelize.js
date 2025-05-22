@@ -5,96 +5,52 @@ module.exports = function initializeModels(sequelize) {
   db.Sequelize = Sequelize;
   db.sequelize = sequelize;
 
-  // Load models with table names
-  db.Users = require("../models/User.model")(sequelize, Sequelize, {
-    tableName: "Users",
-  });
-  db.Deal = require("../models/Deal.model")(sequelize, Sequelize, {
-    tableName: "Deals",
-  });
-  db.Lead = require("../models/Lead.model")(sequelize, Sequelize, {
-    tableName: "Leads",
-  });
-  db.Meeting = require("../models/Meeting.model")(sequelize, Sequelize, {
-    tableName: "Meetings",
-  });
-  db.Opportunity = require("../models/Opportunity.model")(
-    sequelize,
-    Sequelize,
-    { tableName: "Opportunities" }
-  );
-  db.ClientLead = require("../models/ClientLead.model")(sequelize, Sequelize, {
-    tableName: "ClientLeads",
-  });
-  db.Invoice = require("../models/Invoice.model")(sequelize, Sequelize, {
-    tableName: "Invoices",
-  });
+  // Load models – no third argument, models handle their own table names
+  db.Users = require("../models/User.model")(sequelize, Sequelize);
+  db.Deal = require("../models/Deal.model")(sequelize, Sequelize);
+  db.Lead = require("../models/Lead.model")(sequelize, Sequelize);
+  db.Meeting = require("../models/Meeting.model")(sequelize, Sequelize);
+  db.Opportunity = require("../models/Opportunity.model")(sequelize, Sequelize);
+  db.ClientLead = require("../models/ClientLead.model")(sequelize, Sequelize);
+  db.Invoice = require("../models/Invoice.model")(sequelize, Sequelize);
   db.ExecutiveActivity = require("../models/ExecutiveActivity.model")(
     sequelize,
-    Sequelize,
-    { tableName: "ExecutiveActivities" }
+    Sequelize
   );
-  db.FollowUp = require("../models/Followup.model")(sequelize, Sequelize, {
-    tableName: "FollowUps",
-  });
+  db.FollowUp = require("../models/Followup.model")(sequelize, Sequelize);
   db.FollowUpHistory = require("../models/FollowUpHistory.model")(
     sequelize,
-    Sequelize,
-    { tableName: "FollowUpHistories" }
+    Sequelize
   );
-  db.FreshLead = require("../models/FreshLead.model")(sequelize, Sequelize, {
-    tableName: "FreshLeads",
-  });
+  db.FreshLead = require("../models/FreshLead.model")(sequelize, Sequelize);
   db.ConvertedClient = require("../models/ConvertedClient.model")(
     sequelize,
-    Sequelize,
-    { tableName: "ConvertedClients" }
+    Sequelize
   );
-  db.CloseLead = require("../models/CloseLead.model")(sequelize, Sequelize, {
-    tableName: "CloseLeads",
-  });
+  db.CloseLead = require("../models/CloseLead.model")(sequelize, Sequelize);
   db.Notification = require("../models/Notification.model")(
     sequelize,
-    Sequelize,
-    { tableName: "Notifications" }
+    Sequelize
   );
-  db.Customer = require("../models/Customer.model")(sequelize, Sequelize, {
-    tableName: "customers",
-  });
+  db.Customer = require("../models/Customer.model")(sequelize, Sequelize);
   db.CustomerDetails = require("../models/CustomerDetails.model")(
     sequelize,
-    Sequelize,
-    {
-      tableName: "customer_details",
-    }
+    Sequelize
   );
   db.ProcessPerson = require("../models/ProcessPerson.model")(
     sequelize,
-    Sequelize,
-    {
-      tableName: "process_persons",
-    }
+    Sequelize
   );
   db.CustomerStages = require("../models/CustomerStages.model")(
     sequelize,
-    Sequelize,
-    {
-      tableName: "customer_stages",
-    }
+    Sequelize
   );
   db.RevenueChart = require("../models/RevenueChart.model")(
     sequelize,
-    Sequelize,
-    {
-      tableName: "revenue_chart",
-    }
+    Sequelize
   );
-  db.Team = require("../models/Team.model")(sequelize, Sequelize, {
-    tableName: "Teams",
-  });
-  db.Manager = require("../models/Manager.model")(sequelize, Sequelize, {
-    tableName: "Managers",
-  });
+  db.Team = require("../models/Team.model")(sequelize, Sequelize);
+  db.Manager = require("../models/Manager.model")(sequelize, Sequelize);
 
   // ------------------------
   // Define Associations
@@ -202,6 +158,7 @@ module.exports = function initializeModels(sequelize) {
     foreignKey: "executiveId",
     onDelete: "SET NULL",
   });
+
   db.Customer.hasOne(db.CustomerDetails, {
     foreignKey: "customerId",
     onDelete: "CASCADE",
@@ -209,6 +166,7 @@ module.exports = function initializeModels(sequelize) {
   db.CustomerDetails.belongsTo(db.Customer, {
     foreignKey: "customerId",
   });
+
   db.Customer.hasOne(db.CustomerStages, {
     foreignKey: "customerId",
     onDelete: "CASCADE",
@@ -220,9 +178,8 @@ module.exports = function initializeModels(sequelize) {
   db.Team.hasMany(db.Users, {
     foreignKey: "team_id",
     onDelete: "SET NULL",
-    as: "executives", // or "members" if you prefer
+    as: "executives",
   });
-
   db.Users.belongsTo(db.Team, {
     foreignKey: "team_id",
     as: "team",
@@ -233,16 +190,16 @@ module.exports = function initializeModels(sequelize) {
     onDelete: "SET NULL",
     as: "teams",
   });
-
   db.Team.belongsTo(db.Manager, {
     foreignKey: "manager_id",
     as: "manager",
   });
+
   // ------------------------
-  // Sync Models (optional per-tenant)
+  // Sync Models
   // ------------------------
   sequelize
-    .sync({ alter: true })
+    .sync({ alter: true }) // only once for full rebuild
     .then(() => console.log("✅ Tenant DB tables synced"))
     .catch((err) => console.error("❌ Error syncing tenant DB:", err));
 

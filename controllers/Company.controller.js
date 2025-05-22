@@ -43,20 +43,7 @@ const createCompany = async (req, res) => {
 };
 
 const getCompaniesForMasterUser = async (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({ message: "Authorization token required" });
-  }
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Optional: verify decoded email/role if needed
-    if (!decoded || !decoded.email) {
-      return res.status(403).json({ message: "Invalid master token" });
-    }
-
     const Company = masterDB.models.Company;
     const companies = await Company.findAll();
 
@@ -65,8 +52,10 @@ const getCompaniesForMasterUser = async (req, res) => {
       companies,
     });
   } catch (error) {
-    console.error("Token verification or DB error:", error);
-    return res.status(401).json({ message: "Invalid or expired token" });
+    console.error("❌ Error fetching companies for master user:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error while fetching companies" });
   }
 };
 

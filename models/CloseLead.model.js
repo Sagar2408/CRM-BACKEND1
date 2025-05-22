@@ -12,12 +12,13 @@ module.exports = (sequelize) => {
       freshLeadId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        unique: true, // Make sure each FreshLead can be closed only once
+        unique: true, // Each FreshLead can be closed only once
         references: {
-          model: "FreshLeads", // should match the actual table name or model name
+          model: "freshleads", // ✅ matches actual table name
           key: "id",
         },
         onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
       name: {
         type: DataTypes.STRING,
@@ -41,7 +42,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "CloseLeads",
+      tableName: "closeleads", // ✅ lowercase and consistent
+      freezeTableName: true, // ✅ disables auto-pluralization
+      timestamps: true,
     }
   );
 

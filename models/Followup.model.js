@@ -1,4 +1,6 @@
-module.exports = (sequelize, DataTypes) => {
+const { DataTypes } = require("sequelize");
+
+module.exports = (sequelize) => {
   const FollowUp = sequelize.define(
     "FollowUp",
     {
@@ -43,10 +45,21 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "freshleads", // ⚠️ Must match the actual lowercase table name in DB
+          model: "freshleads", // ✅ matches table name
           key: "id",
         },
         onDelete: "CASCADE",
+        onUpdate: "CASCADE",
+      },
+      leadId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "leads", // ✅ lowercase to match correct table name
+          key: "id",
+        },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -58,8 +71,9 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: "followups", // ✅ Explicit table name to match DB
-      timestamps: true, // Optional: if you're using createdAt/updatedAt
+      tableName: "followups", // ✅ lowercase & consistent
+      freezeTableName: true, // ✅ avoids Sequelize auto-pluralization
+      timestamps: true, // ✅ enables auto-managed fields
     }
   );
 

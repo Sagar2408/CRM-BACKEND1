@@ -13,10 +13,11 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "Leads",
+          model: "leads", // ✅ lowercase to match the actual table name
           key: "id",
         },
         onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
       revenue: {
         type: DataTypes.DECIMAL(10, 2),
@@ -40,6 +41,8 @@ module.exports = (sequelize) => {
       },
     },
     {
+      tableName: "deals", // ✅ Consistent lowercase table name
+      freezeTableName: true, // ✅ Prevent Sequelize from auto-pluralizing
       timestamps: true,
     }
   );

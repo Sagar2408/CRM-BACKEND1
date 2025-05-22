@@ -13,10 +13,11 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "Users", // Ensure Users model exists
+          model: "users", // ✅ should match actual table name ('users')
           key: "id",
         },
         onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
       workTime: {
         type: DataTypes.INTEGER,
@@ -27,7 +28,6 @@ module.exports = (sequelize) => {
         defaultValue: 0,
       },
       breakStartTime: {
-        // ✅ Added this field
         type: DataTypes.DATE,
         allowNull: true,
       },
@@ -53,7 +53,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      timestamps: true, // Automatically manages createdAt & updatedAt
+      tableName: "executiveactivities", // ✅ consistent with schema
+      freezeTableName: true, // ✅ disables auto-pluralization
+      timestamps: true, // ✅ enables automatic time tracking
     }
   );
 };
