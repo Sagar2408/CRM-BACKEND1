@@ -53,11 +53,6 @@ module.exports = (sequelize) => {
         allowNull: false,
         defaultValue: true,
       },
-      can_login: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
       // Link to Team
       team_id: {
         type: DataTypes.INTEGER,

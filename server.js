@@ -15,7 +15,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "https://crm-frontend-atozeevisas.vercel.app",
   "https://crm-frontend-live.vercel.app",
-  "https://crm-frontend-eta-olive.vercel.app",
+  "https://crm-frontend-eta-olive.vercel.app"
 ];
 const io = new Server(server, {
   cors: {
@@ -155,12 +155,6 @@ app.use(
   require("./routes/EodReport.routes")
 );
 
-app.use(
-  "/api",
-  auth(),
-  tenantResolver,
-  require("./routes/UserStatus.routes")
-);
 
 // 🧠 Store connected users
 const connectedUsers = {};
