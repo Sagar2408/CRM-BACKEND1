@@ -114,7 +114,7 @@ const deleteOldNotifications = async (req, res) => {
   }
 };
 const copyTextNotification = async (req, res) => {
-  const notification = req.db.Notification;
+  const Notification = req.db.Notification;
   const { userId, userRole, message } = req.body;
 
   if (!userId || !message) {
