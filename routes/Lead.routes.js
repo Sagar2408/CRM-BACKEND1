@@ -8,6 +8,6 @@ router.get("/:id", leadController.getLeadById);
 router.post("/", leadController.createLead);
 router.put("/:id", leadController.updateLead);
 router.delete("/:id", leadController.deleteLead);
-router.put("/reassign/:id", leadController.reassignLead);
+router.put("/reassign", leadController.reassignLead);
 
 module.exports = router;
