@@ -146,6 +146,12 @@ app.use(
   tenantResolver,
   require("./routes/CustomerStages.routes")
 );
+app.use(
+  "/api", 
+  auth(), 
+  tenantResolver, 
+  require("./routes/UserStatus.routes")
+);
 // 🧠 Store connected users
 const connectedUsers = {};
 

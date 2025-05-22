@@ -19,7 +19,6 @@ const transporter = nodemailer.createTransport({
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const Users = req.db.Users;
 
     const user = await Users.findOne({ where: { email } });
@@ -28,14 +27,17 @@ const login = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    if (!user.can_login) {
+      return res.status(403).json({ message: "Login disabled by admin" });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // ✅ Mark user as online
     user.is_online = true;
-    await user.save(); // Make sure this persists the isOnline change
+    await user.save();
 
     const token = jwt.sign(
       {
@@ -63,7 +65,7 @@ const login = async (req, res) => {
         email: user.email,
         username: user.username,
         role: user.role,
-        is_online: user.is_online, // Optional: return online status in response
+        is_online: user.is_online,
       },
     });
   } catch (error) {
