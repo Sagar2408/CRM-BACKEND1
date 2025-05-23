@@ -113,29 +113,31 @@ exports.deleteLead = async (req, res) => {
   }
 };
 
-// 📌 Reassign a lead
 exports.reassignLead = async (req, res) => {
+  console.log('🚀 [API] /api/leads/reassign hit');
+
   try {
+    const { leadId, newExecutive } = req.body;
+    console.log('🔧 Payload:', { leadId, newExecutive });
+
     const Lead = req.db.Lead;
     const ClientLead = req.db.ClientLead;
-    const { leadId, newExecutive } = req.body;
 
-    // Fetch the lead
-    const lead = await Lead.findByPk(leadId);
+    console.log('📄 Models available:', Object.keys(req.db));
+
+    const [rows] = await req.db.sequelize.query("SELECT * FROM leads");
+    console.log('🧾 Existing leads in DB:', rows);
+
+    const lead = await Lead.findByPk(Number(leadId));
     if (!lead) {
+      console.log(`❌ Lead not found for ID: ${leadId}`);
       return res.status(404).json({ message: "Lead not found" });
     }
 
-    // Capture the current executive BEFORE making any changes
-    const previousAssignedTo = lead.assignedToExecutive;
-
-    console.log(`Reassigning Lead ID ${leadId} from ${previousAssignedTo} to ${newExecutive}`);
-
-    // Update the lead's assigned executive
+    console.log(`✅ Reassigning Lead ID ${leadId} from ${lead.assignedToExecutive} to ${newExecutive}`);
     lead.assignedToExecutive = newExecutive;
     await lead.save();
 
-    // Update the associated client lead, if it exists
     let clientLeadUpdate = null;
     if (lead.clientLeadId) {
       const clientLead = await ClientLead.findByPk(lead.clientLeadId);
@@ -143,23 +145,26 @@ exports.reassignLead = async (req, res) => {
         clientLead.assignedToExecutive = newExecutive;
         await clientLead.save();
         clientLeadUpdate = clientLead.toJSON();
+        console.log('📝 Updated clientLead:', clientLeadUpdate);
       }
     }
 
-    res.json({
+    const responsePayload = {
       message: "Lead reassigned successfully",
       lead: lead.toJSON(),
       reassignment: {
-        previousAssignedTo,
-        newAssignedTo: newExecutive
+        previousAssignedTo: lead.assignedToExecutive,
+        newAssignedTo: newExecutive,
       },
-      clientLeadUpdate
-    });
+      clientLeadUpdate,
+    };
+
+    console.log('📤 [RESPONSE]', responsePayload);
+    res.json(responsePayload);
 
   } catch (error) {
-    console.error("Error reassigning lead:", error);
+    console.error("🔥 Error reassigning lead:", error);
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
-
 
