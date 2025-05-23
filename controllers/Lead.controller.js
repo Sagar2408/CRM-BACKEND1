@@ -125,25 +125,25 @@ exports.reassignLead = async (req, res) => {
 
     console.log('📄 Models available:', Object.keys(req.db));
 
-    const [rows] = await req.db.sequelize.query("SELECT * FROM leads");
-    console.log('🧾 Existing leads in DB:', rows);
-
     const lead = await Lead.findByPk(Number(leadId));
     if (!lead) {
       console.log(`❌ Lead not found for ID: ${leadId}`);
       return res.status(404).json({ message: "Lead not found" });
     }
 
-    // 🚫 Prevent reassignment if already assigned
-    if (lead.assignedToExecutive && lead.assignedToExecutive !== '') {
-      console.log(`⚠️ Lead ID ${leadId} is already assigned to ${lead.assignedToExecutive}`);
+    // 🚫 If previousAssignedTo is already filled, block reassignment
+    if (lead.previousAssignedTo) {
+      console.log(`⚠️ Lead ID ${leadId} was already reassigned previously.`);
       return res.status(400).json({
-        message: `Lead is already assigned to ${lead.assignedToExecutive}. Reassignment not allowed.`,
+        message: `Lead has already been reassigned from ${lead.previousAssignedTo}. Further reassignment not allowed.`,
       });
     }
 
-    console.log(`✅ Reassigning Lead ID ${leadId} to ${newExecutive}`);
+    // ✅ Perform reassignment
+    console.log(`✅ Reassigning Lead ID ${leadId} from ${lead.assignedToExecutive} to ${newExecutive}`);
+    lead.previousAssignedTo = lead.assignedToExecutive;
     lead.assignedToExecutive = newExecutive;
+    lead.assignmentDate = new Date(); // Optional: update assignment date
     await lead.save();
 
     let clientLeadUpdate = null;
@@ -161,7 +161,7 @@ exports.reassignLead = async (req, res) => {
       message: "Lead reassigned successfully",
       lead: lead.toJSON(),
       reassignment: {
-        previousAssignedTo: null,
+        previousAssignedTo: lead.previousAssignedTo,
         newAssignedTo: newExecutive,
       },
       clientLeadUpdate,
@@ -175,4 +175,5 @@ exports.reassignLead = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
+
 
