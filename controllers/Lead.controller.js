@@ -134,7 +134,15 @@ exports.reassignLead = async (req, res) => {
       return res.status(404).json({ message: "Lead not found" });
     }
 
-    console.log(`✅ Reassigning Lead ID ${leadId} from ${lead.assignedToExecutive} to ${newExecutive}`);
+    // 🚫 Prevent reassignment if already assigned
+    if (lead.assignedToExecutive && lead.assignedToExecutive !== '') {
+      console.log(`⚠️ Lead ID ${leadId} is already assigned to ${lead.assignedToExecutive}`);
+      return res.status(400).json({
+        message: `Lead is already assigned to ${lead.assignedToExecutive}. Reassignment not allowed.`,
+      });
+    }
+
+    console.log(`✅ Reassigning Lead ID ${leadId} to ${newExecutive}`);
     lead.assignedToExecutive = newExecutive;
     await lead.save();
 
@@ -153,7 +161,7 @@ exports.reassignLead = async (req, res) => {
       message: "Lead reassigned successfully",
       lead: lead.toJSON(),
       reassignment: {
-        previousAssignedTo: lead.assignedToExecutive,
+        previousAssignedTo: null,
         newAssignedTo: newExecutive,
       },
       clientLeadUpdate,
