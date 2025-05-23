@@ -15,7 +15,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "https://crm-frontend-atozeevisas.vercel.app",
   "https://crm-frontend-live.vercel.app",
-  "https://crm-frontend-eta-olive.vercel.app"
+  "https://crm-frontend-eta-olive.vercel.app",
 ];
 const io = new Server(server, {
   cors: {
@@ -32,11 +32,11 @@ app.options("*", cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 app.use((req, res, next) => {
-  console.log('📥 [REQUEST]');
-  console.log('Method:', req.method);
-  console.log('URL:', req.originalUrl);
-  console.log('Headers:', req.headers);
-  console.log('Body:', req.body);
+  console.log("📥 [REQUEST]");
+  console.log("Method:", req.method);
+  console.log("URL:", req.originalUrl);
+  console.log("Headers:", req.headers);
+  console.log("Body:", req.body);
   next();
 });
 
@@ -162,7 +162,7 @@ app.use(
   tenantResolver,
   require("./routes/EodReport.routes")
 );
-
+app.use("/api", require("./routes/Calendar.routes"));
 
 // 🧠 Store connected users
 const connectedUsers = {};
