@@ -1,6 +1,24 @@
 require("dotenv").config();
 const axios = require("axios");
 
+// 📅 Utility to get all Sundays in the month
+function getAllSundays(year, month) {
+  const sundays = [];
+  const date = new Date(year, month - 1, 1);
+
+  while (date.getMonth() === month - 1) {
+    if (date.getDay() === 0) {
+      sundays.push({
+        name: "Sunday",
+        date: date.toISOString().split("T")[0],
+      });
+    }
+    date.setDate(date.getDate() + 1);
+  }
+
+  return sundays;
+}
+
 const getCalendar = async (req, res) => {
   let { year, month } = req.query;
 
