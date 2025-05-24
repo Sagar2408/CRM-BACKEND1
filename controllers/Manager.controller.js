@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
+const { sendTeamAssignmentEmail } = require("../services/emailService");
 const signupManager = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -133,10 +133,67 @@ const getManagerTeams = async (req, res) => {
   }
 };
 
+const addExecutiveToTeam = async (req, res) => {
+  try {
+    const { team_id, user_id } = req.body;
+    const Team = req.db.Team;
+    const Users = req.db.Users;
+    const Manager = req.db.Manager;
+
+    const managerId = req.user.id;
+
+    // Validation
+    if (!team_id || !user_id) {
+      return res.status(400).json({ error: "Team ID and User ID are required." });
+    }
+
+    // Verify ownership
+    const team = await Team.findOne({ where: { id: team_id, manager_id: managerId } });
+    if (!team) {
+      return res.status(403).json({ error: "You do not own this team." });
+    }
+
+    const manager = await Manager.findByPk(managerId);
+
+    const user = await Users.findOne({ where: { id: user_id, role: "Executive" } });
+    if (!user) {
+      return res.status(404).json({ error: "Executive not found." });
+    }
+
+    // Assign team
+    user.team_id = team_id;
+    await user.save();
+
+    // Send team assignment email
+    if (user.email) {
+      await sendTeamAssignmentEmail(
+        user.email,
+        user.firstname || user.username,
+        team.name,
+        manager.name
+      );
+    }
+
+    res.status(200).json({
+      message: "Executive assigned to team and notified via email.",
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        team_id: user.team_id,
+      },
+    });
+  } catch (err) {
+    console.error("Add executive error:", err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
 module.exports = {
   signupManager,
   loginManager,
   logoutManager,
   createTeam,
   getManagerTeams,
+  addExecutiveToTeam
 };
