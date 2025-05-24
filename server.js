@@ -162,7 +162,7 @@ app.use(
   tenantResolver,
   require("./routes/EodReport.routes")
 );
-app.use("/api", require("./routes/Calendar.routes"));
+app.use("/api", auth(), tenantResolver, require("./routes/Calendar.routes"));
 
 // 🧠 Store connected users
 const connectedUsers = {};
