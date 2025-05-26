@@ -88,22 +88,12 @@ const updateCustomerStages = async (req, res) => {
     const { customerId, ...rest } = req.body;
 
     if (!customerId) {
-<<<<<<< HEAD
       return res
         .status(400)
         .json({ error: "Customer ID is required in the request body" });
     }
 
     const [updated] = await CustomerStages.update(rest, {
-=======
-      return res.status(401).json({ error: "Unauthorized: Customer ID missing" });
-    }
-
-    // ✅ Optional: Prevent customerId override here too
-    const { customerId: ignored, ...safeBody } = req.body;
-
-    const [updated] = await CustomerStages.update(safeBody, {
->>>>>>> 41ba45accd1ddd416cf1a9a0318e967ae5e79cd4
       where: { customerId },
     });
 
