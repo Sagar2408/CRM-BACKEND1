@@ -1,12 +1,12 @@
 const createCustomerStages = async (req, res) => {
   try {
     const CustomerStages = req.db.CustomerStages;
-    const customerId = req.user?.id;
+    const { customerId, ...rest } = req.body;
 
     if (!customerId) {
       return res
-        .status(401)
-        .json({ error: "Unauthorized: Customer ID missing" });
+        .status(400)
+        .json({ error: "Customer ID is required in the request body" });
     }
 
     // Check if a record already exists
@@ -16,10 +16,7 @@ const createCustomerStages = async (req, res) => {
     }
 
     // Create a new record
-    const data = await CustomerStages.create({
-      customerId,
-      ...req.body,
-    });
+    const data = await CustomerStages.create({ customerId, ...rest });
 
     return res.status(201).json({
       message: "Customer stages created successfully",
@@ -58,15 +55,15 @@ const getCustomerStages = async (req, res) => {
 const updateCustomerStages = async (req, res) => {
   try {
     const CustomerStages = req.db.CustomerStages;
-    const customerId = req.user?.id;
+    const { customerId, ...rest } = req.body;
 
     if (!customerId) {
       return res
-        .status(401)
-        .json({ error: "Unauthorized: Customer ID missing" });
+        .status(400)
+        .json({ error: "Customer ID is required in the request body" });
     }
 
-    const [updated] = await CustomerStages.update(req.body, {
+    const [updated] = await CustomerStages.update(rest, {
       where: { customerId },
     });
 
