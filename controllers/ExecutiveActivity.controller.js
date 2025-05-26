@@ -1,4 +1,11 @@
 const { Op } = require("sequelize");
+const {
+  startOfWeek,
+  endOfWeek,
+  format,
+  parseISO,
+  addDays,
+} = require("date-fns");
 
 // ✅ Start Work Session
 exports.startWork = async (req, res) => {
@@ -246,5 +253,82 @@ exports.getAdminDashboard = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error fetching admin dashboard data", error });
+  }
+};
+
+exports.getWeeklyAttendance = async (req, res) => {
+  const { ExecutiveActivity } = req.db;
+  try {
+    const { weekStart } = req.query;
+
+    if (!weekStart) {
+      return res
+        .status(400)
+        .json({ error: "weekStart query param is required (YYYY-MM-DD)" });
+    }
+
+    const start = parseISO(weekStart);
+    const end = addDays(start, 6); // End of the week
+
+    // Step 1: Get all executives
+    const executiveIds = await ExecutiveActivity.findAll({
+      attributes: ["ExecutiveId"],
+      group: ["ExecutiveId"],
+    });
+
+    const allExecutiveIds = executiveIds.map((e) => e.ExecutiveId);
+
+    // Step 2: Get all activity records in the week
+    const logs = await ExecutiveActivity.findAll({
+      where: {
+        createdAt: {
+          [Op.between]: [start, end],
+        },
+      },
+    });
+
+    // Step 3: Map logs by executive and date
+    const logsMap = {};
+
+    logs.forEach((log) => {
+      const date = format(new Date(log.createdAt), "yyyy-MM-dd");
+      if (!logsMap[log.ExecutiveId]) {
+        logsMap[log.ExecutiveId] = {};
+      }
+      logsMap[log.ExecutiveId][date] = log;
+    });
+
+    // Step 4: Generate date list
+    const dateList = [];
+    for (let i = 0; i < 7; i++) {
+      const date = format(addDays(start, i), "yyyy-MM-dd");
+      dateList.push(date);
+    }
+
+    // Step 5: Build the report
+    const report = allExecutiveIds.map((execId) => {
+      const attendance = {};
+
+      dateList.forEach((date) => {
+        const log = logsMap[execId]?.[date];
+
+        if (!log || log.workTime === null) {
+          attendance[date] = "Absent";
+        } else {
+          attendance[date] = "Present";
+        }
+      });
+
+      return {
+        executiveId: execId,
+        week: `${format(start, "yyyy-MM-dd")} to ${format(end, "yyyy-MM-dd")}`,
+        attendance,
+      };
+    });
+
+    res.json(report);
+  } catch (error) {
+    console.error("Error generating attendance:", error);
+    res.status(500).json({ error: "Failed to generate attendance report" });
   }
 };
