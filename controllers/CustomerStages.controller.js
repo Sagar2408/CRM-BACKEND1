@@ -6,13 +6,9 @@ const createCustomerStages = async (req, res) => {
 
     // ✅ 1. Authorization check
     if (!customerId) {
-<<<<<<< HEAD
       return res
         .status(400)
         .json({ error: "Customer ID is required in the request body" });
-=======
-      return res.status(401).json({ error: "Unauthorized: Customer ID missing" });
->>>>>>> 41ba45accd1ddd416cf1a9a0318e967ae5e79cd4
     }
 
     // ✅ 2. DEBUG: Log customerId to verify
@@ -31,19 +27,8 @@ const createCustomerStages = async (req, res) => {
       return res.status(400).json({ error: "Customer stages already exist" });
     }
 
-<<<<<<< HEAD
     // Create a new record
     const data = await CustomerStages.create({ customerId, ...rest });
-=======
-    // ✅ 5. Ignore customerId from body to avoid override
-    const { customerId: ignored, ...safeBody } = req.body;
-
-    // ✅ 6. Create new customer stage
-    const data = await CustomerStages.create({
-      customerId, // from auth session
-      ...safeBody,
-    });
->>>>>>> 41ba45accd1ddd416cf1a9a0318e967ae5e79cd4
 
     return res.status(201).json({
       message: "Customer stages created successfully",
@@ -66,7 +51,9 @@ const getCustomerStages = async (req, res) => {
     const customerId = req.user?.id;
 
     if (!customerId) {
-      return res.status(401).json({ error: "Unauthorized: Customer ID missing" });
+      return res
+        .status(401)
+        .json({ error: "Unauthorized: Customer ID missing" });
     }
 
     const data = await CustomerStages.findOne({ where: { customerId } });
@@ -98,7 +85,9 @@ const updateCustomerStages = async (req, res) => {
     });
 
     if (updated === 0) {
-      return res.status(404).json({ error: "No customer stages found to update" });
+      return res
+        .status(404)
+        .json({ error: "No customer stages found to update" });
     }
 
     return res.status(200).json({
