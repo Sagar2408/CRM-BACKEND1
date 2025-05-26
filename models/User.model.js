@@ -51,9 +51,8 @@ module.exports = (sequelize) => {
       is_online: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: false,
+        defaultValue: true,
       },
-
       // Link to Team
       team_id: {
         type: DataTypes.INTEGER,

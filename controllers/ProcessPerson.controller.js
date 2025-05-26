@@ -213,10 +213,78 @@ const importConvertedClientsToCustomers = async (req, res) => {
   }
 };
 
+// GET: Get current settings for logged-in ProcessPerson
+const getProcessSettings = async (req, res) => {
+  try {
+    const ProcessPerson = req.db.ProcessPerson;
+    const personId = req.user?.id;
+
+    if (!personId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const person = await ProcessPerson.findByPk(personId, {
+      attributes: [
+        "fullName", "email", "nationality", "dob", "phone",
+        "passportNumber", "profession", "location"
+      ],
+    });
+
+    if (!person) {
+      return res.status(404).json({ message: "ProcessPerson not found" });
+    }
+
+    res.status(200).json({ settings: person });
+  } catch (error) {
+    console.error("Error fetching process settings:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// PUT: Update settings for logged-in ProcessPerson
+const updateProcessSettings = async (req, res) => {
+  try {
+    const ProcessPerson = req.db.ProcessPerson;
+    const personId = req.user?.id;
+
+    if (!personId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const updateFields = [
+      "fullName", "phone", "dob", "nationality",
+      "passportNumber", "profession", "location"
+    ];
+
+    const updates = {};
+    updateFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    });
+
+    const [updatedRows] = await ProcessPerson.update(updates, {
+      where: { id: personId },
+    });
+
+    if (updatedRows === 0) {
+      return res.status(404).json({ message: "ProcessPerson not found or no changes made" });
+    }
+
+    res.status(200).json({ message: "Settings updated successfully" });
+  } catch (error) {
+    console.error("Error updating process settings:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
 module.exports = {
   loginProcessPerson,
   signupProcessPerson,
   logoutProcessPerson,
   getAllConvertedClients,
   importConvertedClientsToCustomers,
+  getProcessSettings,    
+  updateProcessSettings, 
 };

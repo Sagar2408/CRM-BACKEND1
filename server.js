@@ -31,6 +31,14 @@ app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.options("*", cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
+app.use((req, res, next) => {
+  console.log("📥 [REQUEST]");
+  console.log("Method:", req.method);
+  console.log("URL:", req.originalUrl);
+  console.log("Headers:", req.headers);
+  console.log("Body:", req.body);
+  next();
+});
 
 // 🔐 Middleware for protected routes
 const auth = require("./middleware/auth");
@@ -154,6 +162,8 @@ app.use(
   tenantResolver,
   require("./routes/EodReport.routes")
 );
+app.use("/api", auth(), tenantResolver, require("./routes/Calendar.routes"));
+
 // 🧠 Store connected users
 const connectedUsers = {};
 

@@ -1,4 +1,4 @@
-const { Users } = require("../config/sequelize");
+
 const { Op } = require("sequelize");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -29,19 +29,16 @@ const login = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // ✳️ Block login if can_login is false
-    if (!user.can_login) {
+if (!user.can_login) {
       return res
         .status(403)
         .json({ message: "Login access is disabled. Please contact admin." });
     }
-
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // ✅ Mark user as online
     user.is_online = true;
     await user.save();
 

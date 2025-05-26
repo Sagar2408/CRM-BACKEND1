@@ -59,6 +59,9 @@ module.exports = async (req, res, next) => {
     req.companyId = companyId;
 
     console.log(`✅ [TENANT] Tenant DB resolved for companyId: ${companyId}`);
+
+    console.log('✅ [TENANT] DB resolved and models:', Object.keys(tenantDB));
+
     return next();
   } catch (err) {
     console.error("❌ [TENANT] Error resolving tenant:", err.message || err);

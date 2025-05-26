@@ -13,7 +13,7 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "customers", // ✅ must match table name of Customer model
+          model: "customers", // must match table name of Customer model
           key: "id",
         },
         onDelete: "CASCADE",
@@ -35,6 +35,18 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      bio: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      profession: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      location: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
@@ -45,8 +57,8 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "customer_details", // ✅ matches your naming convention
-      freezeTableName: true, // ✅ avoids auto-pluralization
+      tableName: "customer_details",
+      freezeTableName: true,
       timestamps: true,
     }
   );
