@@ -137,8 +137,34 @@ const logoutCustomer = async (req, res) => {
   }
 };
 
+const getAllCustomers = async (req, res) => {
+  try {
+    const Customer = req.db.Customer;
+
+    const customers = await Customer.findAll({
+      attributes: { exclude: ["password"] }, // Exclude sensitive data
+      order: [["createdAt", "DESC"]],
+    });
+
+    if (!customers || customers.length === 0) {
+      return res.status(404).json({ message: "No customers found" });
+    }
+
+    return res.status(200).json({ customers });
+  } catch (error) {
+    console.error("Fetch all customers error:", {
+      message: error.message,
+      stack: error.stack,
+      sql: error?.sql,
+    });
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 module.exports = {
   loginCustomer,
   signupCustomer,
   logoutCustomer,
+  getAllCustomers
 };
