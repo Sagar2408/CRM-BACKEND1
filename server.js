@@ -6,6 +6,8 @@ const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
+const cron = require("node-cron");
+const notifyUpcomingMeetings = require("./cron/meetingNotifier");
 
 const { getTenantDB } = require("./config/sequelizeManager");
 const {
@@ -14,6 +16,7 @@ const {
 
 const app = express();
 const server = http.createServer(app);
+
 const allowedOrigins = [
   "http://localhost:3000",
   "https://crm-frontend-atozeevisas.vercel.app",
@@ -220,6 +223,12 @@ io.on("connection", (socket) => {
       }
     }
   });
+});
+
+// ⏰ CRON JOB: Schedule meeting notification checker every minute
+cron.schedule("* * * * *", async () => {
+  console.log("⏰ Cron job running for meeting notifications...");
+  await notifyUpcomingMeetings();
 });
 
 // 🚀 Start Server
