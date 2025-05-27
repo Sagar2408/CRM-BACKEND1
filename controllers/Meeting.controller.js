@@ -1,10 +1,3 @@
-const {
-  Meeting,
-  ClientLead,
-  Lead,
-  FreshLead,
-  Users,
-} = require("../config/sequelize");
 
 // 📌 Get all meetings with pagination
 exports.getAllMeetings = async (req, res) => {
