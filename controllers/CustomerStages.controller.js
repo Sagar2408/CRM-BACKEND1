@@ -116,9 +116,48 @@ const updateCustomerStages = async (req, res) => {
   }
 };
 
+const getCustomerStagesById = async (req, res) => {
+  try {
+    const { Customer, CustomerStages } = req.db;
+
+    // Accept customerId from query or params
+    const customerId = req.query.customerId || req.params.customerId;
+
+    if (!customerId) {
+      return res
+        .status(400)
+        .json({ error: "Customer ID is required in query or params" });
+    }
+
+    // Optional: Validate that customer exists
+    const customer = await Customer.findByPk(customerId);
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    const data = await CustomerStages.findOne({
+      where: { customerId },
+    });
+
+    if (!data) {
+      return res.status(404).json({ error: "Customer stages not found" });
+    }
+
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Fetch error:", {
+      message: error.message,
+      stack: error.stack,
+      sql: error?.sql,
+    });
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 
 module.exports = {
   createCustomerStages,
   getCustomerStages,
   updateCustomerStages,
+  getCustomerStagesById
 };
