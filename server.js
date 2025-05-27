@@ -8,6 +8,9 @@ const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
 
 const { getTenantDB } = require("./config/sequelizeManager");
+const {
+  initializeNotificationHelper,
+} = require("./utils/notificationHelper");
 
 const app = express();
 const server = http.createServer(app);
@@ -17,6 +20,7 @@ const allowedOrigins = [
   "https://crm-frontend-live.vercel.app",
   "https://crm-frontend-eta-olive.vercel.app",
 ];
+
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
@@ -47,7 +51,7 @@ const tenantResolver = require("./middleware/tenantResolver");
 
 // 📦 Routes
 app.use("/api/masteruser", require("./routes/MasterUser.routes")); // public login/signup
-app.use("/api/company", require("./routes/Company.routes")); // includes both public & protected (see below)
+app.use("/api/company", require("./routes/Company.routes")); // includes both public & protected
 
 // Tenant routes
 app.use("/api", tenantResolver, require("./routes/User.routes"));
@@ -167,6 +171,9 @@ app.use("/api", auth(), tenantResolver, require("./routes/Calendar.routes"));
 // 🧠 Store connected users
 const connectedUsers = {};
 
+// Initialize Notification System
+initializeNotificationHelper(io, connectedUsers);
+
 // 🔌 SOCKET.IO EVENTS
 io.on("connection", (socket) => {
   console.log("🟢 New socket connection:", socket.id);
@@ -215,33 +222,13 @@ io.on("connection", (socket) => {
   });
 });
 
-// 🔔 Notification Helper
-const sendNotificationToUser = async (userId, companyId, notificationData) => {
-  try {
-    const socketId = connectedUsers[userId];
-    const tenantDB = await getTenantDB(companyId);
-
-    const notification = await tenantDB.Notification.create(notificationData);
-
-    if (socketId) {
-      io.to(socketId).emit("new_notification", notification);
-      console.log(`📨 Sent notification to user ${userId}`);
-    } else {
-      console.log(`⚠️ User ${userId} not connected`);
-    }
-  } catch (err) {
-    console.error("❌ Error sending notification:", err);
-  }
-};
-
-module.exports = {
-  app,
-  sendNotificationToUser,
-};
-
 // 🚀 Start Server
 if (process.env.NODE_ENV !== "test") {
   server.listen(PORT, () =>
     console.log(`🚀 Server running on http://localhost:${PORT}`)
   );
 }
+
+module.exports = {
+  app,
+};
