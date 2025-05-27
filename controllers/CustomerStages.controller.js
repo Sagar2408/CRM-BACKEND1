@@ -1,6 +1,6 @@
 const createCustomerStages = async (req, res) => {
   try {
-    const Customer = req.db.Customer;
+    const Customers = req.db.Customers;
     const CustomerStages = req.db.CustomerStages;
     const { customerId, ...rest } = req.body;
 
@@ -15,7 +15,7 @@ const createCustomerStages = async (req, res) => {
     console.log("Creating stage for customerId:", customerId);
 
     // ✅ 3. Check if the customer actually exists
-    const customer = await Customer.findByPk(customerId);
+    const customer = await Customers.findByPk(customerId);
     if (!customer) {
       console.log("Customer not found in database.");
       return res.status(400).json({ error: "Customer does not exist" });
