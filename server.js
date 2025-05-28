@@ -171,6 +171,10 @@ app.use(
 );
 app.use("/api", auth(), tenantResolver, require("./routes/Calendar.routes"));
 
+
+// lead check
+ app.use('/api',tenantResolver, require('./routes/leadCheck.routes'));
+
 // 🧠 Store connected users
 const connectedUsers = {};
 
