@@ -1,34 +1,64 @@
+// Required dependencies
 const { Op } = require("sequelize");
-const {
-  startOfWeek,
-  endOfWeek,
-  format,
-  parseISO,
-  addDays,
-} = require("date-fns");
+const { format } = require("date-fns");
 
-// ✅ Start Work Session
-exports.startWork = async (req, res) => {
+// Utility to get today's date in YYYY-MM-DD format
+function getTodayDate() {
+  return format(new Date(), "yyyy-MM-dd");
+}
+
+// Track lead section visits
+exports.trackLeadVisit = async (req, res) => {
   try {
     const { ExecutiveId } = req.body;
     const { ExecutiveActivity } = req.db;
+    const today = getTodayDate();
 
     if (!ExecutiveId)
       return res.status(400).json({ message: "ExecutiveId is required" });
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     let activity = await ExecutiveActivity.findOne({
-      where: {
-        ExecutiveId,
-        updatedAt: { [Op.gte]: today },
-      },
+      where: { ExecutiveId, activityDate: today },
     });
 
     if (!activity) {
       activity = await ExecutiveActivity.create({
         ExecutiveId,
+        activityDate: today,
+        workTime: 0,
+        breakTime: 0,
+        dailyCallTime: 0,
+        leadSectionVisits: 1,
+      });
+    } else {
+      activity.leadSectionVisits += 1;
+      await activity.save();
+    }
+
+    res.json({ message: "Lead visit tracked", activity });
+  } catch (error) {
+    res.status(500).json({ message: "Error tracking lead visit", error });
+  }
+};
+
+// Start work session
+exports.startWork = async (req, res) => {
+  try {
+    const { ExecutiveId } = req.body;
+    const { ExecutiveActivity } = req.db;
+    const today = getTodayDate();
+
+    if (!ExecutiveId)
+      return res.status(400).json({ message: "ExecutiveId is required" });
+
+    let activity = await ExecutiveActivity.findOne({
+      where: { ExecutiveId, activityDate: today },
+    });
+
+    if (!activity) {
+      activity = await ExecutiveActivity.create({
+        ExecutiveId,
+        activityDate: today,
         workStartTime: new Date(),
         workTime: 0,
         breakTime: 0,
@@ -46,28 +76,22 @@ exports.startWork = async (req, res) => {
   }
 };
 
-// ✅ Stop Work Session
+// Stop work session
 exports.stopWork = async (req, res) => {
   try {
     const { ExecutiveId } = req.body;
     const { ExecutiveActivity } = req.db;
+    const today = getTodayDate();
 
     if (!ExecutiveId)
       return res.status(400).json({ message: "ExecutiveId is required" });
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    let activity = await ExecutiveActivity.findOne({
-      where: {
-        ExecutiveId,
-        updatedAt: { [Op.gte]: today },
-      },
+    const activity = await ExecutiveActivity.findOne({
+      where: { ExecutiveId, activityDate: today },
     });
 
-    if (!activity || !activity.workStartTime) {
+    if (!activity || !activity.workStartTime)
       return res.status(400).json({ message: "Work session not started" });
-    }
 
     const workDuration = Math.floor(
       (new Date() - new Date(activity.workStartTime)) / 1000
@@ -83,23 +107,18 @@ exports.stopWork = async (req, res) => {
   }
 };
 
-// ✅ Start Break
+// Start break
 exports.startBreak = async (req, res) => {
   try {
     const { ExecutiveId } = req.body;
     const { ExecutiveActivity, Users } = req.db;
+    const today = getTodayDate();
 
     if (!ExecutiveId)
       return res.status(400).json({ message: "ExecutiveId is required" });
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    let activity = await ExecutiveActivity.findOne({
-      where: {
-        ExecutiveId,
-        updatedAt: { [Op.gte]: today },
-      },
+    const activity = await ExecutiveActivity.findOne({
+      where: { ExecutiveId, activityDate: today },
     });
 
     if (!activity)
@@ -107,38 +126,30 @@ exports.startBreak = async (req, res) => {
 
     activity.breakStartTime = new Date();
     await activity.save();
-
     await Users.update({ is_online: false }, { where: { id: ExecutiveId } });
 
     res.json({ message: "Break started", activity });
   } catch (error) {
-    console.error("Error starting break:", error);
     res.status(500).json({ message: "Error starting break", error });
   }
 };
 
-// ✅ Stop Break
+// Stop break
 exports.stopBreak = async (req, res) => {
   try {
     const { ExecutiveId } = req.body;
     const { ExecutiveActivity, Users } = req.db;
+    const today = getTodayDate();
 
     if (!ExecutiveId)
       return res.status(400).json({ message: "ExecutiveId is required" });
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    let activity = await ExecutiveActivity.findOne({
-      where: {
-        ExecutiveId,
-        updatedAt: { [Op.gte]: today },
-      },
+    const activity = await ExecutiveActivity.findOne({
+      where: { ExecutiveId, activityDate: today },
     });
 
-    if (!activity || !activity.breakStartTime) {
-      return res.status(400).json({ message: "Break session not started" });
-    }
+    if (!activity || !activity.breakStartTime)
+      return res.status(400).json({ message: "Break not started" });
 
     const breakDuration = Math.floor(
       (new Date() - new Date(activity.breakStartTime)) / 1000
@@ -147,41 +158,32 @@ exports.stopBreak = async (req, res) => {
     activity.breakTime += breakDuration;
     activity.breakStartTime = null;
     await activity.save();
-
     await Users.update({ is_online: true }, { where: { id: ExecutiveId } });
 
     res.json({ message: "Break stopped", breakDuration, activity });
   } catch (error) {
-    console.error("Error stopping break:", error);
     res.status(500).json({ message: "Error stopping break", error });
   }
 };
 
-// ✅ Update Call Time
+// Update call duration
 exports.updateCallTime = async (req, res) => {
   try {
     const { ExecutiveId, callDuration } = req.body;
     const { ExecutiveActivity } = req.db;
+    const today = getTodayDate();
 
-    if (!ExecutiveId || isNaN(callDuration) || callDuration < 0) {
-      return res
-        .status(400)
-        .json({ message: "Invalid callDuration or ExecutiveId" });
-    }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    if (!ExecutiveId || isNaN(callDuration) || callDuration < 0)
+      return res.status(400).json({ message: "Invalid input" });
 
     let activity = await ExecutiveActivity.findOne({
-      where: {
-        ExecutiveId,
-        updatedAt: { [Op.gte]: today },
-      },
+      where: { ExecutiveId, activityDate: today },
     });
 
     if (!activity) {
       activity = await ExecutiveActivity.create({
         ExecutiveId,
+        activityDate: today,
         workTime: 0,
         breakTime: 0,
         dailyCallTime: callDuration * 60,
@@ -195,140 +197,5 @@ exports.updateCallTime = async (req, res) => {
     res.json({ message: "Call time updated", activity });
   } catch (error) {
     res.status(500).json({ message: "Error updating call time", error });
-  }
-};
-
-// ✅ Track Lead Visit
-exports.trackLeadVisit = async (req, res) => {
-  try {
-    const { ExecutiveId } = req.body;
-    const { ExecutiveActivity } = req.db;
-
-    if (!ExecutiveId)
-      return res.status(400).json({ message: "ExecutiveId is required" });
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    let activity = await ExecutiveActivity.findOne({
-      where: {
-        ExecutiveId,
-        updatedAt: { [Op.gte]: today },
-      },
-    });
-
-    if (!activity) {
-      activity = await ExecutiveActivity.create({
-        ExecutiveId,
-        workTime: 0,
-        breakTime: 0,
-        dailyCallTime: 0,
-        leadSectionVisits: 1,
-      });
-    } else {
-      activity.leadSectionVisits += 1;
-      await activity.save();
-    }
-
-    res.json({ message: "Lead visit tracked", activity });
-  } catch (error) {
-    res.status(500).json({ message: "Error tracking lead visit", error });
-  }
-};
-
-// ✅ Get Admin Dashboard
-exports.getAdminDashboard = async (req, res) => {
-  try {
-    const { ExecutiveActivity } = req.db;
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
-    const executives = await ExecutiveActivity.findAll({
-      where: { updatedAt: { [Op.gte]: todayStart } },
-      order: [["updatedAt", "DESC"]],
-    });
-
-    res.json({ executives });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error fetching admin dashboard data", error });
-  }
-};
-
-exports.getWeeklyAttendance = async (req, res) => {
-  const { ExecutiveActivity } = req.db;
-  try {
-    const { weekStart } = req.query;
-
-    if (!weekStart) {
-      return res
-        .status(400)
-        .json({ error: "weekStart query param is required (YYYY-MM-DD)" });
-    }
-
-    const start = parseISO(weekStart);
-    const end = addDays(start, 6); // End of the week
-
-    // Step 1: Get all executives
-    const executiveIds = await ExecutiveActivity.findAll({
-      attributes: ["ExecutiveId"],
-      group: ["ExecutiveId"],
-    });
-
-    const allExecutiveIds = executiveIds.map((e) => e.ExecutiveId);
-
-    // Step 2: Get all activity records in the week
-    const logs = await ExecutiveActivity.findAll({
-      where: {
-        createdAt: {
-          [Op.between]: [start, end],
-        },
-      },
-    });
-
-    // Step 3: Map logs by executive and date
-    const logsMap = {};
-
-    logs.forEach((log) => {
-      const date = format(new Date(log.createdAt), "yyyy-MM-dd");
-      if (!logsMap[log.ExecutiveId]) {
-        logsMap[log.ExecutiveId] = {};
-      }
-      logsMap[log.ExecutiveId][date] = log;
-    });
-
-    // Step 4: Generate date list
-    const dateList = [];
-    for (let i = 0; i < 7; i++) {
-      const date = format(addDays(start, i), "yyyy-MM-dd");
-      dateList.push(date);
-    }
-
-    // Step 5: Build the report
-    const report = allExecutiveIds.map((execId) => {
-      const attendance = {};
-
-      dateList.forEach((date) => {
-        const log = logsMap[execId]?.[date];
-
-        if (!log || log.workTime === null) {
-          attendance[date] = "Absent";
-        } else {
-          attendance[date] = "Present";
-        }
-      });
-
-      return {
-        executiveId: execId,
-        week: `${format(start, "yyyy-MM-dd")} to ${format(end, "yyyy-MM-dd")}`,
-        attendance,
-      };
-    });
-
-    res.json(report);
-  } catch (error) {
-    console.error("Error generating attendance:", error);
-    res.status(500).json({ error: "Failed to generate attendance report" });
   }
 };
