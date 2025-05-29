@@ -180,6 +180,9 @@ app.use("/api", auth(), tenantResolver, require("./routes/Calendar.routes"));
 // lead check
  app.use('/api',tenantResolver, require('./routes/leadCheck.routes'));
 
+ // Eod report
+  app.use('/api' ,tenantResolver,require('./routes/Eod.routes'));
+
 // 🧠 Store connected users
 const connectedUsers = {};
 
