@@ -8,7 +8,11 @@ router.post("/startBreak", executiveActivityController.startBreak);
 router.post("/stopBreak", executiveActivityController.stopBreak);
 router.post("/updateCallTime", executiveActivityController.updateCallTime);
 router.post("/trackLeadVisit", executiveActivityController.trackLeadVisit);
-router.get("/adminDashboard", executiveActivityController.getAdminDashboard);
-router.get("/attendance", executiveActivityController.getWeeklyAttendance);
+
+// router.get("/adminDashboard", executiveActivityController.getAdminDashboard);
+
+// router.get("/attendance", executiveActivityController.getWeeklyAttendance);
+
+
 
 module.exports = router;
