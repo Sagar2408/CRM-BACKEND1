@@ -142,7 +142,15 @@ const getAllCustomers = async (req, res) => {
     const Customer = req.db.Customer;
 
     const customers = await Customer.findAll({
-      attributes: { exclude: ["password"] }, // Exclude sensitive data
+      attributes: [
+        "id",
+        "fullName",
+        "email",
+        "phone", 
+        "status",
+        "createdAt",
+        "updatedAt"
+      ], 
       order: [["createdAt", "DESC"]],
     });
 
@@ -161,10 +169,9 @@ const getAllCustomers = async (req, res) => {
   }
 };
 
-
 module.exports = {
   loginCustomer,
   signupCustomer,
   logoutCustomer,
-  getAllCustomers
+  getAllCustomers,
 };
