@@ -205,12 +205,24 @@ const updateProcessSettings = async (req, res) => {
 
 const getAllConvertedClients = async (req, res) => {
   try {
+    // Debug: Log available models
+    if (!req.db) {
+      console.error("❌ req.db is undefined.");
+      return res
+        .status(500)
+        .json({ message: "Database connection not available." });
+    }
+
+    console.log("📦 Models available:", Object.keys(req.db));
+
     const { ClientLead } = req.db;
 
     if (!ClientLead) {
-      console.error("ClientLead model not found in request database.");
-      return res.status(500).json({ message: "ClientLead model is missing." });
+      console.error("❌ ClientLead model not found in request DB.");
+      return res.status(500).json({ message: "ClientLead model missing." });
     }
+
+    console.log("✅ Fetching converted clients...");
 
     const convertedClients = await ClientLead.findAll({
       where: { status: "Converted" },
@@ -218,42 +230,70 @@ const getAllConvertedClients = async (req, res) => {
     });
 
     if (!convertedClients.length) {
+      console.warn("⚠️ No converted clients found.");
       return res.status(404).json({ message: "No converted clients found." });
     }
 
+    console.log(`✅ Retrieved ${convertedClients.length} converted clients.`);
     return res.status(200).json({
       message: "Converted clients retrieved successfully.",
       count: convertedClients.length,
       clients: convertedClients,
     });
   } catch (error) {
-    console.error("Error fetching converted clients:", error);
-    return res
-      .status(500)
-      .json({ message: "Failed to fetch converted clients." });
+    console.error("❌ Error in getAllConvertedClients:", error);
+    return res.status(500).json({
+      message: "Failed to fetch converted clients.",
+      error: error.message,
+    });
   }
 };
 const importConvertedClientsToCustomers = async (req, res) => {
   try {
+    if (!req.db) {
+      console.error("❌ req.db is undefined.");
+      return res
+        .status(500)
+        .json({ message: "Database connection not available." });
+    }
+
     const { ClientLead, Customer } = req.db;
+    console.log("📦 Models available:", Object.keys(req.db));
 
     if (!ClientLead || !Customer) {
-      return res.status(500).json({ message: "Models not found in request." });
+      console.error("❌ Required models missing: ClientLead or Customer.");
+      return res
+        .status(500)
+        .json({ message: "Required models not found in request DB." });
     }
 
     const convertedLeads = await ClientLead.findAll({
       where: { status: "Converted" },
     });
 
+    if (!convertedLeads.length) {
+      console.warn("⚠️ No converted leads found.");
+      return res.status(404).json({ message: "No converted leads to import." });
+    }
+
+    console.log(`🔄 Starting import for ${convertedLeads.length} leads...`);
+
     let importedCount = 0;
     let skippedCount = 0;
     const errors = [];
 
     for (const lead of convertedLeads) {
+      console.log("📌 Processing lead:", lead.id, lead.email);
+
       if (!lead.email || !lead.phone) {
+        console.warn(
+          "⚠️ Skipping lead due to missing email or phone:",
+          lead.id
+        );
         skippedCount++;
         errors.push({
           name: lead.name || "Unknown",
+          email: lead.email || "Missing",
           reason: "Missing email or phone",
         });
         continue;
@@ -264,33 +304,41 @@ const importConvertedClientsToCustomers = async (req, res) => {
       });
 
       if (existing) {
+        console.warn(`⚠️ Skipping ${lead.email}: already exists.`);
         skippedCount++;
         errors.push({
           email: lead.email,
-          reason: "Already exists in Customer table",
+          reason: "Email already exists in Customer table",
         });
         continue;
       }
 
       try {
         const hashedPassword = await bcrypt.hash(lead.phone, 10);
-
-        await Customer.create({
+        const customerPayload = {
           fullName: lead.name,
           email: lead.email,
           password: hashedPassword,
           status: "pending",
-        });
+        };
 
+        console.log("📝 Creating customer:", customerPayload);
+        await Customer.create(customerPayload);
         importedCount++;
       } catch (createErr) {
-        console.error(`Failed to import ${lead.email}:`, createErr);
+        console.error(`❌ Failed to import ${lead.email}:`, createErr.message);
         errors.push({
           email: lead.email,
           reason: createErr.message,
         });
       }
     }
+
+    console.log("✅ Import Summary:", {
+      imported: importedCount,
+      skipped: skippedCount,
+      errorsCount: errors.length,
+    });
 
     return res.status(200).json({
       message: "Import completed.",
@@ -299,10 +347,11 @@ const importConvertedClientsToCustomers = async (req, res) => {
       errors,
     });
   } catch (error) {
-    console.error("Import error:", error);
-    return res
-      .status(500)
-      .json({ message: "Failed to import converted clients." });
+    console.error("❌ Error in importConvertedClientsToCustomers:", error);
+    return res.status(500).json({
+      message: "Failed to import converted clients.",
+      error: error.message,
+    });
   }
 };
 
