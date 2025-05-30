@@ -235,6 +235,33 @@ const getDealFunnel = async (req, res) => {
   }
 };
 
+// 📌 Get Client Leads with status "Follow-Up"
+const getFollowUpClientLeads = async (req, res) => {
+  try {
+    const { ClientLead } = req.db;
+
+    const leads = await ClientLead.findAll({
+      where: { status: "Follow-Up" },
+    });
+
+    if (!leads.length) {
+      return res.status(404).json({
+        message: "No leads found with status 'Follow-Up'",
+      });
+    }
+
+    res.status(200).json({
+      message: "Follow-Up leads retrieved successfully",
+      leads,
+    });
+  } catch (err) {
+    console.error("Error fetching follow-up leads:", err);
+    res
+      .status(500)
+      .json({ message: "Failed to fetch follow-up leads", error: err.message });
+  }
+};
+
 module.exports = {
   upload,
   uploadFile,
@@ -242,4 +269,5 @@ module.exports = {
   assignExecutive,
   getLeadsByExecutive,
   getDealFunnel,
+  getFollowUpClientLeads
 };
