@@ -1,6 +1,6 @@
 // Required dependencies
 const { Op } = require("sequelize");
-const { format } = require("date-fns");
+const { parseISO, addDays, format } = require("date-fns");
 
 // Utility to get today's date in YYYY-MM-DD format
 function getTodayDate() {
@@ -294,5 +294,29 @@ exports.getWeeklyAttendance = async (req, res) => {
   } catch (error) {
     console.error("Error generating attendance:", error);
     res.status(500).json({ error: "Failed to generate attendance report" });
+  }
+};
+exports.getExecutiveActivityByExecutiveId = async (req, res) => {
+  const { executiveId } = req.params;
+  const { ExecutiveActivity } = req.db;
+
+  try {
+    const activities = await ExecutiveActivity.findAll({
+      where: { ExecutiveId: executiveId },
+      order: [["activityDate", "DESC"]], // optional: sort by recent first
+    });
+
+    if (!activities || activities.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No activities found for this Executive ID" });
+    }
+
+    res.status(200).json(activities);
+  } catch (error) {
+    console.error("Error fetching executive activities:", error);
+    res
+      .status(500)
+      .json({ message: "Server error while fetching executive activities" });
   }
 };

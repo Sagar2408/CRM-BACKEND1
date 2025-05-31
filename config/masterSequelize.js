@@ -12,11 +12,11 @@ const sequelize = new Sequelize(
     dialect: "mysql",
     logging: false,
     pool: {
-    max: 10,        // Maximum number of connection in pool
-    min: 0,         // Minimum number of connection in pool
-    acquire: 30000, // Maximum time, in ms, that pool will try to get connection before throwing error
-    idle: 10000     // Maximum time, in ms, that a connection can be idle before being released
-  }
+      max: 10, // Maximum number of connection in pool
+      min: 0, // Minimum number of connection in pool
+      acquire: 30000, // Maximum time, in ms, that pool will try to get connection before throwing error
+      idle: 10000, // Maximum time, in ms, that a connection can be idle before being released
+    },
   }
 );
 
@@ -35,7 +35,7 @@ db.MasterUser = require("../models/MasterUser.model")(sequelize, DataTypes);
 
 // Sync schema (optional, safe for dev)
 sequelize
-  .sync({ alter: true})
+  .sync({ alter: true })
   .then(() => console.log("✅ MasterDB tables synced"))
   .catch((err) => console.error("❌ Error syncing MasterDB tables:", err));
 
