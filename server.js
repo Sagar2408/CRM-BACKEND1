@@ -170,12 +170,12 @@ app.use(
   require("./routes/EodReport.routes")
 );
 app.use("/api", auth(), tenantResolver, require("./routes/Calendar.routes"));
-// app.use(
-//   "/api",
-//   auth(),
-//   tenantResolver,
-//   require("./routes/UserStatus.routes")
-// );
+app.use(
+  "/api",
+  auth(),
+  tenantResolver,
+  require("./routes/UserStatus.routes")
+);
 
 // lead check
  app.use('/api',tenantResolver, require('./routes/leadCheck.routes'));
