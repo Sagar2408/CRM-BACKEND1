@@ -29,10 +29,10 @@ module.exports = (sequelize) => {
         type: DataTypes.ENUM("Hot", "Warm", "Cold"),
         allowNull: false,
       },
-      reason_for_follow_up: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
+       reason_for_follow_up: {
+        type: DataTypes.TEXT("long"),
+         allowNull: false,
+        },
       follow_up_date: {
         type: DataTypes.DATEONLY,
         allowNull: false,
