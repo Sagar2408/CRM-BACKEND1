@@ -40,7 +40,7 @@ module.exports = (sequelize) => {
         allowNull: false,
       },
       reason_for_follow_up: {
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         allowNull: false,
       },
       follow_up_date: {
