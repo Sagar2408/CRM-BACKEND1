@@ -550,6 +550,102 @@ const getOnlineExecutives = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+const createExecutive = async (req, res) => {
+  try {
+    const Users = req.db.Users;
+
+    const {
+      username,
+      email,
+      password,
+      profile_picture,
+      team_id,
+      firstname,
+      lastname,
+      country,
+      city,
+      state,
+      postal_code,
+      tax_id,
+    } = req.body;
+
+    // Basic validation
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username and password are required." });
+    }
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: "Invalid email format." });
+    }
+
+    // Prevent creating non-executive roles via this endpoint
+    if (req.body.role && req.body.role !== "Executive") {
+      return res.status(400).json({ error: "This route only allows creation of Executives." });
+    }
+
+    // Check for duplicate username or email
+    const existing = await Users.findOne({
+      where: {
+        [Op.or]: [{ username }, { email }],
+      },
+    });
+
+    if (existing) {
+      const conflictField =
+        existing.username === username ? "Username" : "Email";
+      return res.status(400).json({ error: `${conflictField} already exists.` });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newExecutive = await Users.create({
+      username,
+      email,
+      password: hashedPassword,
+      profile_picture,
+      team_id,
+      firstname,
+      lastname,
+      country,
+      city,
+      state,
+      postal_code,
+      tax_id,
+      role: "Executive",
+    });
+
+    // Send welcome email
+    if (email) {
+      const emailResult = await sendExecutiveSignupEmail(email, username);
+      if (!emailResult.success) {
+        console.warn("Failed to send signup email:", emailResult.message);
+      }
+    }
+
+    return res.status(201).json({
+      message: "Executive created successfully.",
+      executive: {
+        id: newExecutive.id,
+        username: newExecutive.username,
+        email: newExecutive.email,
+        role: newExecutive.role,
+        team_id: newExecutive.team_id,
+        firstname: newExecutive.firstname,
+        lastname: newExecutive.lastname,
+        createdAt: newExecutive.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Create Executive error:", error);
+    let msg = "Internal server error.";
+    if (error.name === "SequelizeValidationError") {
+      msg = error.errors.map((e) => e.message).join(", ");
+    } else if (error.name === "SequelizeUniqueConstraintError") {
+      msg = "Username or email already exists.";
+    }
+    return res.status(500).json({ error: msg });
+  }
+};
 
 // Export all controller methods
 module.exports = {
@@ -568,4 +664,5 @@ module.exports = {
   getAllTeamLeads,
   getOnlineExecutives,
   toggleUserLoginAccess,
+  createExecutive
 };
