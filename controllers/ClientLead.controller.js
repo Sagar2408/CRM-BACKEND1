@@ -73,7 +73,7 @@ const processExcel = (filePath) => {
 // Upload handler
 const uploadFile = async (req, res) => {
   try {
-    const { ClientLead, Sequelize } = req.db;
+    const { ClientLead } = req.db;
     const file = req.file;
 
     if (!file) return res.status(400).json({ message: "No file uploaded" });
@@ -99,9 +99,6 @@ const uploadFile = async (req, res) => {
     ];
 
     let successCount = 0;
-    let duplicateCount = 0;
-    let skippedCount = 0;
-
     for (const record of data) {
       const cleaned = {};
       for (const key of allowedFields) {
@@ -110,25 +107,10 @@ const uploadFile = async (req, res) => {
 
       if (!cleaned.name) {
         console.warn("⛔ Skipping row with no name:", record);
-        skippedCount++;
         continue;
       }
 
-      // 🔍 Check for duplicates using email or phone
-      const whereClause = {
-        [Sequelize.Op.or]: [
-          cleaned.email ? { email: cleaned.email } : null,
-          cleaned.phone ? { phone: cleaned.phone } : null,
-        ].filter(Boolean),
-      };
-
-      const existing = await ClientLead.findOne({ where: whereClause });
-
-      if (existing) {
-        console.warn("⚠️ Duplicate lead skipped:", cleaned);
-        duplicateCount++;
-        continue;
-      }
+      console.log("💾 Cleaned Lead:", cleaned); // Important debug
 
       try {
         await ClientLead.create(cleaned);
@@ -136,27 +118,16 @@ const uploadFile = async (req, res) => {
       } catch (err) {
         console.error("❌ Error saving record:", cleaned);
         console.error("Sequelize Error:", err.message);
-        skippedCount++;
       }
     }
 
-    // Clean up uploaded file
     fs.unlink(file.path, () => {});
-
-    res.status(200).json({
-      message: "Lead import completed",
-      successCount,
-      duplicateCount,
-      skippedCount,
-      totalProcessed: data.length
-    });
-
+    res.status(200).json({ message: `${successCount} leads imported successfully` });
   } catch (err) {
     console.error("Upload error:", err);
     res.status(500).json({ message: "Failed to save data", error: err.message });
   }
 };
-
 
 // Other functions
 const getClientLeads = async (req, res) => {
