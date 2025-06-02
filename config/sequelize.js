@@ -57,10 +57,10 @@ module.exports = function initializeModels(sequelize) {
   // ------------------------
 
   db.Users.hasMany(db.ExecutiveActivity, {
-    foreignKey: "userId",
+    foreignKey: "ExecutiveId",
     onDelete: "CASCADE",
   });
-  db.ExecutiveActivity.belongsTo(db.Users, { foreignKey: "userId" });
+  db.ExecutiveActivity.belongsTo(db.Users, { foreignKey: "ExecutiveId" });
 
   db.ClientLead.hasMany(db.Lead, {
     foreignKey: "clientLeadId",

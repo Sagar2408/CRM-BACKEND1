@@ -221,7 +221,7 @@ exports.getAdminDashboard = async (req, res) => {
 };
 
 exports.getWeeklyAttendance = async (req, res) => {
-  const { ExecutiveActivity } = req.db;
+  const { ExecutiveActivity, Users } = req.db;
   try {
     const { weekStart } = req.query;
 
@@ -232,15 +232,24 @@ exports.getWeeklyAttendance = async (req, res) => {
     }
 
     const start = parseISO(weekStart);
-    const end = addDays(start, 6); // End of the week
+    const end = addDays(start, 6);
 
-    // Step 1: Get all executives
+    // Step 1: Get all ExecutiveIds along with their names
     const executiveIds = await ExecutiveActivity.findAll({
       attributes: ["ExecutiveId"],
-      group: ["ExecutiveId"],
+      include: [
+        {
+          model: Users,
+          attributes: ["username"], // 👈 get the name of the executive
+        },
+      ],
+      group: ["ExecutiveId", "User.id"], // 👈 also group by user.id to avoid Sequelize warnings
     });
 
-    const allExecutiveIds = executiveIds.map((e) => e.ExecutiveId);
+    const allExecutives = executiveIds.map((entry) => ({
+      id: entry.ExecutiveId,
+      name: entry.User?.username || "Unknown",
+    }));
 
     // Step 2: Get all activity records in the week
     const logs = await ExecutiveActivity.findAll({
@@ -270,11 +279,11 @@ exports.getWeeklyAttendance = async (req, res) => {
     }
 
     // Step 5: Build the report
-    const report = allExecutiveIds.map((execId) => {
+    const report = allExecutives.map(({ id, name }) => {
       const attendance = {};
 
       dateList.forEach((date) => {
-        const log = logsMap[execId]?.[date];
+        const log = logsMap[id]?.[date];
 
         if (!log || log.workTime === null) {
           attendance[date] = "Absent";
@@ -284,7 +293,8 @@ exports.getWeeklyAttendance = async (req, res) => {
       });
 
       return {
-        executiveId: execId,
+        executiveId: id,
+        executiveName: name, // ✅ include name here
         week: `${format(start, "yyyy-MM-dd")} to ${format(end, "yyyy-MM-dd")}`,
         attendance,
       };
@@ -296,6 +306,7 @@ exports.getWeeklyAttendance = async (req, res) => {
     res.status(500).json({ error: "Failed to generate attendance report" });
   }
 };
+
 exports.getExecutiveActivityByExecutiveId = async (req, res) => {
   const { executiveId } = req.params;
   const { ExecutiveActivity } = req.db;
