@@ -70,9 +70,10 @@ const processExcel = (filePath) => {
   });
 };
 
+// Upload handler
 const uploadFile = async (req, res) => {
   try {
-    const { ClientLead, Sequelize } = req.db;
+    const { ClientLead } = req.db;
     const file = req.file;
 
     if (!file) return res.status(400).json({ message: "No file uploaded" });
@@ -81,7 +82,7 @@ const uploadFile = async (req, res) => {
     let data = [];
 
     if (ext === ".xlsx" || ext === ".xls") {
-      data = await processExcel(file.path);  // ✅ Await here
+      data = processExcel(file.path);
     } else if (ext === ".csv") {
       try {
         data = await processCSV(file.path);
@@ -109,36 +110,19 @@ const uploadFile = async (req, res) => {
         continue;
       }
 
-      // Optional: prevent duplicates by email or phone
-      const exists = await ClientLead.findOne({
-        where: {
-          [Sequelize.Op.or]: [
-            cleaned.email ? { email: cleaned.email } : null,
-            cleaned.phone ? { phone: cleaned.phone } : null,
-          ].filter(Boolean),
-        },
-      });
-
-      if (exists) {
-        console.warn("⚠️ Duplicate skipped:", cleaned);
-        continue;
-      }
+      console.log("💾 Cleaned Lead:", cleaned); // Important debug
 
       try {
         await ClientLead.create(cleaned);
         successCount++;
       } catch (err) {
         console.error("❌ Error saving record:", cleaned);
-        console.error("Sequelize Full Error:", err); // Full error
+        console.error("Sequelize Error:", err.message);
       }
     }
 
-    fs.unlink(file.path, (err) => {
-      if (err) console.error("Failed to delete uploaded file:", err);
-    });
-
+    fs.unlink(file.path, () => {});
     res.status(200).json({ message: `${successCount} leads imported successfully` });
-
   } catch (err) {
     console.error("Upload error:", err);
     res.status(500).json({ message: "Failed to save data", error: err.message });
@@ -252,34 +236,7 @@ const getDealFunnel = async (req, res) => {
   }
 };
 
-
-// 📌 Get Client Leads with status "Follow-Up"
-const getFollowUpClientLeads = async (req, res) => {
-  try {
-    const { ClientLead } = req.db;
-
-    const leads = await ClientLead.findAll({
-      where: { status: "Follow-Up" },
-    });
-
-    if (!leads.length) {
-      return res.status(404).json({
-        message: "No leads found with status 'Follow-Up'",
-      });
-    }
-
-    res.status(200).json({
-      message: "Follow-Up leads retrieved successfully",
-      leads,
-    });
-  } catch (err) {
-    console.error("Error fetching follow-up leads:", err);
-    res
-      .status(500)
-      .json({ message: "Failed to fetch follow-up leads", error: err.message });
-  }
-};
-
+// Exports
 module.exports = {
   upload,
   uploadFile,
@@ -287,6 +244,4 @@ module.exports = {
   assignExecutive,
   getLeadsByExecutive,
   getDealFunnel,
-  getFollowUpClientLeads  // ✅ MUST exist here
 };
-
