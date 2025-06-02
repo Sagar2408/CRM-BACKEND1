@@ -52,7 +52,12 @@ const loginManager = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: manager.id, email: manager.email, name: manager.name },
+      {
+        id: manager.id,
+        email: manager.email,
+        name: manager.name,
+        role: manager.role,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "12h" }
     );
@@ -71,6 +76,7 @@ const loginManager = async (req, res) => {
         id: manager.id,
         email: manager.email,
         name: manager.name,
+        role: manager.role,
       },
     });
   } catch (err) {
@@ -144,18 +150,24 @@ const addExecutiveToTeam = async (req, res) => {
 
     // Validation
     if (!team_id || !user_id) {
-      return res.status(400).json({ error: "Team ID and User ID are required." });
+      return res
+        .status(400)
+        .json({ error: "Team ID and User ID are required." });
     }
 
     // Verify ownership
-    const team = await Team.findOne({ where: { id: team_id, manager_id: managerId } });
+    const team = await Team.findOne({
+      where: { id: team_id, manager_id: managerId },
+    });
     if (!team) {
       return res.status(403).json({ error: "You do not own this team." });
     }
 
     const manager = await Manager.findByPk(managerId);
 
-    const user = await Users.findOne({ where: { id: user_id, role: "Executive" } });
+    const user = await Users.findOne({
+      where: { id: user_id, role: "Executive" },
+    });
     if (!user) {
       return res.status(404).json({ error: "Executive not found." });
     }
@@ -195,5 +207,5 @@ module.exports = {
   logoutManager,
   createTeam,
   getManagerTeams,
-  addExecutiveToTeam
+  addExecutiveToTeam,
 };
