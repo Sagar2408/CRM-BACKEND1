@@ -70,10 +70,9 @@ const processExcel = (filePath) => {
   });
 };
 
-// Upload handler
 const uploadFile = async (req, res) => {
   try {
-    const { ClientLead } = req.db;
+    const { ClientLead, Sequelize } = req.db;
     const file = req.file;
 
     if (!file) return res.status(400).json({ message: "No file uploaded" });
@@ -82,7 +81,7 @@ const uploadFile = async (req, res) => {
     let data = [];
 
     if (ext === ".xlsx" || ext === ".xls") {
-      data = processExcel(file.path);
+      data = await processExcel(file.path);  // ✅ Await here
     } else if (ext === ".csv") {
       try {
         data = await processCSV(file.path);
@@ -110,19 +109,36 @@ const uploadFile = async (req, res) => {
         continue;
       }
 
-      console.log("💾 Cleaned Lead:", cleaned); // Important debug
+      // Optional: prevent duplicates by email or phone
+      const exists = await ClientLead.findOne({
+        where: {
+          [Sequelize.Op.or]: [
+            cleaned.email ? { email: cleaned.email } : null,
+            cleaned.phone ? { phone: cleaned.phone } : null,
+          ].filter(Boolean),
+        },
+      });
+
+      if (exists) {
+        console.warn("⚠️ Duplicate skipped:", cleaned);
+        continue;
+      }
 
       try {
         await ClientLead.create(cleaned);
         successCount++;
       } catch (err) {
         console.error("❌ Error saving record:", cleaned);
-        console.error("Sequelize Error:", err.message);
+        console.error("Sequelize Full Error:", err); // Full error
       }
     }
 
-    fs.unlink(file.path, () => {});
+    fs.unlink(file.path, (err) => {
+      if (err) console.error("Failed to delete uploaded file:", err);
+    });
+
     res.status(200).json({ message: `${successCount} leads imported successfully` });
+
   } catch (err) {
     console.error("Upload error:", err);
     res.status(500).json({ message: "Failed to save data", error: err.message });
