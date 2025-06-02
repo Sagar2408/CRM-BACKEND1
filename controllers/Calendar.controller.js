@@ -8,9 +8,16 @@ function getAllSundays(year, month) {
 
   while (date.getMonth() === month - 1) {
     if (date.getDay() === 0) {
+      const sundayDate = new Date(date); // Clone the date
+      // Format date as YYYY-MM-DD in local timezone
+      const yearStr = sundayDate.getFullYear();
+      const monthStr = String(sundayDate.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+      const dayStr = String(sundayDate.getDate()).padStart(2, "0");
+      const formattedDate = `${yearStr}-${monthStr}-${dayStr}`;
+      console.log(`Found Sunday: ${formattedDate}`); // Debug log
       sundays.push({
         name: "Sunday",
-        date: date.toISOString().split("T")[0],
+        date: formattedDate,
       });
     }
     date.setDate(date.getDate() + 1);
