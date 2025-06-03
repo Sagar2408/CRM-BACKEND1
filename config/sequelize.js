@@ -52,6 +52,10 @@ module.exports = function initializeModels(sequelize) {
   db.Team = require("../models/Team.model")(sequelize, Sequelize);
   db.Manager = require("../models/Manager.model")(sequelize, Sequelize);
 
+  db.RolePermission = require("../models/RolePermission.model")(
+    sequelize,
+    Sequelize
+  );
   // ------------------------
   // Define Associations
   // ------------------------
@@ -193,6 +197,22 @@ module.exports = function initializeModels(sequelize) {
   db.Team.belongsTo(db.Manager, {
     foreignKey: "manager_id",
     as: "manager",
+  });
+
+  db.Manager.hasMany(db.RolePermission, {
+    foreignKey: "manager_id",
+    onDelete: "CASCADE",
+  });
+  db.RolePermission.belongsTo(db.Manager, {
+    foreignKey: "manager_id",
+  });
+
+  db.Users.hasMany(db.RolePermission, {
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+  db.RolePermission.belongsTo(db.Users, {
+    foreignKey: "user_id",
   });
 
   // ------------------------

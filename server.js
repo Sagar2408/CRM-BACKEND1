@@ -10,9 +10,7 @@ const cron = require("node-cron");
 const notifyUpcomingMeetings = require("./cron/meetingNotifier");
 
 const { getTenantDB } = require("./config/sequelizeManager");
-const {
-  initializeNotificationHelper,
-} = require("./utils/notificationHelper");
+const { initializeNotificationHelper } = require("./utils/notificationHelper");
 
 const app = express();
 const server = http.createServer(app);
@@ -170,18 +168,20 @@ app.use(
   require("./routes/EodReport.routes")
 );
 app.use("/api", auth(), tenantResolver, require("./routes/Calendar.routes"));
+app.use("/api", auth(), tenantResolver, require("./routes/UserStatus.routes"));
+
+// lead check
+app.use("/api", tenantResolver, require("./routes/leadCheck.routes"));
+
+// Eod report
+app.use("/api", tenantResolver, require("./routes/Eod.routes"));
+
 app.use(
   "/api",
   auth(),
   tenantResolver,
-  require("./routes/UserStatus.routes")
+  require("./routes/RolePermission.routes")
 );
-
-// lead check
- app.use('/api',tenantResolver, require('./routes/leadCheck.routes'));
-
- // Eod report
-  app.use('/api' ,tenantResolver,require('./routes/Eod.routes'));
 
 // 🧠 Store connected users
 const connectedUsers = {};
