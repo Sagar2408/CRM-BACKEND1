@@ -114,6 +114,7 @@ exports.deleteLead = async (req, res) => {
 };
 
 exports.reassignLead = async (req, res) => {
+  console.log('🚀 [API] /api/leads/reassign hit');
 
   try {
     const { leadId, newExecutive } = req.body;
@@ -131,18 +132,13 @@ exports.reassignLead = async (req, res) => {
     }
 
     // 🚫 If previousAssignedTo is already filled, block reassignment
-    // if (lead.previousAssignedTo) {
-    //   console.log(`⚠️ Lead ID ${leadId} was already reassigned previously.`);
-    //   return res.status(400).json({
-    //     message: `Lead has already been reassigned from ${lead.previousAssignedTo}. Further reassignment not allowed.`,
-    //   });
-    // }
-    if (lead.assignedToExecutive === newExecutive) {
-        console.log(`⚠️ Lead ID ${leadId} is already assigned to ${newExecutive}.`);
-        return res.status(400).json({
-         message: `Lead is already assigned to ${newExecutive}. Reassignment to the same executive is not allowed.`,
-     });
-}
+    if (lead.previousAssignedTo) {
+      console.log(`⚠️ Lead ID ${leadId} was already reassigned previously.`);
+      return res.status(400).json({
+        message: `Lead has already been reassigned from ${lead.previousAssignedTo}. Further reassignment not allowed.`,
+      });
+    }
+
     // ✅ Perform reassignment
     console.log(`✅ Reassigning Lead ID ${leadId} from ${lead.assignedToExecutive} to ${newExecutive}`);
     lead.previousAssignedTo = lead.assignedToExecutive;
@@ -155,7 +151,6 @@ exports.reassignLead = async (req, res) => {
       const clientLead = await ClientLead.findByPk(lead.clientLeadId);
       if (clientLead) {
         clientLead.assignedToExecutive = newExecutive;
-        clientLead.status = 'Assigned';
         await clientLead.save();
         clientLeadUpdate = clientLead.toJSON();
         console.log('📝 Updated clientLead:', clientLeadUpdate);
