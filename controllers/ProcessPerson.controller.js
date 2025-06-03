@@ -318,6 +318,7 @@ const importConvertedClientsToCustomers = async (req, res) => {
         const customerPayload = {
           fullName: lead.name,
           email: lead.email,
+          phone: lead.phone,
           password: hashedPassword,
           status: "pending",
         };
