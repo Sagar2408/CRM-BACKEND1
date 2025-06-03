@@ -131,12 +131,12 @@ exports.reassignLead = async (req, res) => {
     }
 
     // 🚫 If previousAssignedTo is already filled, block reassignment
-    if (lead.previousAssignedTo) {
-      console.log(`⚠️ Lead ID ${leadId} was already reassigned previously.`);
-      return res.status(400).json({
-        message: `Lead has already been reassigned from ${lead.previousAssignedTo}. Further reassignment not allowed.`,
-      });
-    }
+    // if (lead.previousAssignedTo) {
+    //   console.log(`⚠️ Lead ID ${leadId} was already reassigned previously.`);
+    //   return res.status(400).json({
+    //     message: `Lead has already been reassigned from ${lead.previousAssignedTo}. Further reassignment not allowed.`,
+    //   });
+    // }
 
     // ✅ Perform reassignment
     console.log(`✅ Reassigning Lead ID ${leadId} from ${lead.assignedToExecutive} to ${newExecutive}`);
