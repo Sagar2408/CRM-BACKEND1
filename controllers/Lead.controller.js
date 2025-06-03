@@ -137,7 +137,12 @@ exports.reassignLead = async (req, res) => {
     //     message: `Lead has already been reassigned from ${lead.previousAssignedTo}. Further reassignment not allowed.`,
     //   });
     // }
-
+    if (lead.assignedToExecutive === newExecutive) {
+        console.log(`⚠️ Lead ID ${leadId} is already assigned to ${newExecutive}.`);
+        return res.status(400).json({
+         message: `Lead is already assigned to ${newExecutive}. Reassignment to the same executive is not allowed.`,
+     });
+}
     // ✅ Perform reassignment
     console.log(`✅ Reassigning Lead ID ${leadId} from ${lead.assignedToExecutive} to ${newExecutive}`);
     lead.previousAssignedTo = lead.assignedToExecutive;
