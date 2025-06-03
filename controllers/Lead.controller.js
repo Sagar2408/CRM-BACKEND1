@@ -114,7 +114,6 @@ exports.deleteLead = async (req, res) => {
 };
 
 exports.reassignLead = async (req, res) => {
-  console.log('🚀 [API] /api/leads/reassign hit');
 
   try {
     const { leadId, newExecutive } = req.body;
@@ -151,6 +150,7 @@ exports.reassignLead = async (req, res) => {
       const clientLead = await ClientLead.findByPk(lead.clientLeadId);
       if (clientLead) {
         clientLead.assignedToExecutive = newExecutive;
+        clientLead.status = 'Assigned';
         await clientLead.save();
         clientLeadUpdate = clientLead.toJSON();
         console.log('📝 Updated clientLead:', clientLeadUpdate);
