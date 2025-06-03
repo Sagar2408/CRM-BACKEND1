@@ -154,6 +154,24 @@ const getClientLeads = async (req, res) => {
   }
 };
 
+const getAllClientLeads = async (req, res) => {
+  try {
+    const { ClientLead } = req.db;
+
+    const leads = await ClientLead.findAll();
+
+    res.status(200).json({
+      message: "All client leads retrieved successfully",
+      total: leads.length,
+      leads,
+    });
+  } catch (err) {
+    console.error("❌ Error fetching all client leads:", err);
+    res.status(500).json({ message: "Failed to fetch all client leads", error: err.message });
+  }
+};
+
+
 const assignExecutive = async (req, res) => {
   try {
     const { ClientLead, Users, Notification } = req.db;
@@ -270,5 +288,7 @@ module.exports = {
   assignExecutive,
   getLeadsByExecutive,
   getDealFunnel,
-  getFollowUpClientLeads
+  getFollowUpClientLeads,
+  getAllClientLeads
+
 };

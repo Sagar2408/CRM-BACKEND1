@@ -7,7 +7,8 @@ const {
   assignExecutive,
   getLeadsByExecutive,
   getDealFunnel,
-  getFollowUpClientLeads
+  getFollowUpClientLeads,
+  getAllClientLeads
 } = require("../controllers/ClientLead.controller");
 
 router.post("/upload", upload.single("file"), uploadFile);
@@ -15,7 +16,7 @@ router.get("/getClients", getClientLeads);
 router.put("/assign-executive", assignExecutive);
 router.get("/executive", getLeadsByExecutive);
 router.get("/dealfunnel", getDealFunnel);
-
+router.get("/getAllClientLeads",getAllClientLeads )
 router.get("/followup-leads", getFollowUpClientLeads);
 
 module.exports = router;
