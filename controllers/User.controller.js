@@ -1,4 +1,3 @@
-
 const { Op } = require("sequelize");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -29,7 +28,7 @@ const login = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-if (!user.can_login) {
+    if (!user.can_login) {
       return res
         .status(403)
         .json({ message: "Login access is disabled. Please contact admin." });
@@ -571,7 +570,9 @@ const createExecutive = async (req, res) => {
 
     // Basic validation
     if (!username || !password) {
-      return res.status(400).json({ error: "Username and password are required." });
+      return res
+        .status(400)
+        .json({ error: "Username and password are required." });
     }
 
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -580,7 +581,9 @@ const createExecutive = async (req, res) => {
 
     // Prevent creating non-executive roles via this endpoint
     if (req.body.role && req.body.role !== "Executive") {
-      return res.status(400).json({ error: "This route only allows creation of Executives." });
+      return res
+        .status(400)
+        .json({ error: "This route only allows creation of Executives." });
     }
 
     // Check for duplicate username or email
@@ -593,7 +596,9 @@ const createExecutive = async (req, res) => {
     if (existing) {
       const conflictField =
         existing.username === username ? "Username" : "Email";
-      return res.status(400).json({ error: `${conflictField} already exists.` });
+      return res
+        .status(400)
+        .json({ error: `${conflictField} already exists.` });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -646,6 +651,201 @@ const createExecutive = async (req, res) => {
     return res.status(500).json({ error: msg });
   }
 };
+const createTeamLead = async (req, res) => {
+  try {
+    const Users = req.db.Users;
+
+    const {
+      username,
+      email,
+      password,
+      profile_picture,
+      team_id,
+      firstname,
+      lastname,
+      country,
+      city,
+      state,
+      postal_code,
+      tax_id,
+    } = req.body;
+
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ error: "Username and password are required." });
+    }
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: "Invalid email format." });
+    }
+
+    if (req.body.role && req.body.role !== "TL") {
+      return res
+        .status(400)
+        .json({ error: "This route only allows creation of Team Leads." });
+    }
+
+    const existing = await Users.findOne({
+      where: {
+        [Op.or]: [{ username }, { email }],
+      },
+    });
+
+    if (existing) {
+      const conflictField =
+        existing.username === username ? "Username" : "Email";
+      return res
+        .status(400)
+        .json({ error: `${conflictField} already exists.` });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newTL = await Users.create({
+      username,
+      email,
+      password: hashedPassword,
+      profile_picture,
+      team_id,
+      firstname,
+      lastname,
+      country,
+      city,
+      state,
+      postal_code,
+      tax_id,
+      role: "TL",
+    });
+
+    // Send welcome email
+    if (email) {
+      const emailResult = await sendExecutiveSignupEmail(email, username);
+      if (!emailResult.success) {
+        console.warn("Failed to send signup email:", emailResult.message);
+      }
+    }
+
+    return res.status(201).json({
+      message: "Team Lead created successfully.",
+      team_lead: {
+        id: newTL.id,
+        username: newTL.username,
+        email: newTL.email,
+        role: newTL.role,
+        team_id: newTL.team_id,
+        firstname: newTL.firstname,
+        lastname: newTL.lastname,
+        createdAt: newTL.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Create TL error:", error);
+    let msg = "Internal server error.";
+    if (error.name === "SequelizeValidationError") {
+      msg = error.errors.map((e) => e.message).join(", ");
+    } else if (error.name === "SequelizeUniqueConstraintError") {
+      msg = "Username or email already exists.";
+    }
+    return res.status(500).json({ error: msg });
+  }
+};
+const createAdmin = async (req, res) => {
+  try {
+    const Users = req.db.Users;
+
+    const {
+      username,
+      email,
+      password,
+      profile_picture,
+      firstname,
+      lastname,
+      country,
+      city,
+      state,
+      postal_code,
+      tax_id,
+    } = req.body;
+
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ error: "Username and password are required." });
+    }
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: "Invalid email format." });
+    }
+
+    if (req.body.role && req.body.role !== "Admin") {
+      return res
+        .status(400)
+        .json({ error: "This route only allows creation of Admins." });
+    }
+
+    const existing = await Users.findOne({
+      where: {
+        [Op.or]: [{ username }, { email }],
+      },
+    });
+
+    if (existing) {
+      const conflictField =
+        existing.username === username ? "Username" : "Email";
+      return res
+        .status(400)
+        .json({ error: `${conflictField} already exists.` });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newAdmin = await Users.create({
+      username,
+      email,
+      password: hashedPassword,
+      profile_picture,
+      firstname,
+      lastname,
+      country,
+      city,
+      state,
+      postal_code,
+      tax_id,
+      role: "Admin",
+    });
+
+    // Send welcome email
+    if (email) {
+      const emailResult = await sendExecutiveSignupEmail(email, username);
+      if (!emailResult.success) {
+        console.warn("Failed to send signup email:", emailResult.message);
+      }
+    }
+
+    return res.status(201).json({
+      message: "Admin created successfully.",
+      admin: {
+        id: newAdmin.id,
+        username: newAdmin.username,
+        email: newAdmin.email,
+        role: newAdmin.role,
+        firstname: newAdmin.firstname,
+        lastname: newAdmin.lastname,
+        createdAt: newAdmin.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Create Admin error:", error);
+    let msg = "Internal server error.";
+    if (error.name === "SequelizeValidationError") {
+      msg = error.errors.map((e) => e.message).join(", ");
+    } else if (error.name === "SequelizeUniqueConstraintError") {
+      msg = "Username or email already exists.";
+    }
+    return res.status(500).json({ error: msg });
+  }
+};
 
 // Export all controller methods
 module.exports = {
@@ -664,5 +864,7 @@ module.exports = {
   getAllTeamLeads,
   getOnlineExecutives,
   toggleUserLoginAccess,
-  createExecutive
+  createExecutive,
+  createTeamLead,
+  createAdmin,
 };

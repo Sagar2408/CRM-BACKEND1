@@ -52,6 +52,8 @@ router.get(
   userController.getOnlineExecutives
 );
 
-router.post("/create-exec", auth(["Admin"]), userController.createExecutive)
+router.post("/create-admin", auth(["Admin"]), userController.createAdmin);
+router.post("/create-exec", auth(["Admin"]), userController.createExecutive);
+router.post("/create-tl", auth(["Admin"]), userController.createTeamLead);
 
 module.exports = router;
