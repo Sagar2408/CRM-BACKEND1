@@ -16,6 +16,7 @@ module.exports = (sequelize) => {
           model: "leads", // ✅ lowercase to match actual table name
           key: "id",
         },
+        unique: true,
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       },

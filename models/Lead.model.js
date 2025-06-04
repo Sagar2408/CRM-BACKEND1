@@ -12,6 +12,7 @@ module.exports = (sequelize) => {
       clientLeadId: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        unique: true
       },
       assignedToExecutive: {
         type: DataTypes.STRING,
