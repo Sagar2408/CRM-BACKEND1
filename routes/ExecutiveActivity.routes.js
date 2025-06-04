@@ -9,7 +9,7 @@ router.post("/stopBreak", executiveActivityController.stopBreak);
 router.post("/updateCallTime", executiveActivityController.updateCallTime);
 router.post("/trackLeadVisit", executiveActivityController.trackLeadVisit);
 router.get("/adminDashboard", executiveActivityController.getAdminDashboard);
-router.get("/attendance", executiveActivityController.getWeeklyAttendance);
+router.get("/attendance", executiveActivityController.getAttendanceByDateRange);
 router.get(
   "/:executiveId",
   executiveActivityController.getExecutiveActivityByExecutiveId

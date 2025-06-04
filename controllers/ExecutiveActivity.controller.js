@@ -1,6 +1,6 @@
 // Required dependencies
 const { Op } = require("sequelize");
-const { parseISO, addDays, format } = require("date-fns");
+const { parseISO, addDays, format, eachDayOfInterval } = require("date-fns");
 
 // Utility to get today's date in YYYY-MM-DD format
 function getTodayDate() {
@@ -220,30 +220,30 @@ exports.getAdminDashboard = async (req, res) => {
   }
 };
 
-exports.getWeeklyAttendance = async (req, res) => {
+exports.getAttendanceByDateRange = async (req, res) => {
   const { ExecutiveActivity, Users } = req.db;
   try {
-    const { weekStart } = req.query;
+    const { startDate, endDate } = req.query;
 
-    if (!weekStart) {
-      return res
-        .status(400)
-        .json({ error: "weekStart query param is required (YYYY-MM-DD)" });
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        error: "startDate and endDate query params are required (YYYY-MM-DD)",
+      });
     }
 
-    const start = parseISO(weekStart);
-    const end = addDays(start, 6);
+    const start = parseISO(startDate);
+    const end = parseISO(endDate);
 
-    // Step 1: Get all ExecutiveIds along with their names
+    // Step 1: Get all ExecutiveIds with their names
     const executiveIds = await ExecutiveActivity.findAll({
       attributes: ["ExecutiveId"],
       include: [
         {
           model: Users,
-          attributes: ["username"], // 👈 get the name of the executive
+          attributes: ["username"],
         },
       ],
-      group: ["ExecutiveId", "User.id"], // 👈 also group by user.id to avoid Sequelize warnings
+      group: ["ExecutiveId", "User.id"],
     });
 
     const allExecutives = executiveIds.map((entry) => ({
@@ -251,7 +251,7 @@ exports.getWeeklyAttendance = async (req, res) => {
       name: entry.User?.username || "Unknown",
     }));
 
-    // Step 2: Get all activity records in the week
+    // Step 2: Get logs within the date range
     const logs = await ExecutiveActivity.findAll({
       where: {
         createdAt: {
@@ -262,7 +262,6 @@ exports.getWeeklyAttendance = async (req, res) => {
 
     // Step 3: Map logs by executive and date
     const logsMap = {};
-
     logs.forEach((log) => {
       const date = format(new Date(log.createdAt), "yyyy-MM-dd");
       if (!logsMap[log.ExecutiveId]) {
@@ -272,30 +271,26 @@ exports.getWeeklyAttendance = async (req, res) => {
     });
 
     // Step 4: Generate date list
-    const dateList = [];
-    for (let i = 0; i < 7; i++) {
-      const date = format(addDays(start, i), "yyyy-MM-dd");
-      dateList.push(date);
-    }
+    const dateList = eachDayOfInterval({ start, end }).map((date) =>
+      format(date, "yyyy-MM-dd")
+    );
 
-    // Step 5: Build the report
+    // Step 5: Build report
     const report = allExecutives.map(({ id, name }) => {
       const attendance = {};
 
       dateList.forEach((date) => {
         const log = logsMap[id]?.[date];
-
-        if (!log || log.workTime === null) {
-          attendance[date] = "Absent";
-        } else {
-          attendance[date] = "Present";
-        }
+        attendance[date] = !log || log.workTime === null ? "Absent" : "Present";
       });
 
       return {
         executiveId: id,
-        executiveName: name, // ✅ include name here
-        week: `${format(start, "yyyy-MM-dd")} to ${format(end, "yyyy-MM-dd")}`,
+        executiveName: name,
+        dateRange: `${format(start, "yyyy-MM-dd")} to ${format(
+          end,
+          "yyyy-MM-dd"
+        )}`,
         attendance,
       };
     });
