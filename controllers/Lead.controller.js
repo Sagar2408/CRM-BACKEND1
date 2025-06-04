@@ -117,8 +117,8 @@ exports.reassignLead = async (req, res) => {
   console.log('🚀 [API] /api/leads/reassign hit');
 
   try {
-    const { leadId, newExecutive } = req.body;
-    console.log('🔧 Payload:', { leadId, newExecutive });
+    const { clientLeadId, newExecutive } = req.body;
+    console.log('🔧 Payload:', { clientLeadId, newExecutive });
 
     const {
       Lead,
@@ -129,49 +129,48 @@ exports.reassignLead = async (req, res) => {
       FreshLead,
     } = req.db;
 
-    if (!leadId || !newExecutive) {
-      return res.status(400).json({ message: "leadId and newExecutive are required" });
+    if (!clientLeadId || !newExecutive) {
+      return res.status(400).json({ message: "clientLeadId and newExecutive are required" });
     }
 
-    const lead = await Lead.findByPk(Number(leadId));
+    // 🔍 Find Lead using clientLeadId
+    const lead = await Lead.findOne({ where: { clientLeadId } });
     if (!lead) {
-      console.log(`❌ Lead not found for ID: ${leadId}`);
-      return res.status(404).json({ message: "Lead not found" });
+      console.log(`❌ Lead not found for clientLeadId: ${clientLeadId}`);
+      return res.status(404).json({ message: "Lead not found for provided clientLeadId" });
     }
 
-    // 🚫 Block reassigning to same current or previous executive
+    // 🚫 Prevent reassignment to same or previous executive
     if (
       lead.assignedToExecutive === newExecutive ||
       lead.previousAssignedTo === newExecutive
     ) {
-      console.log(`⚠️ Lead ID ${leadId} is or was already assigned to ${newExecutive}`);
+      console.log(`⚠️ Lead (clientLeadId: ${clientLeadId}) is or was already assigned to ${newExecutive}`);
       return res.status(400).json({
         message: `This lead is or was already assigned to ${newExecutive}. Reassignment not allowed.`,
       });
     }
 
-    // ✅ Proceed with reassignment
-    console.log(`✅ Reassigning Lead ID ${leadId} from ${lead.assignedToExecutive} to ${newExecutive}`);
+    // ✅ Reassign
+    console.log(`✅ Reassigning Lead (clientLeadId: ${clientLeadId}) from ${lead.assignedToExecutive} to ${newExecutive}`);
     lead.previousAssignedTo = lead.assignedToExecutive;
     lead.assignedToExecutive = newExecutive;
     lead.assignmentDate = new Date();
     await lead.save();
 
-    // 🔄 Update ClientLead if exists
+    // 🔄 Update ClientLead
+    const clientLead = await ClientLead.findByPk(clientLeadId);
     let clientLeadUpdate = null;
-    if (lead.clientLeadId) {
-      const clientLead = await ClientLead.findByPk(lead.clientLeadId);
-      if (clientLead) {
-        clientLead.assignedToExecutive = newExecutive;
-        clientLead.status = 'Assigned';
-        await clientLead.save();
-        clientLeadUpdate = clientLead.toJSON();
-        console.log('📝 Updated clientLead:', clientLeadUpdate);
-      }
+    if (clientLead) {
+      clientLead.assignedToExecutive = newExecutive;
+      clientLead.status = 'Assigned';
+      await clientLead.save();
+      clientLeadUpdate = clientLead.toJSON();
+      console.log('📝 Updated clientLead:', clientLeadUpdate);
     }
 
-    // 🗑 Delete associated followups, histories, and meetings
-    const freshLeads = await FreshLead.findAll({ where: { leadId } });
+    // 🗑 Cleanup followups, histories, and meetings via FreshLead
+    const freshLeads = await FreshLead.findAll({ where: { leadId: lead.id } });
     const freshLeadIds = freshLeads.map(f => f.id);
 
     if (freshLeadIds.length > 0) {
@@ -180,11 +179,11 @@ exports.reassignLead = async (req, res) => {
         FollowUpHistory.destroy({ where: { fresh_lead_id: freshLeadIds } }),
         Meeting.destroy({ where: { fresh_lead_id: freshLeadIds } }),
       ]);
-      console.log(`🗑 Deleted followups, histories, and meetings for FreshLeads linked to Lead ID ${leadId}`);
+      console.log(`🗑 Deleted followups, histories, and meetings for FreshLeads linked to Lead ID ${lead.id}`);
     }
 
-    // ✅ Response
-    const responsePayload = {
+    // ✅ Final Response
+    res.json({
       message: "Lead reassigned successfully",
       lead: lead.toJSON(),
       reassignment: {
@@ -192,10 +191,7 @@ exports.reassignLead = async (req, res) => {
         newAssignedTo: newExecutive,
       },
       clientLeadUpdate,
-    };
-
-    console.log('📤 [RESPONSE]', responsePayload);
-    res.json(responsePayload);
+    });
 
   } catch (error) {
     console.error("🔥 Error reassigning lead:", error);
@@ -205,6 +201,5 @@ exports.reassignLead = async (req, res) => {
     });
   }
 };
-
 
 
