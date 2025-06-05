@@ -109,6 +109,132 @@ module.exports = (sequelize) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      // Stage 7
+      stage7_data: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "Custom data for final October 2025",
+      },
+      stage7_completed: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      stage7_timestamp: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Stage 8
+      stage8_data: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "Custom data for final October 2025",
+      },
+      stage8_completed: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      stage8_timestamp: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Stage 9
+      stage9_data: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "Custom data for final October 2025",
+      },
+      stage9_completed: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      stage9_timestamp: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Stage 10
+      stage10_data: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "Custom data for final October 2025",
+      },
+      stage10_completed: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      stage10_timestamp: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Stage 11
+      stage11_data: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "Custom data for final October 2025",
+      },
+      stage11_completed: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      stage11_timestamp: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Stage 12
+      stage12_data: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "Custom data for final October 2025",
+      },
+      stage12_completed: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      stage12_timestamp: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Stage 13
+      stage13_data: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "Custom data for final October 2025",
+      },
+      stage13_completed: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      stage13_timestamp: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Stage 14
+      stage14_data: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "Custom data for final October 2025",
+      },
+      stage14_completed: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      stage14_timestamp: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      // Stage 15
+      stage15_data: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "Custom data for final October 2025",
+      },
+      stage15_completed: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      stage15_timestamp: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
 
       createdAt: {
         type: DataTypes.DATE,
