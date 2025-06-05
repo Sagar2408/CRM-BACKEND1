@@ -319,6 +319,7 @@ const importConvertedClientsToCustomers = async (req, res) => {
           fullName: lead.name,
           email: lead.email,
           phone: lead.phone,
+          country: lead.country, //importing country fie
           password: hashedPassword,
           status: "pending",
         };
