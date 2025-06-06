@@ -57,6 +57,7 @@ app.use("/api/company", require("./routes/Company.routes")); // includes both pu
 // Tenant routes
 app.use("/api", tenantResolver, require("./routes/User.routes"));
 app.use("/api/manager", tenantResolver, require("./routes/Manager.routes"));
+app.use("/api/hr", tenantResolver, require("./routes/Hr.routes"));
 app.use("/api/deals", auth(), tenantResolver, require("./routes/Deal.routes"));
 app.use("/api/leads", auth(), tenantResolver, require("./routes/Lead.routes"));
 app.use(

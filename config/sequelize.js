@@ -51,6 +51,7 @@ module.exports = function initializeModels(sequelize) {
   );
   db.Team = require("../models/Team.model")(sequelize, Sequelize);
   db.Manager = require("../models/Manager.model")(sequelize, Sequelize);
+  db.Hr = require("../models/Hr.model")(sequelize, Sequelize);
 
   db.RolePermission = require("../models/RolePermission.model")(
     sequelize,
