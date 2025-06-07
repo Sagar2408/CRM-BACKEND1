@@ -5,8 +5,22 @@ const xlsx = require("xlsx");
 const csv = require("csv-parser");
 
 // Allowed field mappings
-const nameFields = ["name", "username", "full name", "contact name", "lead name","firstname"];
-const phoneFields = ["phone", "phoneno", "ph.no", "contact number", "mobile", "telephone"];
+const nameFields = [
+  "name",
+  "username",
+  "full name",
+  "contact name",
+  "lead name",
+  "firstname",
+];
+const phoneFields = [
+  "phone",
+  "phoneno",
+  "ph.no",
+  "contact number",
+  "mobile",
+  "telephone",
+];
 const emailFields = ["email", "email address", "e-mail", "mail"];
 
 // Multer setup
@@ -94,8 +108,18 @@ const uploadFile = async (req, res) => {
     }
 
     const allowedFields = [
-      "name", "email", "phone", "education", "experience", "state", "country",
-      "dob", "leadAssignDate", "countryPreference", "assignedToExecutive", "status"
+      "name",
+      "email",
+      "phone",
+      "education",
+      "experience",
+      "state",
+      "country",
+      "dob",
+      "leadAssignDate",
+      "countryPreference",
+      "assignedToExecutive",
+      "status",
     ];
 
     let successCount = 0;
@@ -122,10 +146,14 @@ const uploadFile = async (req, res) => {
     }
 
     fs.unlink(file.path, () => {});
-    res.status(200).json({ message: `${successCount} leads imported successfully` });
+    res
+      .status(200)
+      .json({ message: `${successCount} leads imported successfully` });
   } catch (err) {
     console.error("Upload error:", err);
-    res.status(500).json({ message: "Failed to save data", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to save data", error: err.message });
   }
 };
 
@@ -135,7 +163,8 @@ const getClientLeads = async (req, res) => {
     const { ClientLead } = req.db;
     const limit = parseInt(req.query.limit) === 20 ? 20 : 10;
     const offset = parseInt(req.query.offset) || 0;
-    if (offset < 0) return res.status(400).json({ message: "Invalid offset value" });
+    if (offset < 0)
+      return res.status(400).json({ message: "Invalid offset value" });
 
     const { count, rows } = await ClientLead.findAndCountAll({ limit, offset });
 
@@ -167,10 +196,14 @@ const getAllClientLeads = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Error fetching all client leads:", err);
-    res.status(500).json({ message: "Failed to fetch all client leads", error: err.message });
+    res
+      .status(500)
+      .json({
+        message: "Failed to fetch all client leads",
+        error: err.message,
+      });
   }
 };
-
 
 const assignExecutive = async (req, res) => {
   try {
@@ -178,11 +211,14 @@ const assignExecutive = async (req, res) => {
     const { executiveName, id } = req.body;
 
     if (!executiveName || !id) {
-      return res.status(400).json({ message: "Executive name and lead ID are required" });
+      return res
+        .status(400)
+        .json({ message: "Executive name and lead ID are required" });
     }
 
     const lead = await ClientLead.findByPk(id);
-    if (!lead) return res.status(404).json({ message: "Client lead not found" });
+    if (!lead)
+      return res.status(404).json({ message: "Client lead not found" });
 
     lead.assignedToExecutive = executiveName;
     lead.status = "Assigned";
@@ -192,15 +228,22 @@ const assignExecutive = async (req, res) => {
       where: { username: executiveName, role: "Executive" },
     });
 
-    if (!executive) return res.status(404).json({ message: "Executive not found" });
+    if (!executive)
+      return res.status(404).json({ message: "Executive not found" });
 
-    const message = `You have been assigned a new lead: ${lead.name || "Unnamed Client"} (Lead ID: ${lead.id})`;
+    const message = `You have been assigned a new lead: ${
+      lead.name || "Unnamed Client"
+    } (Lead ID: ${lead.id})`;
     await Notification.create({ userId: executive.id, message });
 
-    res.status(200).json({ message: "Executive assigned and notified successfully", lead });
+    res
+      .status(200)
+      .json({ message: "Executive assigned and notified successfully", lead });
   } catch (err) {
     console.error("Error assigning executive:", err);
-    res.status(500).json({ message: "Failed to assign executive", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to assign executive", error: err.message });
   }
 };
 
@@ -209,12 +252,17 @@ const getLeadsByExecutive = async (req, res) => {
     const { ClientLead } = req.db;
     const { executiveName } = req.query;
 
-    if (!executiveName) return res.status(400).json({ message: "Executive name is required" });
+    if (!executiveName)
+      return res.status(400).json({ message: "Executive name is required" });
 
-    const leads = await ClientLead.findAll({ where: { assignedToExecutive: executiveName } });
+    const leads = await ClientLead.findAll({
+      where: { assignedToExecutive: executiveName },
+    });
 
     if (!leads.length) {
-      return res.status(404).json({ message: `No leads found for executive: ${executiveName}` });
+      return res
+        .status(404)
+        .json({ message: `No leads found for executive: ${executiveName}` });
     }
 
     res.status(200).json({ message: "Leads retrieved successfully", leads });
@@ -281,6 +329,52 @@ const getFollowUpClientLeads = async (req, res) => {
   }
 };
 
+const updateClientLead = async (req, res) => {
+  try {
+    const { ClientLead } = req.db;
+    const { id } = req.params;
+    const updates = req.body;
+
+    const lead = await ClientLead.findByPk(id);
+    if (!lead)
+      return res.status(404).json({ message: "Client lead not found" });
+
+    await lead.update(updates);
+
+    res.status(200).json({
+      message: "Client lead updated successfully",
+      updatedLead: lead,
+    });
+  } catch (err) {
+    console.error("Error updating client lead:", err);
+    res.status(500).json({
+      message: "Failed to update client lead",
+      error: err.message,
+    });
+  }
+};
+
+const deleteClientLead = async (req, res) => {
+  try {
+    const { ClientLead } = req.db;
+    const { id } = req.params;
+
+    const lead = await ClientLead.findByPk(id);
+    if (!lead)
+      return res.status(404).json({ message: "Client lead not found" });
+
+    await lead.destroy();
+
+    res.status(200).json({ message: "Client lead deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting client lead:", err);
+    res.status(500).json({
+      message: "Failed to delete client lead",
+      error: err.message,
+    });
+  }
+};
+
 module.exports = {
   upload,
   uploadFile,
@@ -289,6 +383,7 @@ module.exports = {
   getLeadsByExecutive,
   getDealFunnel,
   getFollowUpClientLeads,
-  getAllClientLeads
-
+  getAllClientLeads,
+  updateClientLead,
+  deleteClientLead,
 };
