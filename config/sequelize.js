@@ -216,6 +216,14 @@ module.exports = function initializeModels(sequelize) {
     foreignKey: "user_id",
   });
 
+  db.Hr.hasMany(db.RolePermission, {
+    foreignKey: "hr_id",
+    onDelete: "CASCADE",
+  });
+  db.RolePermission.belongsTo(db.Hr, {
+    foreignKey: "hr_id",
+  });
+
   // ------------------------
   // Sync Models
   // ------------------------

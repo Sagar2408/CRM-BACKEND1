@@ -20,6 +20,15 @@ module.exports = (sequelize) => {
         },
         onDelete: "CASCADE",
       },
+      hr_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "hrs",
+          key: "id",
+        },
+        onDelete: "CASCADE",
+      },
 
       user_id: {
         type: DataTypes.INTEGER,

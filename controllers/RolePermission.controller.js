@@ -174,7 +174,7 @@ exports.getPermissionById = async (req, res) => {
   }
 };
 
-//fetching permission with id and
+//fetching permission with id and role
 exports.getPermissionByRoleAndId = async (req, res) => {
   const { role, id } = req.params;
   const RolePermission = req.db.RolePermission;
@@ -185,7 +185,9 @@ exports.getPermissionByRoleAndId = async (req, res) => {
     // Determine the correct field based on role
     if (role === "Manager") {
       condition = { role, manager_id: id };
-    } else if (role === "TL" || role === "HR") {
+    } else if (role === "HR") {
+      condition = { role, hr_id: id };
+    } else if (role === "TL") {
       condition = { role, user_id: id };
     } else {
       return res.status(400).json({ message: "Invalid role specified" });
@@ -206,9 +208,10 @@ exports.getPermissionByRoleAndId = async (req, res) => {
   }
 };
 
-exports.getAllUsersAndManagers = async (req, res) => {
+exports.getAllUsersHrsAndManagers = async (req, res) => {
   const User = req.db.Users;
   const Manager = req.db.Manager;
+  const Hr = req.db.Hr;
 
   try {
     // Fetch users with their roles
@@ -226,6 +229,11 @@ exports.getAllUsersAndManagers = async (req, res) => {
       attributes: ["id"],
     });
 
+    //Fetch Hrs (role = Hr)
+    const hrs = await Hr.findAll({
+      attributes: ["id"],
+    });
+
     // Format users: "Executive - id - 2", "TL - id - 5", etc.
     const userOptions = users.map((user) => ({
       id: user.id,
@@ -238,8 +246,14 @@ exports.getAllUsersAndManagers = async (req, res) => {
       label: `id - ${manager.id} - Manager`,
     }));
 
+    // Format HRs
+    const hrOptions = hrs.map((hr) => ({
+      id: hr.id,
+      label: `id - ${hr.id} - HR`,
+    }));
+
     // Combine both lists
-    const combinedOptions = [...userOptions, ...managerOptions];
+    const combinedOptions = [...userOptions, ...managerOptions, ...hrOptions];
 
     res.status(200).json(combinedOptions);
   } catch (error) {

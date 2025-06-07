@@ -13,7 +13,7 @@ router.get("/role-permissions", rolePermissionController.getAllRolePermissions);
 //Get all the manager and users as one
 router.get(
   "/get-managers-users",
-  rolePermissionController.getAllUsersAndManagers
+  rolePermissionController.getAllUsersHrsAndManagers
 );
 
 //get single permission by id
