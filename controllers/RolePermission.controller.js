@@ -7,11 +7,10 @@ exports.createRolePermission = async (req, res) => {
   const { v4: uuidv4 } = require("uuid");
 
   try {
-    const { manager_id, user_id, role } = req.body;
+    const { manager_id, user_id, hr_id, role } = req.body;
 
     const allowedRoles = ["Manager", "TL", "HR"];
 
-    // Validate role
     if (!role || !allowedRoles.includes(role)) {
       return res.status(400).json({
         message: `Invalid role provided. Allowed roles are: ${allowedRoles.join(
@@ -20,18 +19,25 @@ exports.createRolePermission = async (req, res) => {
       });
     }
 
-    // Determine which ID is sent
-    const isManager = !!manager_id;
-    const idField = isManager ? "manager_id" : "user_id";
-    const idValue = isManager ? manager_id : user_id;
+    // Determine which ID is provided based on role
+    let idField, idValue;
 
-    if (!idValue) {
-      return res
-        .status(400)
-        .json({ message: "Either manager_id or user_id must be provided." });
+    if (role === "Manager" && manager_id) {
+      idField = "manager_id";
+      idValue = manager_id;
+    } else if (role === "TL" && user_id) {
+      idField = "user_id";
+      idValue = user_id;
+    } else if (role === "HR" && hr_id) {
+      idField = "hr_id";
+      idValue = hr_id;
+    } else {
+      return res.status(400).json({
+        message: "Required ID for the specified role is missing.",
+      });
     }
 
-    // Check for duplicate RolePermission
+    // Check for duplicate
     const existing = await RolePermission.findOne({
       where: {
         [idField]: idValue,
@@ -45,7 +51,7 @@ exports.createRolePermission = async (req, res) => {
       });
     }
 
-    // Create the new RolePermission
+    // Prepare payload
     const payload = {
       id: uuidv4(),
       role,
