@@ -144,13 +144,17 @@ exports.getAllRolePermissions = async (req, res) => {
 
   try {
     const permissions = await RolePermission.findAll({
-      attributes: ["id", "role", "manager_id", "user_id"],
+      attributes: ["id", "role", "manager_id", "user_id", "hr_id"],
     });
 
     const formatted = permissions.map((p) => ({
       id: p.id,
       label: `Role: ${p.role} | ${
-        p.manager_id ? "Manager ID: " + p.manager_id : "User ID: " + p.user_id
+        p.manager_id
+          ? "Manager ID: " + p.manager_id
+          : p.hr_id
+          ? "HR ID: " + p.hr_id
+          : "User ID: " + p.user_id
       }`,
     }));
 
