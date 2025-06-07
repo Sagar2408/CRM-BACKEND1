@@ -9,7 +9,7 @@ exports.createRolePermission = async (req, res) => {
   try {
     const { manager_id, user_id, hr_id, role } = req.body;
 
-    const allowedRoles = ["Manager", "TL", "HR"];
+    const allowedRoles = ["Manager", "TL", "HR", "Executive"];
 
     if (!role || !allowedRoles.includes(role)) {
       return res.status(400).json({
@@ -22,18 +22,19 @@ exports.createRolePermission = async (req, res) => {
     // Determine which ID is provided based on role
     let idField, idValue;
 
+    // Dynamically detect which ID to use
     if (role === "Manager" && manager_id) {
       idField = "manager_id";
       idValue = manager_id;
-    } else if (role === "TL" && user_id) {
-      idField = "user_id";
-      idValue = user_id;
     } else if (role === "HR" && hr_id) {
       idField = "hr_id";
       idValue = hr_id;
+    } else if (["Executive", "TL"].includes(role) && user_id) {
+      idField = "user_id";
+      idValue = user_id;
     } else {
       return res.status(400).json({
-        message: "Required ID for the specified role is missing.",
+        message: `Missing ID for role '${role}'.`,
       });
     }
 
@@ -199,6 +200,8 @@ exports.getPermissionByRoleAndId = async (req, res) => {
       condition = { role, hr_id: id };
     } else if (role === "TL") {
       condition = { role, user_id: id };
+    } else if (role === "Executive") {
+      condition = { role, user_id: id };
     } else {
       return res.status(400).json({ message: "Invalid role specified" });
     }
@@ -229,7 +232,7 @@ exports.getAllUsersHrsAndManagers = async (req, res) => {
       attributes: ["id", "role"],
       where: {
         role: {
-          [Op.notIn]: ["Admin", "Executive"],
+          [Op.notIn]: ["Admin"],
         },
       },
     });
