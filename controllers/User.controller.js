@@ -468,11 +468,6 @@ const getAllExecutives = async (req, res) => {
     const { role } = req.user;
 
     // Access control: Only Admin and TL can fetch all executives
-    if (role !== "Admin" && role !== "TL") {
-      return res.status(403).json({
-        message: "Unauthorized: Only Admin and TL can view all executives",
-      });
-    }
 
     const executives = await Users.findAll({
       where: { role: "Executive" },
