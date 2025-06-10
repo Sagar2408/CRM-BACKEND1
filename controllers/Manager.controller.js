@@ -201,6 +201,26 @@ const addExecutiveToTeam = async (req, res) => {
   }
 };
 
+const getManagerProfile = async (req, res) => {
+  try {
+    const Manager = req.db.Manager;
+    const managerId = req.user.id; // from token middleware
+
+    const manager = await Manager.findByPk(managerId, {
+      attributes: ["id", "name", "email", "role", "createdAt"],
+    });
+
+    if (!manager) {
+      return res.status(404).json({ error: "Manager not found." });
+    }
+
+    res.status(200).json({ manager });
+  } catch (err) {
+    console.error("Get manager profile error:", err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
 module.exports = {
   signupManager,
   loginManager,
@@ -208,4 +228,5 @@ module.exports = {
   createTeam,
   getManagerTeams,
   addExecutiveToTeam,
+  getManagerProfile,
 };
