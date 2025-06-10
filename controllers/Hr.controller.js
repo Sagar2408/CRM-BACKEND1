@@ -85,20 +85,20 @@ const loginHr = async (req, res) => {
   }
 };
 
-const logoutHr = async (req, res) => {
-  try {
-    res.clearCookie("hr_token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
-    });
+// const logoutHr = async (req, res) => {
+//   try {
+//     res.clearCookie("hr_token", {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === "production",
+//       sameSite: "Lax",
+//     });
 
-    res.status(200).json({ message: "Logout successful." });
-  } catch (err) {
-    console.error("Logout error:", err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-};
+//     res.status(200).json({ message: "Logout successful." });
+//   } catch (err) {
+//     console.error("Logout error:", err);
+//     res.status(500).json({ error: "Internal server error." });
+//   }
+// };
 
 module.exports = {
   signupHr,
