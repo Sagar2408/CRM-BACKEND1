@@ -465,9 +465,7 @@ const resetPassword = async (req, res) => {
 const getAllExecutives = async (req, res) => {
   try {
     const Users = req.db.Users; // ✅ Dynamic DB selection
-    const { role } = req.user;
 
-    // Access control: Only Admin and TL can fetch all executives
 
     const executives = await Users.findAll({
       where: { role: "Executive" },
