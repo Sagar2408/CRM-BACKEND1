@@ -103,5 +103,5 @@ const loginHr = async (req, res) => {
 module.exports = {
   signupHr,
   loginHr,
-  logoutHr,
+  //logoutHr,
 };
