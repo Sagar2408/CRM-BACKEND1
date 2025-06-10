@@ -31,7 +31,7 @@ router.get("/profile", auth(), userController.getUserProfile); // No role restri
 // New protected routes with proper authorization
 router.get(
   "/executives",
-  auth(["Admin", "TL"]), // Only Admin and TL can access
+  auth(),
   userController.getAllExecutives
 );
 router.get(
@@ -41,7 +41,7 @@ router.get(
 );
 router.get(
   "/executives/:id", //For executive info popover
-  auth(["Admin", "TL", "Executive"]),
+  auth(),
   userController.getExecutiveById
 );
 router.get("/admin/profile", auth(["Admin"]), userController.getAdminById);
