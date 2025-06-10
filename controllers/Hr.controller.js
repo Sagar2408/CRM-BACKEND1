@@ -102,7 +102,7 @@ const logoutHr = async (req, res) => {
 
 const getHrProfile = async (req, res) => {
   try {
-    const HR = req.db.HR;
+    const HR = req.db.Hr;
     const hrId = req.user.id; // assumes auth middleware sets req.user
 
     const hr = await HR.findByPk(hrId, {
