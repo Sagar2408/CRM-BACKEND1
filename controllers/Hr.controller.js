@@ -99,8 +99,30 @@ const logoutHr = async (req, res) => {
     res.status(500).json({ error: "Internal server error." });
   }
 };
+
+const getHrProfile = async (req, res) => {
+  try {
+    const HR = req.db.HR;
+    const hrId = req.user.id; // assumes auth middleware sets req.user
+
+    const hr = await HR.findByPk(hrId, {
+      attributes: ["id", "name", "email", "role"], // add more fields if needed
+    });
+
+    if (!hr) {
+      return res.status(404).json({ error: "HR not found." });
+    }
+
+    res.status(200).json({ hr });
+  } catch (err) {
+    console.error("Get HR profile error:", err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
 module.exports = {
   signupHr,
   loginHr,
-  logoutHr
+  logoutHr,
+  getHrProfile,
 };

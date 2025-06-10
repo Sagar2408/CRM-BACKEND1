@@ -1,9 +1,16 @@
 const express = require("express");
 const router = express.Router();
-const { signupHr, loginHr , logoutHr} = require("../controllers/Hr.controller");
+const auth = require("../middleware/auth");
+const {
+  signupHr,
+  loginHr,
+  logoutHr,
+  getHrProfile,
+} = require("../controllers/Hr.controller");
 
 router.post("/signup", signupHr);
 router.post("/login", loginHr);
-router.post("/logout", logoutHr)
+router.post("/logout", logoutHr);
+router.get("/profile", auth(), getHrProfile);
 
 module.exports = router;
