@@ -53,6 +53,7 @@ const tenantResolver = require("./middleware/tenantResolver");
 // 📦 Routes
 app.use("/api/masteruser", require("./routes/MasterUser.routes")); // public login/signup
 app.use("/api/company", require("./routes/Company.routes")); // includes both public & protected
+app.use("/api/crew", require("./routes/Agents.routes"));
 
 // Tenant routes
 app.use("/api", tenantResolver, require("./routes/User.routes"));
