@@ -185,6 +185,13 @@ app.use(
   require("./routes/RolePermission.routes")
 );
 
+app.use(
+  "/api/customer/document",
+  auth(),
+  tenantResolver,
+  require("./routes/CustomerDocuments.routes")
+);
+
 // 🧠 Store connected users
 const connectedUsers = {};
 
