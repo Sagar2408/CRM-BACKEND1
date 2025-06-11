@@ -57,7 +57,10 @@ module.exports = function initializeModels(sequelize) {
     sequelize,
     Sequelize
   );
-  db.CustomerDocument = require("../models/CustomerDocument.model")(sequelize, Sequelize);
+  db.CustomerDocument = require("../models/CustomerDocument.model")(
+    sequelize,
+    Sequelize
+  );
 
   // ------------------------
   // Define Associations
@@ -225,15 +228,15 @@ module.exports = function initializeModels(sequelize) {
   db.RolePermission.belongsTo(db.Hr, {
     foreignKey: "hr_id",
   });
-db.Customer.hasMany(db.CustomerDocument, {
-  foreignKey: "customerId",
-  onDelete: "CASCADE",
-  as: "documents", // optional alias
-});
-db.CustomerDocument.belongsTo(db.Customer, {
-  foreignKey: "customerId",
-  as: "customer", // optional alias
-});
+  db.Customer.hasMany(db.CustomerDocument, {
+    foreignKey: "customerId",
+    onDelete: "CASCADE",
+    as: "documents", // optional alias
+  });
+  db.CustomerDocument.belongsTo(db.Customer, {
+    foreignKey: "customerId",
+    as: "customer", // optional alias
+  });
 
   // ------------------------
   // Sync Models
