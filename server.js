@@ -179,17 +179,17 @@ app.use("/api", tenantResolver, require("./routes/leadCheck.routes"));
 app.use("/api", tenantResolver, require("./routes/Eod.routes"));
 
 app.use(
-  "/api",
-  auth(),
-  tenantResolver,
-  require("./routes/RolePermission.routes")
-);
-
-app.use(
   "/api/customer",
   auth(),
   tenantResolver,
   require("./routes/CustomerDocuments.routes")
+);
+
+app.use(
+  "/api",
+  auth(),
+  tenantResolver,
+  require("./routes/RolePermission.routes")
 );
 
 // 🧠 Store connected users
