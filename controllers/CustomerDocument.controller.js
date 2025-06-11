@@ -46,8 +46,9 @@ exports.uploadDocuments = (req, res) => {
 };
 
 exports.getDocumentsByCustomerId = async (req, res) => {
+  const CustomerDocument = req.db.CustomerDocument;
   try {
-    const { customerId } = req.params;
+    const customerId = req.user.id;
 
     if (!customerId) {
       return res
