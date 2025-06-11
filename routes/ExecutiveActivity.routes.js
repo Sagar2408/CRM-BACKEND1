@@ -11,6 +11,10 @@ router.post("/trackLeadVisit", executiveActivityController.trackLeadVisit);
 router.get("/adminDashboard", executiveActivityController.getAdminDashboard);
 router.get("/attendance", executiveActivityController.getAttendanceByDateRange);
 router.get(
+  "/daily-activity",
+  executiveActivityController.getAllExecutiveActivitiesByDate
+);
+router.get(
   "/:executiveId",
   executiveActivityController.getExecutiveActivityByExecutiveId
 );

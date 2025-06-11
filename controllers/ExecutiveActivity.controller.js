@@ -326,3 +326,27 @@ exports.getExecutiveActivityByExecutiveId = async (req, res) => {
       .json({ message: "Server error while fetching executive activities" });
   }
 };
+
+exports.getAllExecutiveActivitiesByDate = async (req, res) => {
+  const Activity = req.db.ExecutiveActivity; // or whatever your model name is
+
+  try {
+    // Fetch all activity records
+    const activities = await Activity.findAll();
+
+    // Group by activityDate
+    const groupedData = activities.reduce((acc, item) => {
+      const date = item.activityDate;
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(item);
+      return acc;
+    }, {});
+
+    res.status(200).json(groupedData);
+  } catch (error) {
+    console.error("Error fetching activity data:", error);
+    res.status(500).json({ error: "Failed to fetch activity data." });
+  }
+};
