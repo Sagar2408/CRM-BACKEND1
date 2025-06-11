@@ -5,4 +5,7 @@ const customerDocController = require("../controllers/CustomerDocument.controlle
 // Route for uploading documents
 router.post("/upload", customerDocController.uploadDocuments);
 
+// Get documents by customerId
+router.get("/:customerId", customerDocController.getDocumentsByCustomerId);
+
 module.exports = router;
