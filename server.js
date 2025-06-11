@@ -186,7 +186,7 @@ app.use(
 );
 
 app.use(
-  "/api/customer/document",
+  "/api/customer",
   auth(),
   tenantResolver,
   require("./routes/CustomerDocuments.routes")

@@ -4,7 +4,7 @@ const auth = require("../middleware/auth");
 const customerDocController = require("../controllers/CustomerDocument.controller");
 
 // Route for uploading documents
-router.post("/upload", customerDocController.uploadDocuments);
+router.post("/document/upload", customerDocController.uploadDocuments);
 
 // Get documents by customerId
 router.get("/document", auth(), customerDocController.getDocumentsByCustomerId);
