@@ -62,6 +62,10 @@ module.exports = function initializeModels(sequelize) {
     Sequelize
   );
  db.ChatHistory = require("../models/ChatHistory.model")(sequelize, Sequelize);
+ db.EmailTemplate = require("../models/EmailTemplate.model")(
+    sequelize,
+    Sequelize
+  );
 
   // ------------------------
   // Define Associations
@@ -237,6 +241,16 @@ module.exports = function initializeModels(sequelize) {
   db.CustomerDocument.belongsTo(db.Customer, {
     foreignKey: "customerId",
     as: "customer", // optional alias
+  });
+
+  db.Users.hasMany(db.EmailTemplate, {
+    foreignKey: "createdBy",
+    as: "emailTemplates",
+    onDelete: "CASCADE",
+  });
+  db.EmailTemplate.belongsTo(db.Users, {
+    foreignKey: "createdBy",
+    as: "creator",
   });
 
   // ------------------------
