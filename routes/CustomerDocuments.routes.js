@@ -6,7 +6,11 @@ const customerDocController = require("../controllers/CustomerDocument.controlle
 // Route for uploading documents
 router.post("/document/upload", customerDocController.uploadDocuments);
 
-// Get documents by customerId
-router.get("/document", auth(), customerDocController.getDocumentsByCustomerId);
+// Get documents by customerId with auth middleware
+router.get("/document", auth(), customerDocController.getDocumentsByAuth);
 
+router.get(
+  "/document/:customerId",
+  customerDocController.getDocumentsByCustomerIdFromRequest
+);
 module.exports = router;

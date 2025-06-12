@@ -45,7 +45,7 @@ exports.uploadDocuments = (req, res) => {
   });
 };
 
-exports.getDocumentsByCustomerId = async (req, res) => {
+exports.getDocumentsByAuth = async (req, res) => {
   const CustomerDocument = req.db.CustomerDocument;
   try {
     const customerId = req.user.id;
@@ -85,6 +85,50 @@ exports.getDocumentsByCustomerId = async (req, res) => {
     res.status(200).json({ documents: response });
   } catch (error) {
     console.error("Fetch Error:", error);
+    res.status(500).json({ message: "Error fetching documents." });
+  }
+};
+
+exports.getDocumentsByCustomerIdFromRequest = async (req, res) => {
+  const CustomerDocument = req.db.CustomerDocument;
+
+  // Get customerId from query, body, or params
+  const customerId =
+    req.body.customerId || req.query.customerId || req.params.customerId;
+
+  if (!customerId) {
+    return res.status(400).json({ message: "Customer ID is required." });
+  }
+
+  try {
+    const documents = await CustomerDocument.findAll({
+      where: { customerId },
+      attributes: [
+        "id",
+        "documentName",
+        "mimeType",
+        "uploadedAt",
+        "documentData",
+      ],
+    });
+
+    if (!documents || documents.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No documents found for this customer." });
+    }
+
+    const response = documents.map((doc) => ({
+      id: doc.id,
+      documentName: doc.documentName,
+      mimeType: doc.mimeType,
+      uploadedAt: doc.uploadedAt,
+      base64Data: doc.documentData.toString("base64"),
+    }));
+
+    res.status(200).json({ documents: response });
+  } catch (error) {
+    console.error("Fetch error:", error);
     res.status(500).json({ message: "Error fetching documents." });
   }
 };
