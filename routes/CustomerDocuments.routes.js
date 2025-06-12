@@ -10,7 +10,7 @@ router.post("/document/upload", customerDocController.uploadDocuments);
 router.get("/document", auth(), customerDocController.getDocumentsByAuth);
 
 router.get(
-  "/document/:customerId",
+  "/document/:userType/:customerId",
   customerDocController.getDocumentsByCustomerIdFromRequest
 );
 module.exports = router;
