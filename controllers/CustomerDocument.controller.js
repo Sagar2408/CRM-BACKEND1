@@ -26,11 +26,9 @@ exports.uploadDocuments = (req, res) => {
     // Validate userType value
     const allowedUserTypes = ["customer", "process_person"];
     if (!allowedUserTypes.includes(userType)) {
-      return res
-        .status(400)
-        .json({
-          message: "Invalid userType. Must be 'customer' or 'process_person'.",
-        });
+      return res.status(400).json({
+        message: "Invalid userType. Must be 'customer' or 'process_person'.",
+      });
     }
 
     try {
@@ -106,17 +104,29 @@ exports.getDocumentsByAuth = async (req, res) => {
 exports.getDocumentsByCustomerIdFromRequest = async (req, res) => {
   const CustomerDocument = req.db.CustomerDocument;
 
-  // Get customerId from query, body, or params
+  // Extract customerId and userType from request
   const customerId =
     req.body.customerId || req.query.customerId || req.params.customerId;
+  const userType =
+    req.body.userType || req.query.userType || req.params.userType;
 
-  if (!customerId) {
-    return res.status(400).json({ message: "Customer ID is required." });
+  if (!customerId || !userType) {
+    return res
+      .status(400)
+      .json({ message: "Customer ID and userType are required." });
+  }
+
+  const allowedUserTypes = ["customer", "process_person"];
+  if (!allowedUserTypes.includes(userType)) {
+    return res.status(400).json({ message: "Invalid userType." });
   }
 
   try {
     const documents = await CustomerDocument.findAll({
-      where: { customerId },
+      where: {
+        customerId,
+        userType,
+      },
       attributes: [
         "id",
         "documentName",
@@ -129,7 +139,9 @@ exports.getDocumentsByCustomerIdFromRequest = async (req, res) => {
     if (!documents || documents.length === 0) {
       return res
         .status(404)
-        .json({ message: "No documents found for this customer." });
+        .json({
+          message: "No documents found for this customer and userType.",
+        });
     }
 
     const response = documents.map((doc) => ({
