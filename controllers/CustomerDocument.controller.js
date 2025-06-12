@@ -6,6 +6,7 @@ const upload = multer({ storage }).array("documents"); // field name should be '
 
 exports.uploadDocuments = (req, res) => {
   const CustomerDocument = req.db.CustomerDocument;
+
   upload(req, res, async function (err) {
     if (err) {
       console.error("Multer error:", err);
@@ -14,10 +15,22 @@ exports.uploadDocuments = (req, res) => {
         .json({ message: "File upload error.", error: err.message });
     }
 
-    const { customerId } = req.body;
+    const { customerId, userType } = req.body;
 
-    if (!customerId || !req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "Missing customerId or files." });
+    if (!customerId || !userType || !req.files || req.files.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Missing customerId, userType, or files." });
+    }
+
+    // Validate userType value
+    const allowedUserTypes = ["customer", "process_person"];
+    if (!allowedUserTypes.includes(userType)) {
+      return res
+        .status(400)
+        .json({
+          message: "Invalid userType. Must be 'customer' or 'process_person'.",
+        });
     }
 
     try {
@@ -28,6 +41,7 @@ exports.uploadDocuments = (req, res) => {
             documentName: file.originalname,
             mimeType: file.mimetype,
             documentData: file.buffer,
+            userType,
           })
         )
       );

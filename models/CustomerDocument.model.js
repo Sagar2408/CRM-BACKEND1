@@ -34,6 +34,11 @@ module.exports = (sequelize) => {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
+      userType: {
+        type: DataTypes.ENUM("customer", "process_person"),
+        allowNull: false,
+        defaultValue: "customer",
+      },
     },
     {
       tableName: "customer_documents",
