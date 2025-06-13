@@ -32,7 +32,7 @@ router.get("/profile", auth(), userController.getUserProfile); // No role restri
 // admin settings
 router.get("/admin/profile", auth(["Admin"]), userController.getAdminById);          // ✅ Fetch admin profile
 router.put("/admin/profile", auth(["Admin"]), userController.updateAdminProfile);  // ✅ Update admin profile
-router.post("/admin/change_pass",auth(["Admin"]), userController.changePassword);
+router.post("/admin/change_pass",auth(["Admin"]), userController.changePassword);  // ✅ Change admin password
 
 
 
