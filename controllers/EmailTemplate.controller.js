@@ -86,7 +86,6 @@ exports.getAllTemplates = async (req, res) => {
   try {
     const EmailTemplate = req.db.EmailTemplate;
     const templates = await EmailTemplate.findAll({
-      where: { createdBy: req.user.id },
       order: [["createdAt", "DESC"]],
     });
 
