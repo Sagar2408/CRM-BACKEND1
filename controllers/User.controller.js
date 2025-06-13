@@ -256,6 +256,183 @@ const getAdminDashboard = async (req, res) => {
   }
 };
 
+
+
+
+
+
+
+
+
+const getAdminProfile = async (req, res) => {
+  try {
+    const Users = req.db.Users;
+
+    // Find the admin user using the logged-in user's ID
+    const admin = await Users.findOne({
+      where: { id: req.user.id },
+      attributes: [
+        
+        "email",
+        "username",
+        "website",
+        "jobTitle",
+        "alternateEmail",
+        "bio",
+        "showJobTitle",
+      ],
+    });
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    res.json(admin);
+  } catch (error) {
+    console.error("Error fetching admin profile:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+
+const updateAdminProfile = async (req, res) => {
+  try {
+    
+
+    // Authentication check
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "Unauthorized: User not authenticated" });
+    }
+
+    // Ensure Users model exists
+    if (!req.db?.Users) {
+      return res.status(500).json({ message: "Database model Users not available" });
+    }
+
+    const Users = req.db.Users;
+    const { email, username } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const updateData = { email };
+    if (typeof username !== "undefined") updateData.username = username;
+
+    const [updatedCount] = await Users.update(updateData, {
+      where: { id: req.user.id },
+    });
+
+    if (updatedCount === 0) {
+      return res.status(404).json({ message: "Admin not found or no changes made" });
+    }
+
+    const updatedAdmin = await Users.findOne({
+      where: { id: req.user.id },
+      attributes: ["email", "username"], // ✅ Only return relevant fields
+    });
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      admin: updatedAdmin,
+    });
+
+  } catch (error) {
+    console.error("❌ Error updating admin profile:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+
+
+
+
+
+
+const changePassword = async (req, res) => {
+  try {
+    const Users = req.db.Users; // ✅ Scoped model
+    const { currentPassword, newPassword } = req.body;
+    const { id } = req.user; // ✅ User ID from token
+
+    if (!id) {
+      return res.status(401).json({ message: "Unauthorized access" });
+    }
+
+    const user = await Users.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Password update error:", error); // ✅ Error log
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const getTLDashboard = async (req, res) => {
   try {
     const Users = req.db.Users; // ✅ Use dynamic database
@@ -848,6 +1025,9 @@ module.exports = {
   forgotPassword,
   resetPassword,
   getAdminDashboard,
+  getAdminProfile,
+  updateAdminProfile,
+  changePassword,
   getTLDashboard,
   getAdminById,
   logout,
