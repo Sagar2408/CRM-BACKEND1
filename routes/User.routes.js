@@ -53,7 +53,7 @@ router.get(
   auth(),
   userController.getExecutiveById
 );
-router.get("/admin/profile", auth(["Admin"]), userController.getAdminById);
+
 // Get online users (accessible to Admin and TL)
 router.get(
   "/online",

@@ -233,12 +233,12 @@ const signupLocal = async (req, res) => {
 
 const getAdminDashboard = async (req, res) => {
   try {
-    const Users = req.db.Users; // ✅ Dynamic database selection
+    const Users = req.db.Users;
 
     const users = await Users.findAll({
       attributes: {
-        exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
-      },
+        exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"]
+      }
     });
 
     res.json({
@@ -247,9 +247,11 @@ const getAdminDashboard = async (req, res) => {
       currentUser: {
         id: req.user.id,
         email: req.user.email,
-        role: req.user.role,
-      },
+        role: req.user.role // Make sure `req.user` includes this from auth middleware
+      }
+     
     });
+     console.log("Admin dashboard accessed by user:", req.user.role)
   } catch (error) {
     console.error("Admin dashboard error:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -260,39 +262,6 @@ const getAdminDashboard = async (req, res) => {
 
 
 
-
-
-
-
-const getAdminProfile = async (req, res) => {
-  try {
-    const Users = req.db.Users;
-
-    // Find the admin user using the logged-in user's ID
-    const admin = await Users.findOne({
-      where: { id: req.user.id },
-      attributes: [
-        
-        "email",
-        "username",
-        "website",
-        "jobTitle",
-        "alternateEmail",
-        "bio",
-        "showJobTitle",
-      ],
-    });
-
-    if (!admin) {
-      return res.status(404).json({ message: "Admin not found" });
-    }
-
-    res.json(admin);
-  } catch (error) {
-    console.error("Error fetching admin profile:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
 
 
 
@@ -1024,10 +993,11 @@ module.exports = {
   signupLocal,
   forgotPassword,
   resetPassword,
+
   getAdminDashboard,
-  getAdminProfile,
   updateAdminProfile,
   changePassword,
+  
   getTLDashboard,
   getAdminById,
   logout,
