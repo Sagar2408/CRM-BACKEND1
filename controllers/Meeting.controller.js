@@ -2,6 +2,9 @@
 // 📌 Get all meetings with pagination
 exports.getAllMeetings = async (req, res) => {
   const Meeting = req.db.Meeting;
+  const FreshLead = req.db.FreshLead;
+  const Lead = req.db.Lead;
+  const ClientLead = req.db.ClientLead;
 
   const { page = 1, limit = 20 } = req.query;
   const offset = (page - 1) * limit;
@@ -11,6 +14,25 @@ exports.getAllMeetings = async (req, res) => {
       limit: parseInt(limit),
       offset: parseInt(offset),
       order: [["startTime", "DESC"]],
+      include: [
+        {
+          model: FreshLead,
+          as: "freshLead",
+          include: [
+            {
+              model: Lead,
+              as: "lead",
+              include: [
+                {
+                  model: ClientLead,
+                  as: "clientLead",
+                  attributes: ["status"],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     });
 
     const totalPages = Math.ceil(count / limit);
@@ -29,7 +51,6 @@ exports.getAllMeetings = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 // 📌 Get meetings by executive
 exports.getMeetingByExecutive = async (req, res) => {
   const Meeting = req.db.Meeting;
