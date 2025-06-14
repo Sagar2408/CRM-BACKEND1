@@ -148,6 +148,7 @@ const getAllCustomers = async (req, res) => {
         "email",
         "phone", 
         "status",
+        "country",
         "createdAt",
         "updatedAt"
       ], 
