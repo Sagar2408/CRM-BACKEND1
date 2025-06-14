@@ -104,7 +104,6 @@ exports.getTemplateById = async (req, res) => {
     const template = await EmailTemplate.findOne({
       where: {
         id,
-        createdBy: req.user.id,
       },
     });
 
