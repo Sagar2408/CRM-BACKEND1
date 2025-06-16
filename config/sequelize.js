@@ -66,7 +66,7 @@ module.exports = function initializeModels(sequelize) {
     sequelize,
     Sequelize
   );
-  db.CallDetails = require("../models/CallDetails")(sequelize, Sequelize);
+  db.CallDetails = require("../models/CallDetails.model")(sequelize, Sequelize);
 
   // ------------------------
   // Define Associations
