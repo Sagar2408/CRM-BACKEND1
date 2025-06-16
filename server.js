@@ -62,6 +62,12 @@ app.use("/api/hr", tenantResolver, require("./routes/Hr.routes"));
 app.use("/api/deals", auth(), tenantResolver, require("./routes/Deal.routes"));
 app.use("/api/leads", auth(), tenantResolver, require("./routes/Lead.routes"));
 app.use(
+  "/api/calldetails",
+   auth(),
+  tenantResolver,
+  require("./routes/CallDetails.routes")
+);
+app.use(
   "/api/meetings",
   auth(),
   tenantResolver,
