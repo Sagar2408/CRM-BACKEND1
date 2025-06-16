@@ -80,7 +80,17 @@ const getFreshLeadsByExecutive = async (req, res) => {
             {
               model: ClientLead,
               as: "clientLead",
-              attributes: ["id", "status", "name", "email"],
+              attributes: [
+                "id",
+                "status",
+                "name",
+                "email",
+                "education",
+                "experience",
+                "state",
+                "dob",
+                "country",
+              ],
             },
           ],
         },
@@ -105,6 +115,11 @@ const getFreshLeadsByExecutive = async (req, res) => {
               name: clientLead.name,
               email: clientLead.email,
               status: clientLead.status,
+              education: clientLead.education,
+              experience: clientLead.experience,
+              state: clientLead.state,
+              dob: clientLead.dob,
+              country: clientLead.country,
             }
           : null,
       };
@@ -123,13 +138,17 @@ const getClientLeadByFreshLead = async (req, res) => {
     const { leadId } = req.body;
 
     if (!leadId) {
-      return res.status(400).json({ error: "leadId is required in request body" });
+      return res
+        .status(400)
+        .json({ error: "leadId is required in request body" });
     }
 
     // Find the FreshLead using leadId
     const freshLead = await FreshLead.findOne({ where: { leadId } });
     if (!freshLead) {
-      return res.status(404).json({ error: "FreshLead not found for given leadId" });
+      return res
+        .status(404)
+        .json({ error: "FreshLead not found for given leadId" });
     }
 
     // Find the Lead
@@ -141,7 +160,9 @@ const getClientLeadByFreshLead = async (req, res) => {
     // Find the ClientLead
     const clientLead = await ClientLead.findByPk(lead.clientLeadId);
     if (!clientLead) {
-      return res.status(404).json({ error: "ClientLead not found for this lead" });
+      return res
+        .status(404)
+        .json({ error: "ClientLead not found for this lead" });
     }
 
     return res.status(200).json({ data: clientLead });
@@ -172,13 +193,17 @@ const updateFullClientLeadByFreshLead = async (req, res) => {
     } = req.body;
 
     if (!leadId) {
-      return res.status(400).json({ error: "leadId is required in request body" });
+      return res
+        .status(400)
+        .json({ error: "leadId is required in request body" });
     }
 
     // Step 1: Check FreshLead
     const freshLead = await FreshLead.findOne({ where: { leadId } });
     if (!freshLead) {
-      return res.status(404).json({ error: "FreshLead not found for the given leadId" });
+      return res
+        .status(404)
+        .json({ error: "FreshLead not found for the given leadId" });
     }
 
     // Step 2: Find Lead
@@ -190,7 +215,9 @@ const updateFullClientLeadByFreshLead = async (req, res) => {
     // Step 3: Find ClientLead
     const clientLead = await ClientLead.findByPk(lead.clientLeadId);
     if (!clientLead) {
-      return res.status(404).json({ error: "ClientLead not found for this lead" });
+      return res
+        .status(404)
+        .json({ error: "ClientLead not found for this lead" });
     }
 
     // Step 4: Update all fields if provided
@@ -202,9 +229,12 @@ const updateFullClientLeadByFreshLead = async (req, res) => {
     if (state !== undefined) clientLead.state = state;
     if (country !== undefined) clientLead.country = country;
     if (dob !== undefined) clientLead.dob = dob;
-    if (leadAssignDate !== undefined) clientLead.leadAssignDate = leadAssignDate;
-    if (countryPreference !== undefined) clientLead.countryPreference = countryPreference;
-    if (assignedToExecutive !== undefined) clientLead.assignedToExecutive = assignedToExecutive;
+    if (leadAssignDate !== undefined)
+      clientLead.leadAssignDate = leadAssignDate;
+    if (countryPreference !== undefined)
+      clientLead.countryPreference = countryPreference;
+    if (assignedToExecutive !== undefined)
+      clientLead.assignedToExecutive = assignedToExecutive;
     if (status !== undefined) clientLead.status = status;
 
     await clientLead.save();
@@ -223,5 +253,5 @@ module.exports = {
   updateFollowUp,
   getFreshLeadsByExecutive,
   getClientLeadByFreshLead,
-  updateFullClientLeadByFreshLead
+  updateFullClientLeadByFreshLead,
 };
