@@ -66,6 +66,7 @@ module.exports = function initializeModels(sequelize) {
     sequelize,
     Sequelize
   );
+  db.CallDetails = require("../models/CallDetails")(sequelize, Sequelize);
 
   // ------------------------
   // Define Associations
@@ -252,6 +253,16 @@ module.exports = function initializeModels(sequelize) {
     foreignKey: "createdBy",
     as: "creator",
   });
+// One User (executive) can have many CallDetails
+db.Users.hasMany(db.CallDetails, {
+  foreignKey: "executiveId",
+  onDelete: "SET NULL",
+  as: "calls"
+});
+db.CallDetails.belongsTo(db.Users, {
+  foreignKey: "executiveId",
+  as: "executive"
+});
 
   // ------------------------
   // Sync Models
