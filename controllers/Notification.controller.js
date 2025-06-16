@@ -74,6 +74,36 @@ const markAsRead = async (req, res) => {
   }
 };
 
+const markMultipleAsRead = async (req, res) => {
+  const Notification = req.db.Notification;
+  const { notificationIds } = req.body;
+
+  if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
+    return res
+      .status(400)
+      .json({ message: "Invalid or empty notificationIds array." });
+  }
+
+  try {
+    const [updatedCount] = await Notification.update(
+      { is_read: true },
+      {
+        where: {
+          id: notificationIds,
+          is_read: false,
+        },
+      }
+    );
+
+    return res.status(200).json({
+      message: `Marked ${updatedCount} notifications as read.`,
+    });
+  } catch (error) {
+    console.error("Error marking notifications as read:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 const deleteNotification = async (req, res) => {
   const Notification = req.db.Notification; // ✅ Dynamic DB
   const { id } = req.params;
@@ -144,4 +174,5 @@ module.exports = {
   deleteOldNotifications,
   getAllNotificationsByUser,
   copyTextNotification,
+  markMultipleAsRead,
 };
