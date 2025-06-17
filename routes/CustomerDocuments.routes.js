@@ -13,4 +13,6 @@ router.get(
   "/document/:userType/:customerId",
   customerDocController.getDocumentsByCustomerIdFromRequest
 );
+
+router.delete("/document/:id", customerDocController.deleteDocumentById);
 module.exports = router;

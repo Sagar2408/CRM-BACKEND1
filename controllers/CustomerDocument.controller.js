@@ -137,11 +137,9 @@ exports.getDocumentsByCustomerIdFromRequest = async (req, res) => {
     });
 
     if (!documents || documents.length === 0) {
-      return res
-        .status(404)
-        .json({
-          message: "No documents found for this customer and userType.",
-        });
+      return res.status(404).json({
+        message: "No documents found for this customer and userType.",
+      });
     }
 
     const response = documents.map((doc) => ({
@@ -156,5 +154,39 @@ exports.getDocumentsByCustomerIdFromRequest = async (req, res) => {
   } catch (error) {
     console.error("Fetch error:", error);
     res.status(500).json({ message: "Error fetching documents." });
+  }
+};
+
+exports.deleteDocumentById = async (req, res) => {
+  const CustomerDocument = req.db.CustomerDocument;
+  const { id } = req.params;
+  const userType =
+    req.body.userType || req.query.userType || req.params.userType;
+
+  if (!id || !userType) {
+    return res
+      .status(400)
+      .json({ message: "Document ID and userType are required." });
+  }
+
+  if (userType !== "process_person") {
+    return res
+      .status(403)
+      .json({ message: "Only process_person can delete documents." });
+  }
+
+  try {
+    const document = await CustomerDocument.findByPk(id);
+
+    if (!document) {
+      return res.status(404).json({ message: "Document not found." });
+    }
+
+    await document.destroy();
+
+    res.status(200).json({ message: "Document deleted successfully." });
+  } catch (error) {
+    console.error("Delete error:", error);
+    res.status(500).json({ message: "Error deleting document." });
   }
 };
