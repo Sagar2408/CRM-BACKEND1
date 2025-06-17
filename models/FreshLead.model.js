@@ -8,6 +8,7 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
+        unique: true,
       },
       leadId: {
         type: DataTypes.INTEGER,

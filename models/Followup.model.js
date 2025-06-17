@@ -9,6 +9,7 @@ module.exports = (sequelize) => {
         primaryKey: true,
         autoIncrement: true,
         allowNull: false,
+        unique: true,
       },
       connect_via: {
         type: DataTypes.ENUM("Call", "Email", "Call/Email"),
@@ -29,10 +30,10 @@ module.exports = (sequelize) => {
         type: DataTypes.ENUM("Hot", "Warm", "Cold"),
         allowNull: false,
       },
-       reason_for_follow_up: {
+      reason_for_follow_up: {
         type: DataTypes.TEXT("long"),
-         allowNull: false,
-        },
+        allowNull: false,
+      },
       follow_up_date: {
         type: DataTypes.DATEONLY,
         allowNull: false,

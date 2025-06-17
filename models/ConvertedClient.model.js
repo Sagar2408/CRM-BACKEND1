@@ -9,6 +9,7 @@ module.exports = (sequelize) => {
         primaryKey: true,
         autoIncrement: true,
         allowNull: false,
+        unique: true,
       },
       fresh_lead_id: {
         type: DataTypes.INTEGER,

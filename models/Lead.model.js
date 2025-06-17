@@ -8,11 +8,12 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
+        unique: true,
       },
       clientLeadId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        unique: true
+        unique: true,
       },
       assignedToExecutive: {
         type: DataTypes.STRING,
