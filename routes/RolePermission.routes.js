@@ -8,7 +8,7 @@ router.post("/create", rolePermissionController.createRolePermission);
 router.patch("/:id/toggle", rolePermissionController.togglePermission);
 
 // Get all role permission records
-router.get("/role-permissions", rolePermissionController.getAllRolePermissions);
+router.get("/get-permissions", rolePermissionController.getAllRolePermissions);
 
 //Get all the manager and users as one
 router.get(

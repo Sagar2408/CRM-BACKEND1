@@ -204,7 +204,7 @@ app.use(
   require("./routes/ProcessFollowupHistory.routes")
 );
 app.use(
-  "/api",
+  "/api/role-permissions",
   auth(),
   tenantResolver,
   require("./routes/RolePermission.routes")
