@@ -1,51 +1,16 @@
-// 📁 File: agents/executiveAgent.js
 require("dotenv").config();
 const axios = require("axios");
 const searchWeb = require("../utils/websearch");
+const fetchLatestCrsFromWeb = require("../utils/fetchCrsScore");
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = process.env.GEMINI_API_URL;
-
-// Dynamically fetch latest CRS score from IRCC draw page
-async function fetchLatestCrsFromWeb() {
-  try {
-    const response = await axios.get(
-      "https://www.cic.gc.ca/english/express-entry/rounds.asp"
-    );
-    const html = response.data;
-
-    const links = [
-      ...html.matchAll(
-        /<a href=\"(\/english\/express-entry\/rounds\/[^"]+)\"/g
-      ),
-    ];
-    if (!links.length) return null;
-
-    const latestUrl = `https://www.cic.gc.ca${links[0][1]}`;
-    const page = await axios.get(latestUrl);
-    const body = page.data;
-
-    const dateMatch = body.match(/(\w+ \d{1,2}, \d{4})/);
-    const crsMatch = body.match(/lowest score.*?(\d{3})/i);
-
-    if (dateMatch && crsMatch) {
-      return {
-        drawDate: dateMatch[1],
-        crs: parseInt(crsMatch[1]),
-        url: latestUrl,
-      };
-    }
-    return null;
-  } catch (err) {
-    console.error("❌ CRS web fetch failed:", err.message);
-    return null;
-  }
-}
 
 async function askExecutiveAgent(question, userId, db) {
   try {
     const ChatHistory = db.ChatHistory;
 
+    // 🕘 Retrieve last 10 messages
     const history = await ChatHistory.findAll({
       where: { userId, agentType: "executive" },
       order: [["createdAt", "ASC"]],
@@ -56,32 +21,48 @@ async function askExecutiveAgent(question, userId, db) {
       .map((msg) => `${msg.role === "user" ? "User" : "Agent"}: ${msg.message}`)
       .join("\n");
 
+    // 🌐 Fetch relevant web data
     const webData = await searchWeb(question);
-    const truncatedWebData = webData.slice(0, 2000);
+    const truncatedWebData = webData.slice(0, 3000); // Gemini size constraint
 
+    // 📊 Fetch latest CRS score
     const crsData = await fetchLatestCrsFromWeb();
     const crsSummary = crsData
       ? `As of ${crsData.drawDate}, the minimum CRS cutoff was ${crsData.crs}. (source: ${crsData.url})`
-      : "No recent CRS data available.";
+      : "CRS data could not be fetched at this moment.";
 
-    const prompt = `You are an experienced immigration advisor at AtoZee Visas. 
-Only answer questions related to immigration, briefly and professionally.
+    // 🧠 Compose full prompt
+    const prompt = `You are an experienced senior immigration advisor at AtoZee Visas — a trusted firm known for helping clients successfully navigate immigration pathways to Canada, the UK, Australia, and more.
 
-📜 Previous Chat:
+You speak with clarity, confidence, and professionalism. Your tone is warm, helpful, and focused on **actionable immigration advice**.
+
+Your job is to:
+✅ Answer only immigration-related questions  
+✅ Speak as a **human expert**, not an AI  
+✅ Keep answers **brief** (max 3–5 sentences)  
+✅ Gently **guide users to work with AtoZee Visas** for personalized help
+
+If the question is unrelated to immigration (e.g., tech, politics), respond:
+> “I’m here to help only with immigration-related questions.”
+
+Use the following to guide your answer:
+
+📜 **Conversation History**:
 ${historyMessages}
 
-📊 CRS Score Update:
-${crsSummary}
-
-🌐 Web Info:
+🌐 **Recent Immigration Info from Web** (auto-extracted, may not be fully verified):
 ${truncatedWebData}
+
+📊 **Latest CRS Score Insight**:
+${crsSummary}
 
 ---
 
-Answer this question:
+Now respond to this user query:
 "${question}"
 
-Format: Brief human-style immigration advice. Add a source note if info is from CRS data or web.`;
+Be clear, professional, and sound like a real AtoZee advisor who genuinely wants to help.
+`;
 
     const payload = {
       contents: [
@@ -95,13 +76,16 @@ Format: Brief human-style immigration advice. Add a source note if info is from 
     const res = await axios.post(
       `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
       payload,
-      { headers: { "Content-Type": "application/json" } }
+      {
+        headers: { "Content-Type": "application/json" },
+      }
     );
 
     const reply =
       res.data.candidates?.[0]?.content?.parts?.[0]?.text ||
       "No response from Gemini.";
 
+    // 💾 Save chat history
     await ChatHistory.create({
       userId,
       role: "user",
@@ -117,8 +101,8 @@ Format: Brief human-style immigration advice. Add a source note if info is from 
 
     return reply;
   } catch (err) {
-    console.error("Executive Agent Error:", err.response?.data || err.message);
-    return "Sorry, I couldn’t fetch an answer right now.";
+    console.error("❌ Gemini AI Error:", err.response?.data || err.message);
+    return "Sorry, the executive AI agent couldn't respond.";
   }
 }
 
