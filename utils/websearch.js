@@ -1,23 +1,61 @@
+// utils/websearch.js
 const axios = require("axios");
-const SERPAPI_KEY = process.env.SERPAPI_KEY;
+const cheerio = require("cheerio");
 
 async function searchWeb(query) {
   try {
-    const response = await axios.get("https://serpapi.com/search", {
-      params: {
-        q: query,
-        api_key: SERPAPI_KEY,
-        engine: "google",
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(
+      query
+    )}&hl=en`;
+
+    const { data } = await axios.get(searchUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)",
       },
     });
 
-    const organicResults = response.data.organic_results;
-    const snippets = organicResults.slice(0, 3).map((r) => `- ${r.snippet}`).join("\n");
+    const $ = cheerio.load(data);
+    const links = [];
 
-    return `Top results:\n${snippets}`;
-  } catch (error) {
-    console.error("Web search error:", error.response?.data || error.message);
-    return "No live data available right now.";
+    $("a").each((i, el) => {
+      const href = $(el).attr("href");
+      if (href && href.startsWith("/url?q=")) {
+        const url = href.split("/url?q=")[1].split("&")[0];
+        if (
+          !url.includes("google") &&
+          !url.includes("youtube") &&
+          !url.includes("facebook")
+        ) {
+          links.push(url);
+        }
+      }
+    });
+
+    const topLinks = links.slice(0, 2); // Only top 2
+    let fullText = "";
+
+    for (const url of topLinks) {
+      try {
+        const page = await axios.get(url, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)",
+          },
+        });
+
+        const $page = cheerio.load(page.data);
+        const text = $page("body").text().replace(/\s+/g, " ").slice(0, 2000); // clean & trim
+        fullText += `🔗 Source: ${url}\n${text}\n\n---\n`;
+      } catch (err) {
+        console.warn(`❌ Failed to extract from ${url}: ${err.message}`);
+      }
+    }
+
+    return fullText || "No usable immigration information found.";
+  } catch (err) {
+    console.error("Web scraping error:", err.message);
+    return "Web data could not be fetched.";
   }
 }
 

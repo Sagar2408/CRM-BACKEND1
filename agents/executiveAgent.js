@@ -17,13 +17,15 @@ async function askExecutiveAgent(question, userId, db) {
       limit: 10,
     });
 
-    const historyMessages = history.map((msg) =>
-      `${msg.role === "user" ? "User" : "Agent"}: ${msg.message}`
-    ).join("\n");
+    const historyMessages = history
+      .map((msg) => `${msg.role === "user" ? "User" : "Agent"}: ${msg.message}`)
+      .join("\n");
 
     const webData = await searchWeb(question);
-    console.log("🔍 Web Search Data:\n", webData);
-const prompt = `You are an experienced senior immigration advisor at AtoZee Visas — a trusted firm known for helping clients successfully navigate immigration pathways to Canada, the UK, Australia, and more.
+    const truncatedWebData = webData.slice(0, 3000); // Limit content length
+    console.log("🔍 Web Search Data:\n", truncatedWebData);
+
+    const prompt = `You are an experienced senior immigration advisor at AtoZee Visas — a trusted firm known for helping clients successfully navigate immigration pathways to Canada, the UK, Australia, and more.
 
 You speak with clarity, confidence, and professionalism. Your tone is warm, helpful, and focused on **actionable immigration advice**.
 
@@ -42,8 +44,8 @@ Use the following to guide your answer:
 📜 **Conversation History**:
 ${historyMessages}
 
-🌐 **Recent Immigration Info from Web**:
-${webData}
+🌐 **Recent Immigration Info from Web** (auto-extracted from public websites — may not be 100% verified):
+${truncatedWebData}
 
 ---
 
@@ -52,10 +54,6 @@ Now respond to this user query:
 
 Be clear, professional, and sound like a real AtoZee advisor who genuinely wants to help.
 `;
-
-
-
-
 
     const payload = {
       contents: [
@@ -66,16 +64,31 @@ Be clear, professional, and sound like a real AtoZee advisor who genuinely wants
       ],
     };
 
-    const res = await axios.post(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, payload, {
-      headers: { "Content-Type": "application/json" },
-    });
+    const res = await axios.post(
+      `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
+      payload,
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
 
     const reply =
-      res.data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini.";
+      res.data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No response from Gemini.";
 
     // Save history
-    await ChatHistory.create({ userId, role: "user", message: question, agentType: "executive" });
-    await ChatHistory.create({ userId, role: "assistant", message: reply, agentType: "executive" });
+    await ChatHistory.create({
+      userId,
+      role: "user",
+      message: question,
+      agentType: "executive",
+    });
+    await ChatHistory.create({
+      userId,
+      role: "assistant",
+      message: reply,
+      agentType: "executive",
+    });
 
     return reply;
   } catch (err) {
