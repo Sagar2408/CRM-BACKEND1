@@ -1,3 +1,5 @@
+const { Op } = require("sequelize");
+
 // 📌 Create a new FollowUp
 const createFollowUp = async (req, res) => {
   try {
@@ -150,7 +152,17 @@ const getFollowUps = async (req, res) => {
       return res.status(200).json({ message: "No follow-ups", data: [] });
 
     const followUps = await FollowUp.findAll({
-      where: { fresh_lead_id: freshLeadIds },
+      //where: { fresh_lead_id: freshLeadIds },
+      where: {
+        fresh_lead_id: {
+          [Op.in]: freshLeadIds,
+        },
+      },
+      order: [
+        ["fresh_lead_id", "ASC"],
+        ["follow_up_date", "DESC"],
+        ["follow_up_time", "DESC"],
+      ],
       include: [
         {
           model: FreshLead,
