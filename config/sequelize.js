@@ -61,13 +61,16 @@ module.exports = function initializeModels(sequelize) {
     sequelize,
     Sequelize
   );
- db.ChatHistory = require("../models/ChatHistory.model")(sequelize, Sequelize);
- db.EmailTemplate = require("../models/EmailTemplate.model")(
+  db.ChatHistory = require("../models/ChatHistory.model")(sequelize, Sequelize);
+  db.EmailTemplate = require("../models/EmailTemplate.model")(
     sequelize,
     Sequelize
   );
   db.CallDetails = require("../models/CallDetails.model")(sequelize, Sequelize);
-  db.ProcessFollowUpHistory = require("../models/ProcessFollowUpHistory.model")(sequelize, Sequelize)
+  db.ProcessFollowUpHistory = require("../models/ProcessFollowupHIstory.model")(
+    sequelize,
+    Sequelize
+  );
 
   // ------------------------
   // Define Associations
@@ -254,37 +257,37 @@ module.exports = function initializeModels(sequelize) {
     foreignKey: "createdBy",
     as: "creator",
   });
-// One User (executive) can have many CallDetails
-db.Users.hasMany(db.CallDetails, {
-  foreignKey: "executiveId",
-  onDelete: "SET NULL",
-  as: "calls"
-});
-db.CallDetails.belongsTo(db.Users, {
-  foreignKey: "executiveId",
-  as: "executive"
-});
-// One FreshLead can have many process follow-up histories
-db.FreshLead.hasMany(db.ProcessFollowUpHistory, {
-  foreignKey: "fresh_lead_id",
-  as: "processFollowUps",
-  onDelete: "CASCADE"
-});
-db.ProcessFollowUpHistory.belongsTo(db.FreshLead, {
-  foreignKey: "fresh_lead_id",
-  as: "freshLead"
-});
+  // One User (executive) can have many CallDetails
+  db.Users.hasMany(db.CallDetails, {
+    foreignKey: "executiveId",
+    onDelete: "SET NULL",
+    as: "calls",
+  });
+  db.CallDetails.belongsTo(db.Users, {
+    foreignKey: "executiveId",
+    as: "executive",
+  });
+  // One FreshLead can have many process follow-up histories
+  db.FreshLead.hasMany(db.ProcessFollowUpHistory, {
+    foreignKey: "fresh_lead_id",
+    as: "processFollowUps",
+    onDelete: "CASCADE",
+  });
+  db.ProcessFollowUpHistory.belongsTo(db.FreshLead, {
+    foreignKey: "fresh_lead_id",
+    as: "freshLead",
+  });
 
-// One ProcessPerson can have many follow-up histories
-db.ProcessPerson.hasMany(db.ProcessFollowUpHistory, {
-  foreignKey: "process_person_id",
-  as: "followUps",
-  onDelete: "CASCADE"
-});
-db.ProcessFollowUpHistory.belongsTo(db.ProcessPerson, {
-  foreignKey: "process_person_id",
-  as: "processPerson"
-});
+  // One ProcessPerson can have many follow-up histories
+  db.ProcessPerson.hasMany(db.ProcessFollowUpHistory, {
+    foreignKey: "process_person_id",
+    as: "followUps",
+    onDelete: "CASCADE",
+  });
+  db.ProcessFollowUpHistory.belongsTo(db.ProcessPerson, {
+    foreignKey: "process_person_id",
+    as: "processPerson",
+  });
 
   // ------------------------
   // Sync Models
