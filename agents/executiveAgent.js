@@ -1,3 +1,4 @@
+// 📁 File: agents/executiveAgent.js
 require("dotenv").config();
 const axios = require("axios");
 const searchWeb = require("../utils/websearch");
@@ -5,11 +6,46 @@ const searchWeb = require("../utils/websearch");
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = process.env.GEMINI_API_URL;
 
+// Dynamically fetch latest CRS score from IRCC draw page
+async function fetchLatestCrsFromWeb() {
+  try {
+    const response = await axios.get(
+      "https://www.cic.gc.ca/english/express-entry/rounds.asp"
+    );
+    const html = response.data;
+
+    const links = [
+      ...html.matchAll(
+        /<a href=\"(\/english\/express-entry\/rounds\/[^"]+)\"/g
+      ),
+    ];
+    if (!links.length) return null;
+
+    const latestUrl = `https://www.cic.gc.ca${links[0][1]}`;
+    const page = await axios.get(latestUrl);
+    const body = page.data;
+
+    const dateMatch = body.match(/(\w+ \d{1,2}, \d{4})/);
+    const crsMatch = body.match(/lowest score.*?(\d{3})/i);
+
+    if (dateMatch && crsMatch) {
+      return {
+        drawDate: dateMatch[1],
+        crs: parseInt(crsMatch[1]),
+        url: latestUrl,
+      };
+    }
+    return null;
+  } catch (err) {
+    console.error("❌ CRS web fetch failed:", err.message);
+    return null;
+  }
+}
+
 async function askExecutiveAgent(question, userId, db) {
   try {
     const ChatHistory = db.ChatHistory;
 
-    // 1️⃣ Load Chat History
     const history = await ChatHistory.findAll({
       where: { userId, agentType: "executive" },
       order: [["createdAt", "ASC"]],
@@ -20,60 +56,33 @@ async function askExecutiveAgent(question, userId, db) {
       .map((msg) => `${msg.role === "user" ? "User" : "Agent"}: ${msg.message}`)
       .join("\n");
 
-    // 2️⃣ Search Web (with fallback)
-    let webData = await searchWeb(question);
+    const webData = await searchWeb(question);
+    const truncatedWebData = webData.slice(0, 2000);
 
-    // fallback if nothing was found
-    if (!webData || webData.trim().toLowerCase().startsWith("no relevant")) {
-      webData = `From https://www.cic.gc.ca:
-You can find the most accurate and up-to-date immigration rules, CRS cutoff scores, visa updates, and draw details directly at https://www.cic.gc.ca/english/express-entry/rounds.asp
+    const crsData = await fetchLatestCrsFromWeb();
+    const crsSummary = crsData
+      ? `As of ${crsData.drawDate}, the minimum CRS cutoff was ${crsData.crs}. (source: ${crsData.url})`
+      : "No recent CRS data available.";
 
----`;
-    }
+    const prompt = `You are an experienced immigration advisor at AtoZee Visas. 
+Only answer questions related to immigration, briefly and professionally.
 
-    const truncatedWebData = webData.slice(0, 3000);
-    console.log("✅ Truncated Web Data for Gemini:\n", truncatedWebData);
+📜 Previous Chat:
+${historyMessages}
 
-    // 3️⃣ Create Prompt
-    const prompt = `You are an experienced senior immigration advisor at AtoZee Visas — a trusted firm known for helping clients successfully navigate immigration pathways to Canada, the UK, Australia, and more.
+📊 CRS Score Update:
+${crsSummary}
 
-You speak clearly and professionally. Your tone is warm, human, and focused on giving **practical, up-to-date immigration advice**.
-
-Your responsibilities:
-
-✅ Answer only immigration-related questions  
-✅ Speak as a real human expert — never say you're an AI  
-✅ Keep answers brief (3–5 sentences max)  
-✅ End by inviting the user to consult AtoZee Visas for help  
-✅ For every fact you provide, show where it came from:
-   - Use (source: chat history) for old conversation info  
-   - Use (source: URL) for any data from websites
-
-If the question is unrelated to immigration, respond:
-> “I’m here to help only with immigration-related questions.”
-
----
-
-📜 **Conversation History**:  
-Use this for context. Cite as (source: chat history).
-
-${historyMessages || "None."}
-
----
-
-🌐 **Web Search Results** (grouped by source):  
-Use these for up-to-date facts. Always cite like (source: URL).
-
+🌐 Web Info:
 ${truncatedWebData}
 
 ---
 
-Now respond to the user query:
+Answer this question:
 "${question}"
 
-Be confident, brief, and always cite the source of your information — either (source: chat history) or (source: URL). Offer to help via AtoZee Visas if appropriate.`;
+Format: Brief human-style immigration advice. Add a source note if info is from CRS data or web.`;
 
-    // 4️⃣ Gemini API Payload
     const payload = {
       contents: [
         {
@@ -86,18 +95,13 @@ Be confident, brief, and always cite the source of your information — either (
     const res = await axios.post(
       `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
       payload,
-      {
-        headers: { "Content-Type": "application/json" },
-      }
+      { headers: { "Content-Type": "application/json" } }
     );
 
     const reply =
       res.data.candidates?.[0]?.content?.parts?.[0]?.text ||
       "No response from Gemini.";
 
-    console.log("🤖 Gemini Raw Reply:\n", reply);
-
-    // 5️⃣ Save Messages
     await ChatHistory.create({
       userId,
       role: "user",
@@ -113,8 +117,8 @@ Be confident, brief, and always cite the source of your information — either (
 
     return reply;
   } catch (err) {
-    console.error("❌ Gemini AI Error:", err.response?.data || err.message);
-    return "Sorry, the executive AI agent couldn't respond.";
+    console.error("Executive Agent Error:", err.response?.data || err.message);
+    return "Sorry, I couldn’t fetch an answer right now.";
   }
 }
 
