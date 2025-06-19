@@ -175,16 +175,16 @@ exports.reassignLead = async (req, res) => {
     const freshLeads = await FreshLead.findAll({ where: { leadId: lead.id } });
     const freshLeadIds = freshLeads.map((f) => f.id);
 
-    if (freshLeadIds.length > 0) {
-      await Promise.all([
-        FollowUp.destroy({ where: { fresh_lead_id: freshLeadIds } }),
-        //FollowUpHistory.destroy({ where: { fresh_lead_id: freshLeadIds } }),
-        Meeting.destroy({ where: { fresh_lead_id: freshLeadIds } }),
-      ]);
-      console.log(
-        `🗑 Deleted followups, histories, and meetings for FreshLeads linked to Lead ID ${lead.id}`
-      );
-    }
+    // if (freshLeadIds.length > 0) {
+    //   await Promise.all([
+    //     //FollowUp.destroy({ where: { fresh_lead_id: freshLeadIds } }),
+    //     //FollowUpHistory.destroy({ where: { fresh_lead_id: freshLeadIds } }),
+    //     Meeting.destroy({ where: { fresh_lead_id: freshLeadIds } }),
+    //   ]);
+    //   console.log(
+    //     `🗑 Deleted followups, histories, and meetings for FreshLeads linked to Lead ID ${lead.id}`
+    //   );
+    // }
 
     // ✅ Final Response
     res.json({
