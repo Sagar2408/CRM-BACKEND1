@@ -128,9 +128,82 @@ const updateFollowUp = async (req, res) => {
 };
 
 // 📌 Get FollowUps for executive
+// const getFollowUps = async (req, res) => {
+//   try {
+//     const { FollowUp, FreshLead, Lead, ClientLead } = req.db; // ✅ Dynamic DB
+//     const username = req.user.username;
+
+//     const leads = await Lead.findAll({
+//       where: { assignedToExecutive: username },
+//       attributes: ["id"],
+//     });
+
+//     const leadIds = leads.map((lead) => lead.id);
+//     if (!leadIds.length)
+//       return res.status(200).json({ message: "No follow-ups", data: [] });
+
+//     const freshLeads = await FreshLead.findAll({
+//       where: { leadId: leadIds },
+//       attributes: ["id", "leadId"],
+//     });
+
+//     const freshLeadIds = freshLeads.map((fl) => fl.id);
+//     if (!freshLeadIds.length)
+//       return res.status(200).json({ message: "No follow-ups", data: [] });
+
+//     const followUps = await FollowUp.findAll({
+//       where: { fresh_lead_id: freshLeadIds },
+//       include: [
+//         {
+//           model: FreshLead,
+//           as: "freshLead",
+//           attributes: ["name", "phone", "email"],
+//           include: [
+//             {
+//               model: Lead,
+//               as: "lead",
+//               attributes: ["id", "clientLeadId"],
+//               include: [
+//                 {
+//                   model: ClientLead,
+//                   as: "clientLead",
+//                   attributes: ["status"],
+//                 },
+//               ],
+//             },
+//           ],
+//         },
+//       ],
+//     });
+
+//     const response = followUps.map((fu) => {
+//       const freshLead = fu.freshLead;
+//       const clientLeadStatus = freshLead?.lead?.clientLead?.status;
+
+//       return {
+//         ...fu.toJSON(),
+//         freshLead: {
+//           name: freshLead?.name,
+//           phone: freshLead?.phone,
+//           email: freshLead?.email,
+//         },
+//         clientLeadStatus: clientLeadStatus || null,
+//       };
+//     });
+
+//     return res.status(200).json({
+//       message: "Follow-ups fetched successfully",
+//       data: response,
+//     });
+//   } catch (err) {
+//     console.error("Error fetching follow-ups:", err);
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
 const getFollowUps = async (req, res) => {
   try {
-    const { FollowUp, FreshLead, Lead, ClientLead } = req.db; // ✅ Dynamic DB
+    const { FollowUp, FreshLead, Lead, ClientLead } = req.db;
     const username = req.user.username;
 
     const leads = await Lead.findAll({
@@ -139,8 +212,9 @@ const getFollowUps = async (req, res) => {
     });
 
     const leadIds = leads.map((lead) => lead.id);
-    if (!leadIds.length)
+    if (!leadIds.length) {
       return res.status(200).json({ message: "No follow-ups", data: [] });
+    }
 
     const freshLeads = await FreshLead.findAll({
       where: { leadId: leadIds },
@@ -148,21 +222,24 @@ const getFollowUps = async (req, res) => {
     });
 
     const freshLeadIds = freshLeads.map((fl) => fl.id);
-    if (!freshLeadIds.length)
+    if (!freshLeadIds.length) {
       return res.status(200).json({ message: "No follow-ups", data: [] });
+    }
+
+    // ✅ Use subquery to get latest follow-up ID per fresh_lead_id
+    const latestFollowUps = await FollowUp.findAll({
+      attributes: [[Sequelize.fn("MAX", Sequelize.col("id")), "id"]],
+      where: { fresh_lead_id: freshLeadIds },
+      group: ["fresh_lead_id"],
+      raw: true,
+    });
+
+    const latestFollowUpIds = latestFollowUps.map((fu) => fu.id);
 
     const followUps = await FollowUp.findAll({
-      //where: { fresh_lead_id: freshLeadIds },
       where: {
-        fresh_lead_id: {
-          [Op.in]: freshLeadIds,
-        },
+        id: { [Op.in]: latestFollowUpIds },
       },
-      order: [
-        ["fresh_lead_id", "ASC"],
-        ["follow_up_date", "DESC"],
-        ["follow_up_time", "DESC"],
-      ],
       include: [
         {
           model: FreshLead,
@@ -184,6 +261,7 @@ const getFollowUps = async (req, res) => {
           ],
         },
       ],
+      order: [["createdAt", "DESC"]],
     });
 
     const response = followUps.map((fu) => {
