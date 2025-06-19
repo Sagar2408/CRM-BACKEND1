@@ -63,7 +63,7 @@ app.use("/api/deals", auth(), tenantResolver, require("./routes/Deal.routes"));
 app.use("/api/leads", auth(), tenantResolver, require("./routes/Lead.routes"));
 app.use(
   "/api/calldetails",
-   auth(),
+  auth(),
   tenantResolver,
   require("./routes/CallDetails.routes")
 );
@@ -198,12 +198,17 @@ app.use(
   require("./routes/EmailTemplate.routes")
 );
 app.use(
+  "/api/process-history",
+  auth(),
+  tenantResolver,
+  require("./routes/ProcessFollowupHistory.routes")
+);
+app.use(
   "/api",
   auth(),
   tenantResolver,
   require("./routes/RolePermission.routes")
 );
-app.use("/api/process-history", auth(), tenantResolver, require("./routes/ProcessFollowupHistory.routes"));
 
 // 🧠 Store connected users
 const connectedUsers = {};
