@@ -17,7 +17,7 @@ router.get(
 
 //get all the follow-up history of particular lead by fresh lead id
 router.get(
-  "/:id",
+  "/:fresh_lead_id",
   auth(),
   followUpHistoryController.getFollowUpHistoriesByFreshLeadId
 );
