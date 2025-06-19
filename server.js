@@ -203,6 +203,7 @@ app.use(
   tenantResolver,
   require("./routes/RolePermission.routes")
 );
+app.use("/api/process-history", auth(), tenantResolver, require("./routes/ProcessFollowupHistory.routes"));
 
 // 🧠 Store connected users
 const connectedUsers = {};
