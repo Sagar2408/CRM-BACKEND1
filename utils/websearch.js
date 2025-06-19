@@ -1,4 +1,3 @@
-// utils/websearch.js
 const axios = require("axios");
 const cheerio = require("cheerio");
 
@@ -23,39 +22,42 @@ async function searchWeb(query) {
       if (href && href.startsWith("/url?q=")) {
         const url = href.split("/url?q=")[1].split("&")[0];
         if (
-          !url.includes("google") &&
-          !url.includes("youtube") &&
-          !url.includes("facebook")
+          url.startsWith("http") &&
+          !url.includes("google.com") &&
+          !url.includes("youtube.com") &&
+          !url.includes("facebook.com")
         ) {
           links.push(url);
         }
       }
     });
 
-    const topLinks = links.slice(0, 2); // Only top 2
-    let fullText = "";
+    const topLinks = [...new Set(links)].slice(0, 3); // avoid duplicates, limit to 3
+    let groupedContent = "";
 
     for (const url of topLinks) {
       try {
-        const page = await axios.get(url, {
+        const res = await axios.get(url, {
           headers: {
             "User-Agent":
               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)",
           },
         });
 
-        const $page = cheerio.load(page.data);
-        const text = $page("body").text().replace(/\s+/g, " ").slice(0, 2000); // clean & trim
-        fullText += `🔗 Source: ${url}\n${text}\n\n---\n`;
+        const $page = cheerio.load(res.data);
+        const rawText = $page("body").text();
+        const cleanText = rawText.replace(/\s+/g, " ").trim().slice(0, 1500);
+
+        groupedContent += `\nFrom ${url}:\n${cleanText}\n\n---\n`;
       } catch (err) {
-        console.warn(`❌ Failed to extract from ${url}: ${err.message}`);
+        console.warn(`❌ Could not scrape ${url}:`, err.message);
       }
     }
 
-    return fullText || "No usable immigration information found.";
+    return groupedContent || "No relevant web content could be extracted.";
   } catch (err) {
-    console.error("Web scraping error:", err.message);
-    return "Web data could not be fetched.";
+    console.error("❌ searchWeb failed:", err.message);
+    return "No web data available.";
   }
 }
 
