@@ -15,4 +15,10 @@ router.get(
   followUpHistoryController.getFollowUpHistoriesByExecutive
 );
 
+//get all the follow-up history of particular lead by fresh lead id
+router.get(
+  "/:id",
+  auth(),
+  followUpHistoryController.getFollowUpHistoriesByFreshLeadId
+);
 module.exports = router;

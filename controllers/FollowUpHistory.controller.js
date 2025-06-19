@@ -107,3 +107,43 @@ exports.getFollowUpHistoriesByExecutive = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+exports.getFollowUpHistoriesByFreshLeadId = async (req, res) => {
+  const { FollowUpHistory, FollowUp } = req.db;
+
+  const freshLeadId =
+    req.params.fresh_lead_id ||
+    req.query.fresh_lead_id ||
+    req.body.fresh_lead_id;
+
+  if (!freshLeadId) {
+    return res.status(400).json({ error: "Missing fresh_lead_id in request" });
+  }
+
+  try {
+    const followUpHistories = await FollowUpHistory.findAll({
+      where: { fresh_lead_id: freshLeadId },
+      include: [
+        {
+          model: FollowUp,
+          as: "followUp", // optional, remove if not associated
+        },
+      ],
+      order: [
+        ["follow_up_date", "DESC"],
+        ["follow_up_time", "DESC"],
+      ],
+    });
+
+    if (!followUpHistories.length) {
+      return res.status(404).json({
+        error: "No follow-up history found for this fresh_lead_id",
+      });
+    }
+
+    return res.status(200).json(followUpHistories);
+  } catch (error) {
+    console.error("Error fetching FollowUpHistories by fresh_lead_id:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
