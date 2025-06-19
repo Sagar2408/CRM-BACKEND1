@@ -67,7 +67,7 @@ module.exports = function initializeModels(sequelize) {
     Sequelize
   );
   db.CallDetails = require("../models/CallDetails.model")(sequelize, Sequelize);
-  db.ProcessFollowUpHistory = require("../models/ProcessFollowupHistory.model")(sequelize, Sequelize)
+  db.ProcessFollowUpHistory = require("../models/ProcessFollowUpHistory.model")(sequelize, Sequelize)
 
   // ------------------------
   // Define Associations
