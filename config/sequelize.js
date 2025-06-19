@@ -67,6 +67,7 @@ module.exports = function initializeModels(sequelize) {
     Sequelize
   );
   db.CallDetails = require("../models/CallDetails.model")(sequelize, Sequelize);
+  db.ProcessFollowUpHistory = require("../models/ProcessFollowupHistory.model")(sequelize, Sequelize)
 
   // ------------------------
   // Define Associations
@@ -262,6 +263,27 @@ db.Users.hasMany(db.CallDetails, {
 db.CallDetails.belongsTo(db.Users, {
   foreignKey: "executiveId",
   as: "executive"
+});
+// One FreshLead can have many process follow-up histories
+db.FreshLead.hasMany(db.ProcessFollowUpHistory, {
+  foreignKey: "fresh_lead_id",
+  as: "processFollowUps",
+  onDelete: "CASCADE"
+});
+db.ProcessFollowUpHistory.belongsTo(db.FreshLead, {
+  foreignKey: "fresh_lead_id",
+  as: "freshLead"
+});
+
+// One ProcessPerson can have many follow-up histories
+db.ProcessPerson.hasMany(db.ProcessFollowUpHistory, {
+  foreignKey: "process_person_id",
+  as: "followUps",
+  onDelete: "CASCADE"
+});
+db.ProcessFollowUpHistory.belongsTo(db.ProcessPerson, {
+  foreignKey: "process_person_id",
+  as: "processPerson"
 });
 
   // ------------------------
