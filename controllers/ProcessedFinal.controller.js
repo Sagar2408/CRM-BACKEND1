@@ -27,7 +27,10 @@ const createFinalizedLead = async (req, res) => {
     if (freshLead.followUpStatus !== "close") {
       return res
         .status(400)
-        .json({ message: "Fresh lead is not closed", followUpStatus });
+        .json({
+          message: "Fresh lead is not closed",
+          followUpStatus: freshLead.followUpStatus,
+        });
     }
 
     // Prevent duplicate ProcessedFinal entry
