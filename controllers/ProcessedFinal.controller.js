@@ -1,6 +1,6 @@
 const createFinalizedLead = async (req, res) => {
   try {
-    const { ProcessedFinal, FreshLead } = req.db;
+    const { ProcessedFinal, FreshLead, ClientLead } = req.db;
     const { fresh_lead_id } = req.body;
 
     // Extract logged-in process person ID
@@ -18,19 +18,27 @@ const createFinalizedLead = async (req, res) => {
     }
 
     // Confirm fresh lead exists
-    const freshLead = await FreshLead.findByPk(fresh_lead_id);
+    const freshLead = await FreshLead.findByPk(fresh_lead_id, {
+      include: {
+        model: Lead,
+        as: "lead",
+        include: {
+          model: ClientLead,
+          as: "clientLead",
+        },
+      },
+    });
     if (!freshLead) {
       return res.status(404).json({ message: "FreshLead not found." });
     }
 
-    // Must be a closed lead
-    if (freshLead.followUpStatus !== "close") {
-      return res
-        .status(400)
-        .json({
-          message: "Fresh lead is not closed",
-          followUpStatus: freshLead.followUpStatus,
-        });
+    const clientLeadStatus = freshLead.lead?.clientLead?.status;
+
+    if (clientLeadStatus !== "Closed") {
+      return res.status(400).json({
+        message: "Fresh lead is not closed",
+        clientLeadStatus: clientLeadStatus || "Unknown",
+      });
     }
 
     // Prevent duplicate ProcessedFinal entry
