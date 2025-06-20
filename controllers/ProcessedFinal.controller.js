@@ -70,7 +70,35 @@ const createFinalizedLead = async (req, res) => {
   }
 };
 
-const getFinalizedLead = async (req, res) => {};
+const getFinalizedLead = async (req, res) => {
+  try {
+    const { ProcessedFinal, FreshLead, ProcessPerson } = req.db;
+
+    const finalizedLeads = await ProcessedFinal.findAll({
+      include: [
+        {
+          model: FreshLead,
+          as: "freshLead",
+          attributes: ["id", "name", "email", "phone", "followUpStatus"],
+        },
+        {
+          model: ProcessPerson,
+          as: "processPerson",
+          attributes: ["id", "fullName", "email", "phone"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    return res.status(200).json({
+      message: "Finalized leads fetched successfully",
+      data: finalizedLeads,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching finalized leads:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 module.exports = {
   createFinalizedLead,

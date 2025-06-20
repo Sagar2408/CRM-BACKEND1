@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  const CloseLead = sequelize.define(
+  return sequelize.define(
     "ProcessedFinal",
     {
       id: {
