@@ -21,6 +21,16 @@ module.exports = (sequelize) => {
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       },
+      process_person_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: "process_persons", // must match the table name in ProcessPerson model
+          key: "id",
+        },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
+      },
       name: {
         type: DataTypes.STRING,
         allowNull: false,

@@ -304,6 +304,19 @@ module.exports = function initializeModels(sequelize) {
     as: "freshLead",
   });
 
+  // One ProcessPerson can have many closed leads
+  db.ProcessPerson.hasMany(db.ProcessedFinal, {
+    foreignKey: "process_person_id",
+    as: "closedLeads",
+    onDelete: "CASCADE",
+  });
+
+  // Each closed lead belongs to one ProcessPerson
+  db.ProcessedFinal.belongsTo(db.ProcessPerson, {
+    foreignKey: "process_person_id",
+    as: "processPerson",
+  });
+
   // ------------------------
   // Sync Models
   // ------------------------
