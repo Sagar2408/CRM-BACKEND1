@@ -1,6 +1,6 @@
 const createFinalizedLead = async (req, res) => {
   try {
-    const { ProcessedFinal, FreshLead, ClientLead } = req.db;
+    const { ProcessedFinal, FreshLead, ClientLead, Lead } = req.db;
     const { fresh_lead_id } = req.body;
 
     // Extract logged-in process person ID
