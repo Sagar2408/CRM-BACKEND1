@@ -71,6 +71,10 @@ module.exports = function initializeModels(sequelize) {
     sequelize,
     Sequelize
   );
+  db.ProcessedFinal = require("../models/ProcessedFinal.model")(
+    sequelize,
+    Sequelize
+  );
 
   // ------------------------
   // Define Associations
@@ -287,6 +291,17 @@ module.exports = function initializeModels(sequelize) {
   db.ProcessFollowUpHistory.belongsTo(db.ProcessPerson, {
     foreignKey: "process_person_id",
     as: "processPerson",
+  });
+
+  // One FreshLead can have one ProcessedFinal record
+  db.FreshLead.hasOne(db.ProcessedFinal, {
+    foreignKey: "freshLeadId",
+    onDelete: "CASCADE",
+    as: "processedFinal",
+  });
+  db.ProcessedFinal.belongsTo(db.FreshLead, {
+    foreignKey: "freshLeadId",
+    as: "freshLead",
   });
 
   // ------------------------

@@ -209,6 +209,12 @@ app.use(
   tenantResolver,
   require("./routes/RolePermission.routes")
 );
+app.use(
+  "/api/processed",
+  auth(),
+  tenantResolver,
+  require("./routes/ProcessedFinal.routes")
+);
 
 // 🧠 Store connected users
 const connectedUsers = {};
