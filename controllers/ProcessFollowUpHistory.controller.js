@@ -9,6 +9,7 @@ const createProcessFollowUp = async (req, res) => {
       follow_up_time,
       comments,
     } = req.body;
+    console.log(req.body);
 
     // Ensure fresh_lead_id is provided
     if (!fresh_lead_id) {
@@ -28,7 +29,8 @@ const createProcessFollowUp = async (req, res) => {
 
     if (!converted) {
       return res.status(400).json({
-        message: "This lead is not converted yet. Process follow-up not allowed.",
+        message:
+          "This lead is not converted yet. Process follow-up not allowed.",
       });
     }
 
@@ -36,7 +38,9 @@ const createProcessFollowUp = async (req, res) => {
     const process_person_id = req.user?.id;
 
     if (!process_person_id) {
-      return res.status(401).json({ message: "Unauthorized: process person not found." });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: process person not found." });
     }
 
     const followUp = await ProcessFollowUpHistory.create({
@@ -68,7 +72,9 @@ const getProcessFollowUpsByFreshLeadId = async (req, res) => {
     const { fresh_lead_id } = req.params;
 
     if (!fresh_lead_id) {
-      return res.status(400).json({ message: "fresh_lead_id is required in the URL." });
+      return res
+        .status(400)
+        .json({ message: "fresh_lead_id is required in the URL." });
     }
 
     // Optional: Validate if the lead exists
@@ -79,7 +85,10 @@ const getProcessFollowUpsByFreshLeadId = async (req, res) => {
 
     const followUps = await ProcessFollowUpHistory.findAll({
       where: { fresh_lead_id },
-      order: [["follow_up_date", "DESC"], ["follow_up_time", "DESC"]],
+      order: [
+        ["follow_up_date", "DESC"],
+        ["follow_up_time", "DESC"],
+      ],
     });
 
     if (!followUps.length) {
