@@ -89,6 +89,13 @@ const getProcessFollowUpsByFreshLeadId = async (req, res) => {
         ["follow_up_date", "DESC"],
         ["follow_up_time", "DESC"],
       ],
+      include: [
+        {
+          model: FreshLead,
+          as: "freshLead",
+          attributes: ["name", "phone", "email"],
+        },
+      ],
     });
 
     if (!followUps.length) {
@@ -109,6 +116,7 @@ const getProcessFollowUpsByFreshLeadId = async (req, res) => {
     });
   }
 };
+
 module.exports = {
   createProcessFollowUp,
   getProcessFollowUpsByFreshLeadId,
