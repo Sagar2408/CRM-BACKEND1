@@ -215,6 +215,24 @@ app.use(
   tenantResolver,
   require("./routes/ProcessedFinal.routes")
 );
+app.use(
+  "/api/process-person-activities",
+  auth(),
+  tenantResolver,
+  require("./routes/ProcessPersonActivity.routes")
+);
+app.use(
+  "/api/manager-activities",
+  auth(),
+  tenantResolver,
+  require("./routes/ManagerActivity.routes")
+);
+app.use(
+  "/api/hr-activities",
+  auth(),
+  tenantResolver,
+  require("./routes/HrActivity.routes")
+);
 
 // 🧠 Store connected users
 const connectedUsers = {};
