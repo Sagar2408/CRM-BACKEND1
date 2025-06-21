@@ -89,13 +89,6 @@ const getProcessFollowUpsByFreshLeadId = async (req, res) => {
         ["follow_up_date", "DESC"],
         ["follow_up_time", "DESC"],
       ],
-      include: [
-        {
-          model: FreshLead,
-          as: "freshLead",
-          attributes: ["name", "phone", "email"],
-        },
-      ],
     });
 
     if (!followUps.length) {
@@ -117,7 +110,73 @@ const getProcessFollowUpsByFreshLeadId = async (req, res) => {
   }
 };
 
+const getAllProcessFollowups = async (req, res) => {
+  try {
+    const { ProcessFollowUpHistory, FreshLead } = req.db;
+    const process_person_id = req.user?.id;
+
+    if (!process_person_id) {
+      return res.status(401).json({
+        message: "Unauthorized: process person not found.",
+      });
+    }
+
+    // Find all distinct fresh_lead_ids for this process_person
+    const allFollowUps = await ProcessFollowUpHistory.findAll({
+      where: { process_person_id },
+      attributes: ["fresh_lead_id"],
+      group: ["fresh_lead_id"],
+    });
+
+    const freshLeadIds = allFollowUps.map((item) => item.fresh_lead_id);
+
+    if (freshLeadIds.length === 0) {
+      return res.status(404).json({
+        message: "No follow-ups found for this process person.",
+      });
+    }
+
+    const latestFollowUps = [];
+
+    //For each fresh_lead_id, fetch latest follow-up and attach lead info
+    for (const freshLeadId of freshLeadIds) {
+      const latest = await ProcessFollowUpHistory.findOne({
+        where: {
+          fresh_lead_id: freshLeadId,
+          process_person_id,
+        },
+        order: [
+          ["follow_up_date", "DESC"],
+          ["follow_up_time", "DESC"],
+          ["createdAt", "DESC"],
+        ],
+        include: [
+          {
+            model: FreshLead,
+            as: "freshLead",
+            attributes: ["name", "phone", "email"],
+          },
+        ],
+      });
+
+      if (latest) latestFollowUps.push(latest);
+    }
+
+    return res.status(200).json({
+      message: "Latest follow-ups retrieved successfully.",
+      data: latestFollowUps,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching latest follow-ups:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createProcessFollowUp,
   getProcessFollowUpsByFreshLeadId,
+  getAllProcessFollowups,
 };
