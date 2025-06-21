@@ -75,6 +75,15 @@ module.exports = function initializeModels(sequelize) {
     sequelize,
     Sequelize
   );
+  db.ProcessPersonActivity = require("../models/ProcessPersonActivity.model")(
+    sequelize,
+    Sequelize
+  );
+  db.HrActivity = require("../models/HrActivities.model")(sequelize, Sequelize);
+  db.ManagerActivity = require("../models/ManagerActivities.model")(
+    sequelize,
+    Sequelize
+  );
 
   // ------------------------
   // Define Associations
@@ -315,6 +324,53 @@ module.exports = function initializeModels(sequelize) {
   db.ProcessedFinal.belongsTo(db.ProcessPerson, {
     foreignKey: "process_person_id",
     as: "processPerson",
+  });
+
+  // One ProcessPerson has many activities
+  db.ProcessPerson.hasMany(db.ProcessPersonActivity, {
+    foreignKey: "process_person_id",
+    as: "activities",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  });
+
+  // Each activity belongs to one ProcessPerson
+  db.ProcessPersonActivity.belongsTo(db.ProcessPerson, {
+    foreignKey: "process_person_id",
+    as: "processPerson",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  });
+
+  // One HR can have many activities
+  db.Hr.hasMany(db.HrActivity, {
+    foreignKey: "hr_id",
+    as: "activities",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  });
+
+  // Each activity belongs to one HR
+  db.HrActivity.belongsTo(db.Hr, {
+    foreignKey: "hr_id",
+    as: "hr",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  });
+  // One Manager has many ManagerActivities
+  db.Manager.hasMany(db.ManagerActivity, {
+    foreignKey: "manager_id",
+    as: "activities",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  });
+
+  // Each ManagerActivity belongs to one Manager
+  db.ManagerActivity.belongsTo(db.Manager, {
+    foreignKey: "manager_id",
+    as: "manager",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
   });
 
   // ------------------------
