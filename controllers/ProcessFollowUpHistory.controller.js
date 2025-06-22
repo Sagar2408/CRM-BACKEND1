@@ -112,7 +112,7 @@ const getProcessFollowUpsByFreshLeadId = async (req, res) => {
 
 const getAllProcessFollowups = async (req, res) => {
   try {
-    const { ProcessFollowUpHistory, FreshLead } = req.db;
+    const { ProcessFollowUpHistory, FreshLead, ClientLead } = req.db;
     const process_person_id = req.user?.id;
 
     if (!process_person_id) {
@@ -155,6 +155,13 @@ const getAllProcessFollowups = async (req, res) => {
             model: FreshLead,
             as: "freshLead",
             attributes: ["name", "phone", "email"],
+            include: [
+              {
+                model: ClientLead,
+                as: "clientLead",
+                attributes: ["status"], // added status
+              },
+            ],
           },
         ],
       });
