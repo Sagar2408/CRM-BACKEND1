@@ -390,14 +390,16 @@ db.LeaveApplication = require("../models/LeaveApplication.model")(
     onUpdate: "CASCADE",
   });
 
-  db.CustomerStages.hasMany(db.StageComment, {
-    foreignKey: "customer_stage_id",
-    as: "comments",
-    onDelete: "CASCADE",
+  db.Customer.hasMany(db.ProcessFollowUpHistory, {
+    foreignKey: "fresh_lead_id",
+    sourceKey: "fresh_lead_id",
+    as: "processfollowuphistories",
   });
-  db.StageComment.belongsTo(db.CustomerStages, {
-    foreignKey: "customer_stage_id",
-    as: "customerStage",
+
+  db.ProcessFollowUpHistory.belongsTo(db.Customer, {
+    foreignKey: "fresh_lead_id",
+    targetKey: "fresh_lead_id",
+    as: "customer",
   });
 // One User (executive) can have many LeaveApplications
 db.Users.hasMany(db.LeaveApplication, {

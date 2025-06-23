@@ -154,10 +154,88 @@ const getCustomerStagesById = async (req, res) => {
   }
 };
 
+const addStageComment = async (req, res) => {
+  try {
+    const { CustomerStages } = req.db;
+    const { customerId, stageNumber, comment } = req.body;
+
+    if (!customerId || !stageNumber || !comment) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (stageNumber < 1 || stageNumber > 15) {
+      return res
+        .status(400)
+        .json({ error: "Stage number must be between 1 and 15" });
+    }
+
+    const stageField = `stage${stageNumber}_data`;
+
+    const record = await CustomerStages.findOne({ where: { customerId } });
+
+    if (!record) {
+      return res.status(404).json({ error: "Customer stage record not found" });
+    }
+
+    const currentData = record[stageField] || [];
+
+    const newComment = {
+      comment,
+      timestamp: new Date().toISOString(),
+    };
+
+    currentData.push(newComment);
+
+    record[stageField] = currentData;
+
+    await record.save();
+
+    return res
+      .status(200)
+      .json({ message: "Comment added successfully", data: newComment });
+  } catch (error) {
+    console.error("Add stage comment error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const getStageComments = async (req, res) => {
+  try {
+    const { CustomerStages } = req.db;
+    const { customerId, stageNumber } = req.query;
+
+    if (!customerId || !stageNumber) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (stageNumber < 1 || stageNumber > 15) {
+      return res
+        .status(400)
+        .json({ error: "Stage number must be between 1 and 15" });
+    }
+
+    const stageField = `stage${stageNumber}_data`;
+
+    const record = await CustomerStages.findOne({ where: { customerId } });
+
+    if (!record) {
+      return res.status(404).json({ error: "Customer stage record not found" });
+    }
+
+    const comments = record[stageField] || [];
+
+    return res.status(200).json({ comments });
+  } catch (error) {
+    console.error("Get stage comments error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 module.exports = {
   createCustomerStages,
   getCustomerStages,
   updateCustomerStages,
-  getCustomerStagesById
+  getCustomerStagesById,
+  addStageComment,
+  getStageComments,
 };
