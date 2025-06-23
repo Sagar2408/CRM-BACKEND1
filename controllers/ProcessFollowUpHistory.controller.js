@@ -1,6 +1,7 @@
 const createProcessFollowUp = async (req, res) => {
   try {
-    const { ProcessFollowUpHistory, FreshLead, ConvertedClient } = req.db;
+    const { ProcessFollowUpHistory, FreshLead, ConvertedClient, Customer } =
+      req.db;
     const {
       fresh_lead_id,
       connect_via,
@@ -54,6 +55,13 @@ const createProcessFollowUp = async (req, res) => {
       follow_up_time,
       comments,
     });
+
+    // ✅ Update customer status to "under_review" for the same fresh_lead_id
+    const customer = await Customer.findOne({ where: { fresh_lead_id } });
+    if (customer) {
+      customer.status = "under_review";
+      await customer.save();
+    }
 
     res.status(201).json({
       message: "Process follow-up recorded successfully.",
