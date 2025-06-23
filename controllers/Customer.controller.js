@@ -173,7 +173,7 @@ const getAllCustomers = async (req, res) => {
 // 📌 Mark customer as "under_review"
 const markAsUnderReview = async (req, res) => {
   const Customer = req.db.Customer;
-  const id = req.user.id;
+  const { id } = req.params;
 
   try {
     const customer = await Customer.findByPk(id);
@@ -197,7 +197,7 @@ const markAsUnderReview = async (req, res) => {
 // 📌 Mark customer as "approved"
 const markAsApproved = async (req, res) => {
   const Customer = req.db.Customer;
-  const id = req.user.id;
+  const { id } = req.params;
 
   try {
     const customer = await Customer.findByPk(id);
@@ -221,7 +221,7 @@ const markAsApproved = async (req, res) => {
 // 📌 Mark customer as "rejected"
 const markAsRejected = async (req, res) => {
   const Customer = req.db.Customer;
-  const id = req.user.id;
+  const { id } = req.params;
 
   try {
     const customer = await Customer.findByPk(id);
@@ -245,7 +245,7 @@ const markAsRejected = async (req, res) => {
 // 📌 Mark customer as "meeting"
 const markAsMeeting = async (req, res) => {
   const Customer = req.db.Customer;
-  const id = req.user.id;
+  const { id } = req.params;
 
   try {
     const customer = await Customer.findByPk(id);

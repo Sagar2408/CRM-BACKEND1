@@ -23,9 +23,9 @@ router.post("/logout", auth(), logoutCustomer);
 
 router.get("/getAllCustomer", getAllCustomers);
 
-router.put("/status/under_review", auth(), markAsUnderReview);
-router.put("/status/approved", auth(), markAsApproved);
-router.put("/status/rejected", auth(), markAsRejected);
-router.put("/status/meeting", auth(), markAsMeeting);
+router.put("/status/under_review/:id", auth(), markAsUnderReview);
+router.put("/status/approved/:id", auth(), markAsApproved);
+router.put("/status/rejected/:id", auth(), markAsRejected);
+router.put("/status/meeting/:id", auth(), markAsMeeting);
 
 module.exports = router;

@@ -84,6 +84,10 @@ module.exports = function initializeModels(sequelize) {
     sequelize,
     Sequelize
   );
+  db.StageComment = require("../models/CustomerStageComment.model")(
+    sequelize,
+    Sequelize
+  );
 
   // ------------------------
   // Define Associations
@@ -260,6 +264,19 @@ module.exports = function initializeModels(sequelize) {
     foreignKey: "customerId",
     as: "customer", // optional alias
   });
+  // Assuming you have imported all models and assigned them to db
+
+  // Customer belongs to FreshLead
+  db.Customer.belongsTo(db.FreshLead, {
+    foreignKey: "fresh_lead_id",
+    as: "freshLead",
+  });
+
+  // FreshLead has one Customer
+  db.FreshLead.hasOne(db.Customer, {
+    foreignKey: "fresh_lead_id",
+    as: "customer",
+  });
 
   db.Users.hasMany(db.EmailTemplate, {
     foreignKey: "createdBy",
@@ -371,6 +388,16 @@ module.exports = function initializeModels(sequelize) {
     as: "manager",
     onDelete: "CASCADE",
     onUpdate: "CASCADE",
+  });
+
+  db.CustomerStages.hasMany(db.StageComment, {
+    foreignKey: "customer_stage_id",
+    as: "comments",
+    onDelete: "CASCADE",
+  });
+  db.StageComment.belongsTo(db.CustomerStages, {
+    foreignKey: "customer_stage_id",
+    as: "customerStage",
   });
 
   // ------------------------

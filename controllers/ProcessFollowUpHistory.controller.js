@@ -1,10 +1,12 @@
 const createProcessFollowUp = async (req, res) => {
   try {
-    const { ProcessFollowUpHistory, FreshLead, ConvertedClient } = req.db;
+    const { ProcessFollowUpHistory, FreshLead, ConvertedClient, Customer } =
+      req.db;
     const {
       fresh_lead_id,
       connect_via,
       follow_up_type,
+      interaction_rating,
       follow_up_date,
       follow_up_time,
       comments,
@@ -48,10 +50,18 @@ const createProcessFollowUp = async (req, res) => {
       process_person_id,
       connect_via,
       follow_up_type,
+      interaction_rating,
       follow_up_date,
       follow_up_time,
       comments,
     });
+
+    // ✅ Update customer status to "under_review" for the same fresh_lead_id
+    const customer = await Customer.findByPk(fresh_lead_id);
+    if (customer) {
+      customer.status = "under_review";
+      await customer.save();
+    }
 
     res.status(201).json({
       message: "Process follow-up recorded successfully.",
@@ -112,7 +122,7 @@ const getProcessFollowUpsByFreshLeadId = async (req, res) => {
 
 const getAllProcessFollowups = async (req, res) => {
   try {
-    const { ProcessFollowUpHistory, FreshLead, Lead, ClientLead } = req.db;
+    const { ProcessFollowUpHistory, FreshLead, Customer } = req.db;
     const process_person_id = req.user?.id;
 
     if (!process_person_id) {
@@ -154,19 +164,12 @@ const getAllProcessFollowups = async (req, res) => {
           {
             model: FreshLead,
             as: "freshLead",
-            attributes: ["name", "phone", "email", "leadId"],
+            attributes: ["name", "phone", "email"],
             include: [
               {
-                model: Lead,
-                as: "lead",
-                attributes: ["clientLeadId"],
-                include: [
-                  {
-                    model: ClientLead,
-                    as: "clientLead",
-                    attributes: ["status"],
-                  },
-                ],
+                model: Customer,
+                as: "customer",
+                attributes: ["status"],
               },
             ],
           },
