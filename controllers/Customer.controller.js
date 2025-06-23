@@ -152,6 +152,15 @@ const getAllCustomers = async (req, res) => {
         "createdAt",
         "updatedAt",
       ],
+      include: [
+        {
+          model: ProcessFollowUpHistory,
+          as: "followUps",
+          attributes: ["follow_up_type"],
+          limit: 1,
+          order: [["createdAt", "DESC"]],
+        },
+      ],
       order: [["createdAt", "DESC"]],
     });
 

@@ -382,6 +382,18 @@ module.exports = function initializeModels(sequelize) {
     onUpdate: "CASCADE",
   });
 
+  Customer.hasMany(ProcessFollowUpHistory, {
+    foreignKey: "fresh_lead_id",
+    sourceKey: "fresh_lead_id",
+    as: "followUps",
+  });
+
+  ProcessFollowUpHistory.belongsTo(Customer, {
+    foreignKey: "fresh_lead_id",
+    targetKey: "fresh_lead_id",
+    as: "customer",
+  });
+
   // ------------------------
   // Sync Models
   // ------------------------
