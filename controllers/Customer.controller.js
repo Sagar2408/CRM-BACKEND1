@@ -146,12 +146,12 @@ const getAllCustomers = async (req, res) => {
         "id",
         "fullName",
         "email",
-        "phone", 
+        "phone",
         "status",
         "country",
         "createdAt",
-        "updatedAt"
-      ], 
+        "updatedAt",
+      ],
       order: [["createdAt", "DESC"]],
     });
 
@@ -170,9 +170,109 @@ const getAllCustomers = async (req, res) => {
   }
 };
 
+// 📌 Mark customer as "under_review"
+const markAsUnderReview = async (req, res) => {
+  const Customer = req.db.Customer;
+  const id = req.user.id;
+
+  try {
+    const customer = await Customer.findByPk(id);
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found." });
+    }
+
+    customer.status = "under_review";
+    await customer.save();
+
+    return res
+      .status(200)
+      .json({ message: "Status updated to under_review", customer });
+  } catch (error) {
+    console.error("Error updating status:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+// 📌 Mark customer as "approved"
+const markAsApproved = async (req, res) => {
+  const Customer = req.db.Customer;
+  const id = req.user.id;
+
+  try {
+    const customer = await Customer.findByPk(id);
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found." });
+    }
+
+    customer.status = "approved";
+    await customer.save();
+
+    return res
+      .status(200)
+      .json({ message: "Status updated to approved", customer });
+  } catch (error) {
+    console.error("Error updating status:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+// 📌 Mark customer as "rejected"
+const markAsRejected = async (req, res) => {
+  const Customer = req.db.Customer;
+  const id = req.user.id;
+
+  try {
+    const customer = await Customer.findByPk(id);
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found." });
+    }
+
+    customer.status = "rejected";
+    await customer.save();
+
+    return res
+      .status(200)
+      .json({ message: "Status updated to rejected", customer });
+  } catch (error) {
+    console.error("Error updating status:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+// 📌 Mark customer as "meeting"
+const markAsMeeting = async (req, res) => {
+  const Customer = req.db.Customer;
+  const id = req.user.id;
+
+  try {
+    const customer = await Customer.findByPk(id);
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found." });
+    }
+
+    customer.status = "meeting";
+    await customer.save();
+
+    return res
+      .status(200)
+      .json({ message: "Status updated to meeting", customer });
+  } catch (error) {
+    console.error("Error updating status:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
+};
+
 module.exports = {
   loginCustomer,
   signupCustomer,
   logoutCustomer,
   getAllCustomers,
+  markAsUnderReview,
+  markAsApproved,
+  markAsRejected,
+  markAsMeeting,
 };
