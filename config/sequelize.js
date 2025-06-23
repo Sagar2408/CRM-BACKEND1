@@ -385,7 +385,7 @@ module.exports = function initializeModels(sequelize) {
   Customer.hasMany(ProcessFollowUpHistory, {
     foreignKey: "fresh_lead_id",
     sourceKey: "fresh_lead_id",
-    as: "followUps",
+    as: "processfollowuphistories",
   });
 
   ProcessFollowUpHistory.belongsTo(Customer, {
