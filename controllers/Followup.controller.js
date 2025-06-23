@@ -254,7 +254,14 @@ const getFollowUps = async (req, res) => {
                 {
                   model: ClientLead,
                   as: "clientLead",
-                  attributes: ["status"],
+                  attributes: [
+                    "status",
+                    "education",
+                    "experience",
+                    "state",
+                    "dob",
+                    "country",
+                  ],
                 },
               ],
             },
@@ -266,7 +273,8 @@ const getFollowUps = async (req, res) => {
 
     const response = followUps.map((fu) => {
       const freshLead = fu.freshLead;
-      const clientLeadStatus = freshLead?.lead?.clientLead?.status;
+      const lead = freshLead?.lead;
+      const clientLead = lead?.clientLead;
 
       return {
         ...fu.toJSON(),
@@ -275,19 +283,22 @@ const getFollowUps = async (req, res) => {
           phone: freshLead?.phone,
           email: freshLead?.email,
         },
-        clientLeadStatus: clientLeadStatus || null,
+        clientLeadStatus: clientLead?.status || null,
+        education: clientLead?.education || null,
+        experience: clientLead?.experience || null,
+        state: clientLead?.state || null,
+        dob: clientLead?.dob || null,
+        country: clientLead?.country || null,
       };
     });
 
-    return res.status(200).json({
-      message: "Follow-ups fetched successfully",
-      data: response,
-    });
+    return res.status(200).json({ message: "Follow-ups fetched", data: response });
   } catch (err) {
-    console.error("Error fetching follow-ups:", err);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error(err);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 module.exports = {
   createFollowUp,
