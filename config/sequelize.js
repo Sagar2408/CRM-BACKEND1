@@ -119,7 +119,7 @@ module.exports = function initializeModels(sequelize) {
   });
   db.ConvertedClient.belongsTo(db.Lead, { foreignKey: "leadId", as: "lead" });
 
-  db.Lead.hasMany(db.Deal, { foreignKey: "leadId", onDelete: "CASCADE" });
+ 
 
   db.FreshLead.hasMany(db.FollowUp, {
     foreignKey: "fresh_lead_id",
