@@ -9,6 +9,16 @@ module.exports = (sequelize) => {
         autoIncrement: true,
         primaryKey: true,
       },
+      fresh_lead_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: "freshleads",
+          key: "id",
+        },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
+      },
       fullName: {
         type: DataTypes.STRING,
         allowNull: false,

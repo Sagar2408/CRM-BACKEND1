@@ -260,6 +260,19 @@ module.exports = function initializeModels(sequelize) {
     foreignKey: "customerId",
     as: "customer", // optional alias
   });
+  // Assuming you have imported all models and assigned them to db
+
+  // Customer belongs to FreshLead
+  db.Customer.belongsTo(db.FreshLead, {
+    foreignKey: "fresh_lead_id",
+    as: "freshLead",
+  });
+
+  // FreshLead has one Customer
+  db.FreshLead.hasOne(db.Customer, {
+    foreignKey: "fresh_lead_id",
+    as: "customer",
+  });
 
   db.Users.hasMany(db.EmailTemplate, {
     foreignKey: "createdBy",
