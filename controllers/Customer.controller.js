@@ -139,8 +139,8 @@ const logoutCustomer = async (req, res) => {
 
 const getAllCustomers = async (req, res) => {
   try {
-    const Customer = req.db.Customer;
-    const { ProcessFollowUpHistory } = req.db;
+    //const Customer = req.db.Customer;
+    const { ProcessFollowUpHistory, Customer } = req.db;
 
     const customers = await Customer.findAll({
       attributes: [
