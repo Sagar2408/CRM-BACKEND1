@@ -84,10 +84,10 @@ module.exports = function initializeModels(sequelize) {
     sequelize,
     Sequelize
   );
-  db.StageComment = require("../models/CustomerStageComment.model"(
+  db.StageComment = require("../models/CustomerStageComment.model")(
     sequelize,
     Sequelize
-  ));
+  );
 
   // ------------------------
   // Define Associations
