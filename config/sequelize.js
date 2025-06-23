@@ -83,10 +83,6 @@ module.exports = function initializeModels(sequelize) {
     sequelize,
     Sequelize
   );
-  db.StageComment = require("../models/CustomerStageComment.model")(
-    sequelize,
-    Sequelize
-  );
 
   // ------------------------
   // Define Associations
@@ -118,8 +114,6 @@ module.exports = function initializeModels(sequelize) {
     onDelete: "CASCADE",
   });
   db.ConvertedClient.belongsTo(db.Lead, { foreignKey: "leadId", as: "lead" });
-
- 
 
   db.FreshLead.hasMany(db.FollowUp, {
     foreignKey: "fresh_lead_id",
@@ -386,16 +380,6 @@ module.exports = function initializeModels(sequelize) {
     as: "manager",
     onDelete: "CASCADE",
     onUpdate: "CASCADE",
-  });
-
-  db.CustomerStages.hasMany(db.StageComment, {
-    foreignKey: "customer_stage_id",
-    as: "comments",
-    onDelete: "CASCADE",
-  });
-  db.StageComment.belongsTo(db.CustomerStages, {
-    foreignKey: "customer_stage_id",
-    as: "customerStage",
   });
 
   // ------------------------
