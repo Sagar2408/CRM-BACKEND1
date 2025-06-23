@@ -140,6 +140,7 @@ const logoutCustomer = async (req, res) => {
 const getAllCustomers = async (req, res) => {
   try {
     const Customer = req.db.Customer;
+    const { ProcessFollowUpHistory } = req.db;
 
     const customers = await Customer.findAll({
       attributes: [
@@ -155,7 +156,7 @@ const getAllCustomers = async (req, res) => {
       include: [
         {
           model: ProcessFollowUpHistory,
-          as: "followUps",
+          as: "processfollowuphistories",
           attributes: ["follow_up_type"],
           limit: 1,
           order: [["createdAt", "DESC"]],
