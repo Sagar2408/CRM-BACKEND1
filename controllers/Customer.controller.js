@@ -158,8 +158,6 @@ const getAllCustomers = async (req, res) => {
           model: ProcessFollowUpHistory,
           as: "processfollowuphistories",
           attributes: ["follow_up_type"],
-          limit: 1,
-          order: [["createdAt", "DESC"]],
         },
       ],
       order: [["createdAt", "DESC"]],

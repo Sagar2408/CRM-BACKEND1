@@ -382,13 +382,13 @@ module.exports = function initializeModels(sequelize) {
     onUpdate: "CASCADE",
   });
 
-  Customer.hasMany(ProcessFollowUpHistory, {
+  db.Customer.hasMany(ProcessFollowUpHistory, {
     foreignKey: "fresh_lead_id",
     sourceKey: "fresh_lead_id",
     as: "processfollowuphistories",
   });
 
-  ProcessFollowUpHistory.belongsTo(Customer, {
+  db.ProcessFollowUpHistory.belongsTo(Customer, {
     foreignKey: "fresh_lead_id",
     targetKey: "fresh_lead_id",
     as: "customer",
