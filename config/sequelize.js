@@ -7,7 +7,6 @@ module.exports = function initializeModels(sequelize) {
 
   // Load models – no third argument, models handle their own table names
   db.Users = require("../models/User.model")(sequelize, Sequelize);
-  db.Deal = require("../models/Deal.model")(sequelize, Sequelize);
   db.Lead = require("../models/Lead.model")(sequelize, Sequelize);
   db.Meeting = require("../models/Meeting.model")(sequelize, Sequelize);
   db.Opportunity = require("../models/Opportunity.model")(sequelize, Sequelize);
@@ -121,7 +120,6 @@ module.exports = function initializeModels(sequelize) {
   db.ConvertedClient.belongsTo(db.Lead, { foreignKey: "leadId", as: "lead" });
 
   db.Lead.hasMany(db.Deal, { foreignKey: "leadId", onDelete: "CASCADE" });
-  db.Deal.belongsTo(db.Lead, { foreignKey: "leadId" });
 
   db.FreshLead.hasMany(db.FollowUp, {
     foreignKey: "fresh_lead_id",
