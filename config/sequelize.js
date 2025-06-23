@@ -87,6 +87,10 @@ module.exports = function initializeModels(sequelize) {
     sequelize,
     Sequelize
   );
+db.LeaveApplication = require("../models/LeaveApplication.model")(
+  sequelize,
+  Sequelize
+);
 
   // ------------------------
   // Define Associations
@@ -118,8 +122,6 @@ module.exports = function initializeModels(sequelize) {
     onDelete: "CASCADE",
   });
   db.ConvertedClient.belongsTo(db.Lead, { foreignKey: "leadId", as: "lead" });
-
- 
 
   db.FreshLead.hasMany(db.FollowUp, {
     foreignKey: "fresh_lead_id",
@@ -397,6 +399,17 @@ module.exports = function initializeModels(sequelize) {
     foreignKey: "customer_stage_id",
     as: "customerStage",
   });
+// One User (executive) can have many LeaveApplications
+db.Users.hasMany(db.LeaveApplication, {
+  foreignKey: "employeeId",
+  as: "leaveApplications",
+  onDelete: "CASCADE",
+});
+db.LeaveApplication.belongsTo(db.Users, {
+  foreignKey: "employeeId",
+  as: "employee",
+  onDelete: "CASCADE",
+});
 
   // ------------------------
   // Sync Models
