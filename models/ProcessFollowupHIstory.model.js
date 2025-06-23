@@ -36,6 +36,10 @@ module.exports = (sequelize) => {
         ),
         allowNull: false,
       },
+      interaction_rating: {
+        type: DataTypes.ENUM("Hot", "Warm", "Cold"),
+        allowNull: false,
+      },
       follow_up_date: {
         type: DataTypes.DATEONLY,
         allowNull: false,
