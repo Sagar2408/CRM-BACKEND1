@@ -13,12 +13,6 @@ const {
 // POST - Create a follow-up entry
 router.post("/process-followup", createProcessFollowUp);
 
-// GET - Get all follow-ups by fresh_lead_id
-router.get(
-  "/process-followup/:fresh_lead_id",
-  getProcessFollowUpsByFreshLeadId
-);
-
 //GET - Get all the follwups for logged in process person
 router.get("/process-followup", getAllProcessFollowups);
 
@@ -30,5 +24,11 @@ router.get("/process-followup/get-meeting", getProcessPersonMeetings);
 
 //create meeting for process person
 router.post("/process-followp/create-meeting", createMeetingForProcessPerson);
+
+// GET - Get all follow-ups by fresh_lead_id
+router.get(
+  "/process-followup/:fresh_lead_id",
+  getProcessFollowUpsByFreshLeadId
+);
 
 module.exports = router;
