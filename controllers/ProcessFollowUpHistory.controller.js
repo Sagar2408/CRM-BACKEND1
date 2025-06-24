@@ -361,24 +361,24 @@ const getProcessPersonMeetings = async (req, res) => {
 
     const meetings = await Meeting.findAll({
       where: { processPersonId },
-      include: [
-        {
-          model: FreshLead,
-          as: "freshLead",
-          include: [
-            {
-              model: Lead,
-              as: "lead",
-              include: [
-                {
-                  model: ClientLead,
-                  as: "clientLead",
-                },
-              ],
-            },
-          ],
-        },
-      ],
+      // include: [
+      //   {
+      //     model: FreshLead,
+      //     as: "freshLead",
+      //     include: [
+      //       {
+      //         model: Lead,
+      //         as: "lead",
+      //         include: [
+      //           {
+      //             model: ClientLead,
+      //             as: "clientLead",
+      //           },
+      //         ],
+      //       },
+      //     ],
+      //   },
+      // ],
       order: [["startTime", "ASC"]],
     });
 
