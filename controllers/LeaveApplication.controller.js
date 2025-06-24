@@ -103,7 +103,48 @@ const getLeaveApplication = async (req, res) => {
   }
 };
 
+const updateLeaveStatus = async (req, res) => {
+  try {
+    const { LeaveApplication } = req.db;
+    const { leaveId, status } = req.body;
+
+    // ✅ Validate presence
+    if (!leaveId || !status) {
+      return res
+        .status(400)
+        .json({ error: "Both leaveId and status are required" });
+    }
+
+    // ✅ Validate status
+    const validStatuses = ["Approved", "Rejected"];
+    if (!validStatuses.includes(status)) {
+      return res
+        .status(400)
+        .json({ error: "Invalid status. Use 'Approved' or 'Rejected'" });
+    }
+
+    // ✅ Find the leave application
+    const leave = await LeaveApplication.findByPk(leaveId);
+    if (!leave) {
+      return res.status(404).json({ error: "Leave application not found" });
+    }
+
+    // ✅ Update status
+    leave.status = status;
+    await leave.save();
+
+    return res.status(200).json({
+      message: `Leave status updated to ${status}`,
+      data: leave,
+    });
+  } catch (error) {
+    console.error("Update leave status error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   createLeaveApplication,
   getLeaveApplication,
+  updateLeaveStatus,
 };
