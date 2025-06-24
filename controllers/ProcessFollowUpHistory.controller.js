@@ -257,9 +257,103 @@ const moveToRejected = async (req, res) => {
   }
 };
 
+const createMeetingForProcessPerson = async (req, res) => {
+  const { Meeting, FreshLead, Lead, ClientLead } = req.db;
+
+  try {
+    const {
+      clientName,
+      clientEmail,
+      clientPhone,
+      reasonForFollowup,
+      startTime,
+      endTime,
+      fresh_lead_id,
+    } = req.body;
+
+    const processPersonId = req.user?.id;
+
+    if (
+      !clientName ||
+      !clientEmail ||
+      !clientPhone ||
+      !startTime ||
+      !fresh_lead_id
+    ) {
+      return res.status(400).json({
+        message:
+          "clientName, clientEmail, clientPhone, startTime, and fresh_lead_id are required",
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(clientEmail)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    const startDate = new Date(startTime);
+    if (isNaN(startDate.getTime()) || startDate < new Date()) {
+      return res.status(400).json({ message: "Invalid or past startTime" });
+    }
+
+    if (endTime) {
+      const endDate = new Date(endTime);
+      if (isNaN(endDate.getTime()) || endDate <= startDate) {
+        return res
+          .status(400)
+          .json({ message: "endTime must be after startTime" });
+      }
+    }
+
+    const freshLead = await FreshLead.findByPk(fresh_lead_id);
+    if (!freshLead)
+      return res.status(404).json({ message: "FreshLead not found" });
+
+    const lead = await Lead.findByPk(freshLead.leadId);
+    if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+    const clientLead = await ClientLead.findByPk(lead.clientLeadId);
+    if (!clientLead)
+      return res.status(404).json({ message: "ClientLead not found" });
+
+    const transaction = await Meeting.sequelize.transaction();
+    try {
+      await clientLead.update({ status: "Meeting" }, { transaction });
+
+      const meeting = await Meeting.create(
+        {
+          clientName,
+          clientEmail,
+          clientPhone,
+          reasonForFollowup,
+          startTime,
+          endTime,
+          processPersonId,
+          fresh_lead_id,
+        },
+        { transaction }
+      );
+
+      await transaction.commit();
+
+      res.status(201).json({
+        message: "Meeting created successfully for process person",
+        data: meeting,
+      });
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  } catch (error) {
+    console.error("Error creating meeting for process person:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   createProcessFollowUp,
   getProcessFollowUpsByFreshLeadId,
   getAllProcessFollowups,
   moveToRejected,
+  createMeetingForProcessPerson,
 };

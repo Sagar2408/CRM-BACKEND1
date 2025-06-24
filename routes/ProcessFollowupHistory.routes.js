@@ -6,6 +6,7 @@ const {
   getProcessFollowUpsByFreshLeadId,
   getAllProcessFollowups,
   moveToRejected,
+  createMeetingForProcessPerson,
 } = require("../controllers/ProcessFollowUpHistory.controller");
 
 // POST - Create a follow-up entry
@@ -22,5 +23,8 @@ router.get("/process-followup", getAllProcessFollowups);
 
 //change the status to rejected in process person panel
 router.post("/process-followup/reject", moveToRejected);
+
+//create meeting for process person
+router.post("/process-followp/create-meeting", createMeetingForProcessPerson);
 
 module.exports = router;
