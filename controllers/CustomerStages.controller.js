@@ -156,7 +156,7 @@ const getCustomerStagesById = async (req, res) => {
 
 const addStageComment = async (req, res) => {
   try {
-    const { CustomerStages } = req.db;
+    const { Customer, CustomerStages } = req.db;
     const { customerId, stageNumber, newComment } = req.body;
 
     if (!customerId || !stageNumber || !newComment) {
@@ -169,12 +169,32 @@ const addStageComment = async (req, res) => {
         .json({ error: "Stage number must be between 1 and 15" });
     }
 
-    const stageKey = `stage${stageNumber}_data`; // ✅ corrected and defined
+    const stageKey = `stage${stageNumber}_data`;
 
-    const record = await CustomerStages.findOne({ where: { customerId } });
+    // ✅ Check if stage record exists
+    let record = await CustomerStages.findOne({ where: { customerId } });
 
+    // 🔄 If not exists, check if the customer is valid and create the base stage record
     if (!record) {
-      return res.status(404).json({ error: "Customer stage record not found" });
+      const customer = await Customer.findByPk(customerId);
+      if (!customer) {
+        return res.status(404).json({ error: "Customer does not exist" });
+      }
+
+      record = await CustomerStages.create({
+        customerId,
+        [stageKey]: [
+          {
+            comment: newComment,
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      });
+
+      return res.status(201).json({
+        message: "Customer stages created and comment added",
+        data: record[stageKey],
+      });
     }
 
     const existingData = Array.isArray(record[stageKey])
