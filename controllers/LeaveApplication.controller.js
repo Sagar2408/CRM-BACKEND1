@@ -26,9 +26,7 @@ const createLeaveApplication = async (req, res) => {
 
     // ✅ Validation
     if (
-      !employeeId ||
       !fullName ||
-      !role ||
       !positionTitle ||
       !leaveType ||
       !startDate ||
