@@ -4,8 +4,10 @@ const createLeaveApplication = async (req, res) => {
     const employeeId = req.user?.id;
     const role = req.user?.role;
 
-    if (!employeeId) {
-      return res.status(404).json({ error: "EmployeeId or Role not found" });
+    if (!employeeId || !role) {
+      return res
+        .status(401)
+        .json({ error: "Unauthorized: Missing user info in token" });
     }
 
     const {
