@@ -157,9 +157,9 @@ const getCustomerStagesById = async (req, res) => {
 const addStageComment = async (req, res) => {
   try {
     const { CustomerStages } = req.db;
-    const { customerId, stageNumber, comment } = req.body;
+    const { customerId, stageNumber, newComment } = req.body;
 
-    if (!customerId || !stageNumber || !comment) {
+    if (!customerId || !stageNumber || !newComment) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -169,7 +169,7 @@ const addStageComment = async (req, res) => {
         .json({ error: "Stage number must be between 1 and 15" });
     }
 
-    const stageField = `stage${stageNumber}_data`;
+    const stageKey = `stage${stageNumber}_data`; // ✅ corrected and defined
 
     const record = await CustomerStages.findOne({ where: { customerId } });
 
@@ -177,22 +177,24 @@ const addStageComment = async (req, res) => {
       return res.status(404).json({ error: "Customer stage record not found" });
     }
 
-    const currentData = record[stageField] || [];
+    const existingData = Array.isArray(record[stageKey])
+      ? record[stageKey]
+      : [];
 
-    const newComment = {
-      comment,
-      timestamp: new Date().toISOString(),
-    };
+    const updatedComments = [
+      ...existingData,
+      {
+        comment: newComment,
+        timestamp: new Date().toISOString(),
+      },
+    ];
 
-    currentData.push(newComment);
-
-    record[stageField] = currentData;
-
+    record[stageKey] = updatedComments;
     await record.save();
 
     return res
       .status(200)
-      .json({ message: "Comment added successfully", data: newComment });
+      .json({ message: "Comment added successfully", data: updatedComments });
   } catch (error) {
     console.error("Add stage comment error:", error);
     return res.status(500).json({ error: "Internal server error" });
@@ -214,7 +216,7 @@ const getStageComments = async (req, res) => {
         .json({ error: "Stage number must be between 1 and 15" });
     }
 
-    const stageField = `stage${stageNumber}_data`;
+    const stageKey = `stage${stageNumber}_data`; // ✅ corrected and defined
 
     const record = await CustomerStages.findOne({ where: { customerId } });
 
@@ -222,7 +224,7 @@ const getStageComments = async (req, res) => {
       return res.status(404).json({ error: "Customer stage record not found" });
     }
 
-    const comments = record[stageField] || [];
+    const comments = Array.isArray(record[stageKey]) ? record[stageKey] : [];
 
     return res.status(200).json({ comments });
   } catch (error) {
