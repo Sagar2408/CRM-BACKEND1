@@ -150,5 +150,11 @@ router.use(
   tenantResolver,
   require("./HrActivity.routes")
 );
+router.use(
+  "/leave",
+  auth(),
+  tenantResolver,
+  require("./LeaveApplication.routes")
+);
 
 module.exports = router;

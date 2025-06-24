@@ -217,6 +217,12 @@ app.use(
   tenantResolver,
   require("./routes/HrActivity.routes")
 );
+app.use(
+  "/api/leave",
+  auth(),
+  tenantResolver,
+  require("./routes/LeaveApplication.routes")
+);
 
 // 🧠 Store connected users
 const connectedUsers = {};
