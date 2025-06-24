@@ -192,6 +192,15 @@ module.exports = function initializeModels(sequelize) {
     foreignKey: "executiveId",
     onDelete: "SET NULL",
   });
+  db.Meeting.belongsTo(db.ProcessPerson, {
+    foreignKey: "processPersonId",
+    as: "processPerson",
+    onDelete: "SET NULL",
+  });
+  db.ProcessPerson.hasMany(db.Meeting, {
+    foreignKey: "processPersonId",
+    as: "processMeetings",
+  });
 
   db.Customer.hasOne(db.CustomerDetails, {
     foreignKey: "customerId",
