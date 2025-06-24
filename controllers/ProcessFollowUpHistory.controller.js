@@ -346,7 +346,11 @@ const createMeetingForProcessPerson = async (req, res) => {
     }
   } catch (error) {
     console.error("Error creating meeting for process person:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({
+      message: "Internal server error",
+      error: error.message, // ✅ this reveals the error in the response
+      stack: error.stack,
+    });
   }
 };
 
