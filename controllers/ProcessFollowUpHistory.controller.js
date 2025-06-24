@@ -11,7 +11,7 @@ const createProcessFollowUp = async (req, res) => {
       follow_up_time,
       comments,
     } = req.body;
-    console.log(req.body);
+    //console.log(req.body);
 
     // Ensure fresh_lead_id is provided
     if (!fresh_lead_id) {
@@ -192,8 +192,74 @@ const getAllProcessFollowups = async (req, res) => {
   }
 };
 
+const moveToRejected = async (req, res) => {
+  try {
+    const { ProcessFollowUpHistory, FreshLead, Customer } = req.db;
+
+    const {
+      fresh_lead_id,
+      connect_via,
+      follow_up_type,
+      interaction_rating,
+      follow_up_date,
+      follow_up_time,
+      comments,
+    } = req.body;
+
+    // Ensure fresh_lead_id is provided
+    if (!fresh_lead_id) {
+      return res.status(400).json({ message: "fresh_lead_id is required." });
+    }
+
+    // Confirm fresh lead exists
+    const freshLead = await FreshLead.findByPk(fresh_lead_id);
+    if (!freshLead) {
+      return res.status(404).json({ message: "FreshLead not found." });
+    }
+
+    // Extract logged-in process person ID
+    const process_person_id = req.user?.id;
+
+    if (!process_person_id) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: process person not found." });
+    }
+
+    const followUp = await ProcessFollowUpHistory.create({
+      fresh_lead_id,
+      process_person_id,
+      connect_via,
+      follow_up_type,
+      interaction_rating,
+      follow_up_date,
+      follow_up_time,
+      comments,
+    });
+
+    // ✅ Update customer status to "rejected" for the same fresh_lead_id
+    const customer = await Customer.findByPk(fresh_lead_id);
+    if (customer) {
+      customer.status = "rejected";
+      await customer.save();
+    }
+
+    res.status(201).json({
+      message: "Process follow-up recorded successfully.",
+      data: followUp,
+    });
+  } catch (error) {
+    console.error("Error moving to Rejected", err);
+    res.status(500).json({
+      message: "Something went wrong.",
+      error: err.message,
+    });
+  }
+};
+
 module.exports = {
   createProcessFollowUp,
   getProcessFollowUpsByFreshLeadId,
   getAllProcessFollowups,
+  moveToRejected,
 };
