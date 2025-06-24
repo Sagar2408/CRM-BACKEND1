@@ -7,6 +7,7 @@ const {
   getAllProcessFollowups,
   moveToRejected,
   createMeetingForProcessPerson,
+  getProcessPersonMeetings,
 } = require("../controllers/ProcessFollowUpHistory.controller");
 
 // POST - Create a follow-up entry
@@ -26,5 +27,8 @@ router.post("/process-followup/reject", moveToRejected);
 
 //create meeting for process person
 router.post("/process-followp/create-meeting", createMeetingForProcessPerson);
+
+//get meeting for process person
+router.get("/process-followup/get-meeting", getProcessPersonMeetings);
 
 module.exports = router;

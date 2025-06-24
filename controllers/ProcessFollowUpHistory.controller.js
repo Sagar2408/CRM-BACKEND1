@@ -350,10 +350,50 @@ const createMeetingForProcessPerson = async (req, res) => {
   }
 };
 
+const getProcessPersonMeetings = async (req, res) => {
+  try {
+    const { Meeting, FreshLead, Lead, ClientLead } = req.db;
+    const processPersonId = req.user?.id;
+
+    if (!processPersonId) {
+      return res.status(401).json({ error: "Unauthorized: Missing user ID" });
+    }
+
+    const meetings = await Meeting.findAll({
+      where: { processPersonId },
+      include: [
+        {
+          model: FreshLead,
+          as: "freshLead",
+          include: [
+            {
+              model: Lead,
+              as: "lead",
+              include: [
+                {
+                  model: ClientLead,
+                  as: "clientLead",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      order: [["startTime", "ASC"]],
+    });
+
+    return res.status(200).json({ meetings });
+  } catch (error) {
+    console.error("Fetch meetings error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   createProcessFollowUp,
   getProcessFollowUpsByFreshLeadId,
   getAllProcessFollowups,
   moveToRejected,
   createMeetingForProcessPerson,
+  getProcessPersonMeetings,
 };
