@@ -1,8 +1,8 @@
 const createLeaveApplication = async (req, res) => {
   try {
     const { LeaveApplication, Users } = req.db;
-    const { employeeId } = req.user?.id;
-    const { role } = req.user?.role;
+    const employeeId = req.user?.id;
+    const role = req.user?.role;
 
     if (!employeeId) {
       return res.status(404).json({ error: "EmployeeId or Role not found" });
