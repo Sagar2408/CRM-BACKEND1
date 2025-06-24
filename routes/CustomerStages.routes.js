@@ -12,7 +12,7 @@ const {
 router.post("/stages", createCustomerStages);
 router.get("/stages", getCustomerStages);
 router.put("/stages", updateCustomerStages);
-router.get("/customer-stages/:customerId", getCustomerStagesById);
+router.get("/:customerId", getCustomerStagesById);
 
 //To add multiple comments on a single stage
 router.post("/stage-comment/add", addStageComment);
