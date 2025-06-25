@@ -10,14 +10,14 @@ const {
   getProcessPersonMeetings,
 } = require("../controllers/ProcessFollowUpHistory.controller");
 
+//change the status to rejected in process person panel
+router.post("/process-followup/reject", moveToRejected);
+
 // POST - Create a follow-up entry
 router.post("/process-followup", createProcessFollowUp);
 
 //GET - Get all the follwups for logged in process person
 router.get("/process-followup", getAllProcessFollowups);
-
-//change the status to rejected in process person panel
-router.post("/process-followup/reject", moveToRejected);
 
 //get meeting for process person
 router.get("/process-followup/get-meeting", getProcessPersonMeetings);
