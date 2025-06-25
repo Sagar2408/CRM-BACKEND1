@@ -1,6 +1,6 @@
 const createFinalizedLead = async (req, res) => {
   try {
-    const { ProcessedFinal, FreshLead, ClientLead, Lead } = req.db;
+    const { ProcessedFinal, FreshLead, ClientLead, Lead, Customer } = req.db;
     const { fresh_lead_id } = req.body;
 
     // Extract logged-in process person ID
@@ -59,6 +59,12 @@ const createFinalizedLead = async (req, res) => {
       phone: freshLead.phone,
       email: freshLead.email,
     });
+    // ✅ Update customer status to "approved" for the same fresh_lead_id
+    const customer = await Customer.findByPk(fresh_lead_id);
+    if (customer) {
+      customer.status = "approved";
+      await customer.save();
+    }
 
     return res.status(201).json({
       message: "ProcessedFinal entry created successfully",

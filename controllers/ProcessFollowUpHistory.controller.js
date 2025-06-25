@@ -226,6 +226,7 @@ const moveToRejected = async (req, res) => {
         .json({ message: "Unauthorized: process person not found." });
     }
 
+    // Save follow-up entry
     const followUp = await ProcessFollowUpHistory.create({
       fresh_lead_id,
       process_person_id,
@@ -245,7 +246,8 @@ const moveToRejected = async (req, res) => {
     }
 
     res.status(201).json({
-      message: "Process follow-up recorded successfully and moved to rejected.",
+      message:
+        "Process follow-up recorded successfully and customer marked as rejected.",
       data: followUp,
     });
   } catch (error) {
