@@ -258,7 +258,7 @@ const moveToRejected = async (req, res) => {
 };
 
 const createMeetingForProcessPerson = async (req, res) => {
-  const { Meeting, FreshLead, Lead, ClientLead } = req.db;
+  const { Meeting, FreshLead, Lead, ClientLead, Customer } = req.db;
 
   try {
     const {
@@ -335,6 +335,12 @@ const createMeetingForProcessPerson = async (req, res) => {
       );
 
       await transaction.commit();
+
+      const customer = await Customer.findByPk(fresh_lead_id);
+      if (customer) {
+        customer.status = "meeting";
+        await customer.save();
+      }
 
       res.status(201).json({
         message: "Meeting created successfully for process person",
