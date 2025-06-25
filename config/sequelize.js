@@ -418,6 +418,15 @@ module.exports = function initializeModels(sequelize) {
     as: "employee",
     onDelete: "CASCADE",
   });
+  Notification.belongsTo(Customer, {
+    foreignKey: "customerId",
+    as: "customer",
+  });
+
+  Customer.hasMany(Notification, {
+    foreignKey: "customerId",
+    as: "notifications",
+  });
 
   // ------------------------
   // Sync Models

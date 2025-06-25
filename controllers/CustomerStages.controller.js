@@ -253,6 +253,78 @@ const getStageComments = async (req, res) => {
   }
 };
 
+const addStageCommentAndNotify = async (req, res) => {
+  try {
+    const { Customer, CustomerStages, Notification } = req.db;
+    const { customerId, stageNumber, newComment } = req.body;
+
+    if (!customerId || !stageNumber || !newComment) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (stageNumber < 1 || stageNumber > 15) {
+      return res
+        .status(400)
+        .json({ error: "Stage number must be between 1 and 15" });
+    }
+
+    const stageKey = `stage${stageNumber}_data`;
+
+    // ✅ Ensure the customer exists
+    const customer = await Customer.findByPk(customerId);
+    if (!customer) {
+      return res.status(404).json({ error: "Customer does not exist" });
+    }
+
+    // 🔄 Check if stage record exists
+    let record = await CustomerStages.findOne({ where: { customerId } });
+
+    if (!record) {
+      // 🆕 Create new CustomerStages entry
+      record = await CustomerStages.create({
+        customerId,
+        [stageKey]: [
+          {
+            comment: newComment,
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      });
+    } else {
+      // ✏️ Append to existing stage comments
+      const existingData = Array.isArray(record[stageKey])
+        ? record[stageKey]
+        : [];
+
+      const updatedComments = [
+        ...existingData,
+        {
+          comment: newComment,
+          timestamp: new Date().toISOString(),
+        },
+      ];
+
+      record[stageKey] = updatedComments;
+      await record.save();
+    }
+
+    // ✅ Create notification for customer
+    await Notification.create({
+      customerId,
+      message: `New comment added to stage ${stageNumber}: ${newComment}`,
+      targetRole: "customer",
+    });
+
+    return res.status(200).json({
+      message: "Comment added and notification sent",
+      data: record[stageKey],
+    });
+  } catch (error) {
+    console.error("❌ Error adding comment and creating notification:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   createCustomerStages,
   getCustomerStages,
@@ -260,4 +332,5 @@ module.exports = {
   getCustomerStagesById,
   addStageComment,
   getStageComments,
+  addStageCommentAndNotify,
 };
