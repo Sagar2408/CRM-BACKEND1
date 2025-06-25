@@ -238,14 +238,14 @@ const moveToRejected = async (req, res) => {
     });
 
     // ✅ Update customer status to "rejected" for the same fresh_lead_id
-    const customer = await Customer.findByPk(fresh_lead_id);
+    const customer = await Customer.findOne({ where: { fresh_lead_id } });
     if (customer) {
       customer.status = "rejected";
       await customer.save();
     }
 
     res.status(201).json({
-      message: "Process follow-up recorded successfully.",
+      message: "Process follow-up recorded successfully and moved to rejected.",
       data: followUp,
     });
   } catch (error) {
@@ -336,7 +336,7 @@ const createMeetingForProcessPerson = async (req, res) => {
 
       await transaction.commit();
 
-      const customer = await Customer.findByPk(fresh_lead_id);
+      const customer = await Customer.findOne({ where: { fresh_lead_id } });
       if (customer) {
         customer.status = "meeting";
         await customer.save();
