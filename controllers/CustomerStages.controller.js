@@ -311,7 +311,7 @@ const addStageCommentAndNotify = async (req, res) => {
     // ✅ Create notification for customer
     await Notification.create({
       customerId,
-      message: `New comment added to stage ${stageNumber}: ${newComment}`,
+      message: `Reminder: ${newComment}`,
       targetRole: "customer",
     });
 
