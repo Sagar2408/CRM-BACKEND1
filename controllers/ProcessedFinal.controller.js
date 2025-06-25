@@ -32,14 +32,14 @@ const createFinalizedLead = async (req, res) => {
       return res.status(404).json({ message: "FreshLead not found." });
     }
 
-    const clientLeadStatus = freshLead.lead?.clientLead?.status;
+    // const clientLeadStatus = freshLead.lead?.clientLead?.status;
 
-    if (clientLeadStatus !== "Closed") {
-      return res.status(400).json({
-        message: "Fresh lead is not closed",
-        clientLeadStatus: clientLeadStatus || "Unknown",
-      });
-    }
+    // if (clientLeadStatus !== "Closed") {
+    //   return res.status(400).json({
+    //     message: "Fresh lead is not closed",
+    //     clientLeadStatus: clientLeadStatus || "Unknown",
+    //   });
+    // }
 
     // Prevent duplicate ProcessedFinal entry
     const exists = await ProcessedFinal.findOne({
