@@ -32,7 +32,8 @@ module.exports = (sequelize) => {
           "document collection",
           "payment follow-up",
           "visa filing",
-          "other"
+          "other",
+          "rejected"
         ),
         allowNull: false,
       },
