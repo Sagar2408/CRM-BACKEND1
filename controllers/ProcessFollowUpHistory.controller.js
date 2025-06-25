@@ -251,10 +251,10 @@ const moveToRejected = async (req, res) => {
       data: followUp,
     });
   } catch (error) {
-    console.error("Error moving to Rejected", err);
+    console.error("Error moving to Rejected", error); // ✅ use the correct variable
     res.status(500).json({
       message: "Something went wrong.",
-      error: err.message,
+      error: error.message, // ✅ fixed
     });
   }
 };
