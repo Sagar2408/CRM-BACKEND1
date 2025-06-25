@@ -418,12 +418,12 @@ module.exports = function initializeModels(sequelize) {
     as: "employee",
     onDelete: "CASCADE",
   });
-  Notification.belongsTo(Customer, {
+  db.Notification.belongsTo(db.Customer, {
     foreignKey: "customerId",
     as: "customer",
   });
 
-  Customer.hasMany(Notification, {
+  db.Customer.hasMany(db.Notification, {
     foreignKey: "customerId",
     as: "notifications",
   });
