@@ -60,9 +60,9 @@ const createFinalizedLead = async (req, res) => {
       email: freshLead.email,
     });
     // ✅ Update customer status to "approved" for the same fresh_lead_id
-    const customer = await Customer.findByPk(fresh_lead_id);
+    const customer = await Customer.findOne({ where: { fresh_lead_id } });
     if (customer) {
-      customer.status = "approved";
+      customer.status = "under_review";
       await customer.save();
     }
 
