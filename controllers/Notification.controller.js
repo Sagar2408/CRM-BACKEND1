@@ -1,8 +1,57 @@
 const { Op } = require("sequelize");
 
 // Get all notifications for a user (admin or executive) with pagination
+// const getAllNotificationsByUser = async (req, res) => {
+//   const Notification = req.db.Notification; // 👈 dynamically get model
+//   const { userRole } = req.body;
+//   const userId = req.user?.id;
+//   const { page = 1 } = req.query;
+
+//   const limit = 20;
+//   const offset = (page - 1) * limit;
+
+//   try {
+//     let whereClause = {};
+
+//     if (userRole?.toLowerCase() === "admin") {
+//       whereClause = { targetRole: "admin" };
+//     } else if (userRole?.toLowerCase() === "executive") {
+//       if (!userId) {
+//         return res
+//           .status(401)
+//           .json({ message: "Unauthorized: Missing user ID" });
+//       }
+//       whereClause = { userId, targetRole: "executive" };
+//     } else {
+//       return res.status(400).json({ message: "Invalid user role" });
+//     }
+
+//     const { count, rows: notifications } = await Notification.findAndCountAll({
+//       where: whereClause,
+//       order: [["createdAt", "DESC"]],
+//       limit,
+//       offset,
+//     });
+
+//     const totalPages = Math.ceil(count / limit);
+
+//     return res.status(200).json({
+//       notifications,
+//       pagination: {
+//         totalNotifications: count,
+//         currentPage: parseInt(page),
+//         totalPages,
+//         limit,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching notifications:", error);
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
 const getAllNotificationsByUser = async (req, res) => {
-  const Notification = req.db.Notification; // 👈 dynamically get model
+  const Notification = req.db.Notification;
   const { userRole } = req.body;
   const userId = req.user?.id;
   const { page = 1 } = req.query;
@@ -13,17 +62,40 @@ const getAllNotificationsByUser = async (req, res) => {
   try {
     let whereClause = {};
 
-    if (userRole?.toLowerCase() === "admin") {
-      whereClause = { targetRole: "admin" };
-    } else if (userRole?.toLowerCase() === "executive") {
-      if (!userId) {
-        return res
-          .status(401)
-          .json({ message: "Unauthorized: Missing user ID" });
-      }
-      whereClause = { userId, targetRole: "executive" };
-    } else {
-      return res.status(400).json({ message: "Invalid user role" });
+    switch (userRole?.toLowerCase()) {
+      case "admin":
+        whereClause = { targetRole: "admin" };
+        break;
+
+      case "executive":
+        if (!userId) {
+          return res
+            .status(401)
+            .json({ message: "Unauthorized: Missing executive user ID" });
+        }
+        whereClause = { userId, targetRole: "executive" };
+        break;
+
+      case "hr":
+        if (!userId) {
+          return res
+            .status(401)
+            .json({ message: "Unauthorized: Missing HR user ID" });
+        }
+        whereClause = { hr_id: userId, targetRole: "hr" };
+        break;
+
+      case "customer":
+        if (!userId) {
+          return res
+            .status(401)
+            .json({ message: "Unauthorized: Missing customer user ID" });
+        }
+        whereClause = { customerId: userId, targetRole: "customer" };
+        break;
+
+      default:
+        return res.status(400).json({ message: "Invalid user role" });
     }
 
     const { count, rows: notifications } = await Notification.findAndCountAll({
