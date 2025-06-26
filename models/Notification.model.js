@@ -29,6 +29,16 @@ module.exports = (sequelize) => {
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       },
+      hr_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true, // make it optional if not all notifications are for customers
+        references: {
+          model: "customers", // ✅ must match your actual table name
+          key: "id",
+        },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
+      },
       targetRole: {
         type: DataTypes.STRING,
         allowNull: true,

@@ -428,6 +428,15 @@ module.exports = function initializeModels(sequelize) {
     as: "notifications",
   });
 
+  db.Hr.hasMany(db.Notification, {
+    foreignKey: "hr_id",
+    as: "notifications",
+  });
+  db.Notification.belongsTo(db.Hr, {
+    foreignKey: "hr_id",
+    as: "hr",
+  });
+
   // ------------------------
   // Sync Models
   // ------------------------
