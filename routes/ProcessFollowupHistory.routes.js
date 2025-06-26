@@ -14,7 +14,7 @@ const {
 router.post("/process-followup/reject", moveToRejected);
 
 // POST - Create a follow-up entry
-router.post("/process-followup", createProcessFollowUp);
+router.post("/process-followup/create", createProcessFollowUp);
 
 //GET - Get all the follwups for logged in process person
 router.get("/process-followup", getAllProcessFollowups);
