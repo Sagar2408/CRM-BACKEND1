@@ -6,6 +6,6 @@ router.post("/startWork", hrActivityController.startWork);
 router.post("/stopWork", hrActivityController.stopWork);
 router.post("/startBreak", hrActivityController.startBreak);
 router.post("/stopBreak", hrActivityController.stopBreak);
-router.post("/attendance", hrActivityController.getHrAttendanceByDateRange);
+router.get("/attendance", hrActivityController.getHrAttendanceByDateRange);
 
 module.exports = router;
