@@ -57,7 +57,7 @@ const createProcessFollowUp = async (req, res) => {
     });
 
     // ✅ Update customer status to "under_review" for the same fresh_lead_id
-    const customer = await Customer.findByPk(fresh_lead_id);
+    const customer = await Customer.findOne({ where: { fresh_lead_id } });
     if (customer) {
       customer.status = "under_review";
       await customer.save();
