@@ -129,7 +129,9 @@ exports.scheduleEodReport = async (req, res) => {
       html: emailContent,
     });
 
-    return res.status(200).json({ message: "Report sent successfully." });
+    return res
+      .status(200)
+      .json({ message: "Report sent successfully.", reportData });
   } catch (error) {
     console.error("Error sending executive report:", error);
     return res.status(500).json({ message: "Failed to send report." });
