@@ -62,7 +62,7 @@ const createFinalizedLead = async (req, res) => {
     // ✅ Update customer status to "approved" for the same fresh_lead_id
     const customer = await Customer.findOne({ where: { fresh_lead_id } });
     if (customer) {
-      customer.status = "under_review";
+      customer.status = "approved";
       await customer.save();
     }
 
