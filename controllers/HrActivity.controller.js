@@ -153,12 +153,12 @@ exports.getHrAttendanceByDateRange = async (req, res) => {
           attributes: ["name"],
         },
       ],
-      group: ["hr_id", "Hr.id"],
+      group: ["hr_id", "hr.id"],
     });
 
     const allHrs = hrIds.map((entry) => ({
       id: entry.hr_id,
-      name: entry.Hr?.name || "Unknown",
+      name: entry.hr?.name || "Unknown",
     }));
 
     // Step 2: Fetch activity logs for the given date range

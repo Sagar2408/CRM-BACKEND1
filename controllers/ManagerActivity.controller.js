@@ -156,12 +156,12 @@ exports.getManagerAttendanceByDateRange = async (req, res) => {
           attributes: ["name"],
         },
       ],
-      group: ["manager_id", "Manager.id"],
+      group: ["manager_id", "manager.id"],
     });
 
     const allManagers = managerIds.map((entry) => ({
       id: entry.manager_id,
-      name: entry.Manager?.name || "Unknown",
+      name: entry.manager?.name || "Unknown",
     }));
 
     // Step 2: Get logs within the date range
