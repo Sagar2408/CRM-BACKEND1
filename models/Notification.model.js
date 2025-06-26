@@ -33,7 +33,7 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: true, // make it optional if not all notifications are for customers
         references: {
-          model: "customers", // ✅ must match your actual table name
+          model: "hrs", // ✅ must match your actual table name
           key: "id",
         },
         onDelete: "CASCADE",
