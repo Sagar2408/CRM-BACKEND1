@@ -427,16 +427,6 @@ module.exports = function initializeModels(sequelize) {
     foreignKey: "customerId",
     as: "notifications",
   });
-  // db.Manager.hasMany(db.ManagerActivity, {
-  //   foreignKey: "manager_id",
-  //   as: "managerActivities",
-  // });
-  // db.ManagerActivity.belongsTo(db.Manager, {
-  //   foreignKey: "manager_id",
-  //   as: "manager",
-  // });
-  // db.Hr.hasMany(db.HrActivity, { foreignKey: "hr_id", as: "hrActivities" });
-  // db.HrActivity.belongsTo(db.Hr, { foreignKey: "hr_id", as: "hr" });
 
   // ------------------------
   // Sync Models

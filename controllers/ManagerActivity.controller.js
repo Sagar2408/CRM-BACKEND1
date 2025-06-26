@@ -131,87 +131,88 @@ exports.stopBreak = async (req, res) => {
   }
 };
 
-// exports.getManagerAttendanceByDateRange = async (req, res) => {
-//   const { ManagerActivity, Manager } = req.db;
+exports.getManagerAttendanceByDateRange = async (req, res) => {
+  const { ManagerActivity, Manager } = req.db;
 
-//   try {
-//     const { startDate, endDate } = req.query;
+  try {
+    const { startDate, endDate } = req.query;
 
-//     if (!startDate || !endDate) {
-//       return res.status(400).json({
-//         error: "startDate and endDate query params are required (YYYY-MM-DD)",
-//       });
-//     }
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        error: "startDate and endDate query params are required (YYYY-MM-DD)",
+      });
+    }
 
-//     const start = parseISO(startDate);
-//     const end = parseISO(endDate);
+    const start = parseISO(startDate);
+    const end = parseISO(endDate);
 
-//     // Step 1: Get all unique manager IDs with their names
-//     const managerIds = await ManagerActivity.findAll({
-//       attributes: ["manager_id"],
-//       include: [
-//         {
-//           model: Manager,
-//           attributes: ["name"],
-//         },
-//       ],
-//       group: ["manager_id", "Manager.id"],
-//     });
+    // Step 1: Get all unique manager IDs with their names
+    const managerIds = await ManagerActivity.findAll({
+      attributes: ["manager_id"],
+      include: [
+        {
+          model: Manager,
+          as: "manager",
+          attributes: ["name"],
+        },
+      ],
+      group: ["manager_id", "Manager.id"],
+    });
 
-//     const allManagers = managerIds.map((entry) => ({
-//       id: entry.manager_id,
-//       name: entry.Manager?.name || "Unknown",
-//     }));
+    const allManagers = managerIds.map((entry) => ({
+      id: entry.manager_id,
+      name: entry.Manager?.name || "Unknown",
+    }));
 
-//     // Step 2: Get logs within the date range
-//     const logs = await ManagerActivity.findAll({
-//       where: {
-//         createdAt: {
-//           [Op.between]: [start, end],
-//         },
-//       },
-//     });
+    // Step 2: Get logs within the date range
+    const logs = await ManagerActivity.findAll({
+      where: {
+        createdAt: {
+          [Op.between]: [start, end],
+        },
+      },
+    });
 
-//     // Step 3: Organize logs by manager and date
-//     const logsMap = {};
-//     logs.forEach((log) => {
-//       const date = format(new Date(log.createdAt), "yyyy-MM-dd");
-//       if (!logsMap[log.manager_id]) {
-//         logsMap[log.manager_id] = {};
-//       }
-//       logsMap[log.manager_id][date] = log;
-//     });
+    // Step 3: Organize logs by manager and date
+    const logsMap = {};
+    logs.forEach((log) => {
+      const date = format(new Date(log.createdAt), "yyyy-MM-dd");
+      if (!logsMap[log.manager_id]) {
+        logsMap[log.manager_id] = {};
+      }
+      logsMap[log.manager_id][date] = log;
+    });
 
-//     // Step 4: Generate list of dates in range
-//     const dateList = eachDayOfInterval({ start, end }).map((date) =>
-//       format(date, "yyyy-MM-dd")
-//     );
+    // Step 4: Generate list of dates in range
+    const dateList = eachDayOfInterval({ start, end }).map((date) =>
+      format(date, "yyyy-MM-dd")
+    );
 
-//     // Step 5: Build attendance report
-//     const report = allManagers.map(({ id, name }) => {
-//       const attendance = {};
+    // Step 5: Build attendance report
+    const report = allManagers.map(({ id, name }) => {
+      const attendance = {};
 
-//       dateList.forEach((date) => {
-//         const log = logsMap[id]?.[date];
-//         attendance[date] = !log || log.workTime === null ? "Absent" : "Present";
-//       });
+      dateList.forEach((date) => {
+        const log = logsMap[id]?.[date];
+        attendance[date] = !log || log.workTime === null ? "Absent" : "Present";
+      });
 
-//       return {
-//         managerId: id,
-//         managerName: name,
-//         dateRange: `${format(start, "yyyy-MM-dd")} to ${format(
-//           end,
-//           "yyyy-MM-dd"
-//         )}`,
-//         attendance,
-//       };
-//     });
+      return {
+        managerId: id,
+        managerName: name,
+        dateRange: `${format(start, "yyyy-MM-dd")} to ${format(
+          end,
+          "yyyy-MM-dd"
+        )}`,
+        attendance,
+      };
+    });
 
-//     res.json(report);
-//   } catch (error) {
-//     console.error("Error generating manager attendance:", error);
-//     res
-//       .status(500)
-//       .json({ error: "Failed to generate manager attendance report" });
-//   }
-// };
+    res.json(report);
+  } catch (error) {
+    console.error("Error generating manager attendance:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to generate manager attendance report" });
+  }
+};
