@@ -429,13 +429,13 @@ module.exports = function initializeModels(sequelize) {
   });
   db.Manager.hasMany(db.ManagerActivity, {
     foreignKey: "manager_id",
-    as: "activities",
+    as: "managerActivities",
   });
   db.ManagerActivity.belongsTo(db.Manager, {
     foreignKey: "manager_id",
     as: "manager",
   });
-  db.Hr.hasMany(db.HrActivity, { foreignKey: "hr_id", as: "activities" });
+  db.Hr.hasMany(db.HrActivity, { foreignKey: "hr_id", as: "hrActivities" });
   db.HrActivity.belongsTo(db.Hr, { foreignKey: "hr_id", as: "hr" });
 
   // ------------------------
