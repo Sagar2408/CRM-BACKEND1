@@ -1,4 +1,4 @@
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 
 // Get all notifications for a user (admin or executive) with pagination
 // const getAllNotificationsByUser = async (req, res) => {
@@ -82,7 +82,8 @@ const getAllNotificationsByUser = async (req, res) => {
             .status(401)
             .json({ message: "Unauthorized: Missing HR user ID" });
         }
-        whereClause = { hr_id: userId, targetRole: "hr" };
+        //whereClause = { hr_id: userId, targetRole: "hr" };
+        whereClause = { targetRole: "hr" };
         break;
 
       case "customer":

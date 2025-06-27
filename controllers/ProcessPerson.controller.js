@@ -473,6 +473,24 @@ const importConvertedClientsToCustomers = async (req, res) => {
   }
 };
 
+const getAllProcessPersons = async (req, res) => {
+  try {
+    const { ProcessPerson } = req.db;
+    const processPersons = await ProcessPerson.findAll({
+      attributes: {
+        exclude: ["password"],
+      },
+    });
+    res.status(200).json({
+      message: "Process Persons retrieved sucessfully",
+      processPersons,
+    });
+  } catch (error) {
+    console.error("Error fetching managers:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   signupProcessPerson,
   loginProcessPerson,
@@ -481,4 +499,5 @@ module.exports = {
   updateProcessSettings,
   importConvertedClientsToCustomers,
   getAllConvertedClients,
+  getAllProcessPersons,
 };

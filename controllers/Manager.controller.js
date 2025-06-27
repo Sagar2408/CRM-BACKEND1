@@ -221,6 +221,24 @@ const getManagerProfile = async (req, res) => {
   }
 };
 
+const getAllManagers = async (req, res) => {
+  try {
+    const Manager = req.db.Manager;
+    const managers = await Manager.findAll({
+      attributes: {
+        exclude: ["password"],
+      },
+    });
+    res.status(200).json({
+      message: "Managers retrieved successfully",
+      managers,
+    });
+  } catch (error) {
+    console.error("Error fetching managers:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   signupManager,
   loginManager,
@@ -229,4 +247,5 @@ module.exports = {
   getManagerTeams,
   addExecutiveToTeam,
   getManagerProfile,
+  getAllManagers,
 };

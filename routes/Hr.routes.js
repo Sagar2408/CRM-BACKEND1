@@ -6,11 +6,13 @@ const {
   loginHr,
   logoutHr,
   getHrProfile,
+  getAllHrs,
 } = require("../controllers/Hr.controller");
 
 router.post("/signup", signupHr);
 router.post("/login", loginHr);
 router.post("/logout", logoutHr);
 router.get("/profile", auth(), getHrProfile);
+router.get("/", auth(), getAllHrs);
 
 module.exports = router;

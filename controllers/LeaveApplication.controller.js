@@ -1,6 +1,6 @@
 const createLeaveApplication = async (req, res) => {
   try {
-    const { LeaveApplication, Users } = req.db;
+    const { LeaveApplication, Users, Notification } = req.db;
     const employeeId = req.user?.id;
     const role = req.user?.role;
 
@@ -65,6 +65,12 @@ const createLeaveApplication = async (req, res) => {
       workHandoverTo,
       handoverNotes,
       supportingDocumentPath,
+    });
+
+    // ✅ Create notification for customer
+    await Notification.create({
+      message: `Reminder: New leave Application by ${fullName}`,
+      targetRole: "hr",
     });
 
     return res.status(201).json({

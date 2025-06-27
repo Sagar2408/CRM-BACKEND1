@@ -120,9 +120,29 @@ const getHrProfile = async (req, res) => {
   }
 };
 
+const getAllHrs = async (req, res) => {
+  try {
+    const HR = req.db.Hr;
+    const hrs = await HR.findAll({
+      attributes: {
+        exclude: ["password"],
+      },
+    });
+
+    res.status(200).json({
+      message: "Hrs retrieved successfully",
+      hrs,
+    });
+  } catch (error) {
+    console.error("Error fetching managers:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   signupHr,
   loginHr,
   logoutHr,
   getHrProfile,
+  getAllHrs,
 };
