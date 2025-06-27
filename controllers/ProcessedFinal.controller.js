@@ -1,7 +1,23 @@
 const createFinalizedLead = async (req, res) => {
   try {
-    const { ProcessedFinal, FreshLead, ClientLead, Lead, Customer } = req.db;
-    const { fresh_lead_id } = req.body;
+    const {
+      ProcessedFinal,
+      FreshLead,
+      ClientLead,
+      Lead,
+      Customer,
+      ProcessFollowUpHistory,
+    } = req.db;
+
+    const {
+      fresh_lead_id,
+      connect_via,
+      follow_up_type,
+      interaction_rating,
+      follow_up_date,
+      follow_up_time,
+      comments,
+    } = req.body;
 
     // Extract logged-in process person ID
     const process_person_id = req.user?.id;
@@ -28,18 +44,10 @@ const createFinalizedLead = async (req, res) => {
         },
       },
     });
+
     if (!freshLead) {
       return res.status(404).json({ message: "FreshLead not found." });
     }
-
-    // const clientLeadStatus = freshLead.lead?.clientLead?.status;
-
-    // if (clientLeadStatus !== "Closed") {
-    //   return res.status(400).json({
-    //     message: "Fresh lead is not closed",
-    //     clientLeadStatus: clientLeadStatus || "Unknown",
-    //   });
-    // }
 
     // Prevent duplicate ProcessedFinal entry
     const exists = await ProcessedFinal.findOne({
@@ -59,6 +67,19 @@ const createFinalizedLead = async (req, res) => {
       phone: freshLead.phone,
       email: freshLead.email,
     });
+
+    // Save follow-up entry
+    await ProcessFollowUpHistory.create({
+      fresh_lead_id,
+      process_person_id,
+      connect_via,
+      follow_up_type,
+      interaction_rating,
+      follow_up_date,
+      follow_up_time,
+      comments,
+    });
+
     // ✅ Update customer status to "approved" for the same fresh_lead_id
     const customer = await Customer.findOne({ where: { fresh_lead_id } });
     if (customer) {
