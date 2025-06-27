@@ -7,7 +7,6 @@ module.exports = function initializeModels(sequelize) {
 
   // Load models – no third argument, models handle their own table names
   db.Users = require("../models/User.model")(sequelize, Sequelize);
-  db.Deal = require("../models/Deal.model")(sequelize, Sequelize);
   db.Lead = require("../models/Lead.model")(sequelize, Sequelize);
   db.Meeting = require("../models/Meeting.model")(sequelize, Sequelize);
   db.Opportunity = require("../models/Opportunity.model")(sequelize, Sequelize);
@@ -71,6 +70,24 @@ module.exports = function initializeModels(sequelize) {
     sequelize,
     Sequelize
   );
+  db.ProcessedFinal = require("../models/ProcessedFinal.model")(
+    sequelize,
+    Sequelize
+  );
+  db.ProcessPersonActivity = require("../models/ProcessPersonActivity.model")(
+    sequelize,
+    Sequelize
+  );
+  db.HrActivity = require("../models/HrActivities.model")(sequelize, Sequelize);
+  db.ManagerActivity = require("../models/ManagerActivities.model")(
+    sequelize,
+    Sequelize
+  );
+
+  db.LeaveApplication = require("../models/LeaveApplication.model")(
+    sequelize,
+    Sequelize
+  );
 
   // ------------------------
   // Define Associations
@@ -102,9 +119,6 @@ module.exports = function initializeModels(sequelize) {
     onDelete: "CASCADE",
   });
   db.ConvertedClient.belongsTo(db.Lead, { foreignKey: "leadId", as: "lead" });
-
-  db.Lead.hasMany(db.Deal, { foreignKey: "leadId", onDelete: "CASCADE" });
-  db.Deal.belongsTo(db.Lead, { foreignKey: "leadId" });
 
   db.FreshLead.hasMany(db.FollowUp, {
     foreignKey: "fresh_lead_id",
@@ -178,6 +192,15 @@ module.exports = function initializeModels(sequelize) {
     foreignKey: "executiveId",
     onDelete: "SET NULL",
   });
+  db.Meeting.belongsTo(db.ProcessPerson, {
+    foreignKey: "processPersonId",
+    as: "processPerson",
+    onDelete: "SET NULL",
+  });
+  db.ProcessPerson.hasMany(db.Meeting, {
+    foreignKey: "processPersonId",
+    as: "processMeetings",
+  });
 
   db.Customer.hasOne(db.CustomerDetails, {
     foreignKey: "customerId",
@@ -247,6 +270,19 @@ module.exports = function initializeModels(sequelize) {
     foreignKey: "customerId",
     as: "customer", // optional alias
   });
+  // Assuming you have imported all models and assigned them to db
+
+  // Customer belongs to FreshLead
+  db.Customer.belongsTo(db.FreshLead, {
+    foreignKey: "fresh_lead_id",
+    as: "freshLead",
+  });
+
+  // FreshLead has one Customer
+  db.FreshLead.hasOne(db.Customer, {
+    foreignKey: "fresh_lead_id",
+    as: "customer",
+  });
 
   db.Users.hasMany(db.EmailTemplate, {
     foreignKey: "createdBy",
@@ -287,6 +323,118 @@ module.exports = function initializeModels(sequelize) {
   db.ProcessFollowUpHistory.belongsTo(db.ProcessPerson, {
     foreignKey: "process_person_id",
     as: "processPerson",
+  });
+
+  // One FreshLead can have one ProcessedFinal record
+  db.FreshLead.hasOne(db.ProcessedFinal, {
+    foreignKey: "freshLeadId",
+    onDelete: "CASCADE",
+    as: "processedFinal",
+  });
+  db.ProcessedFinal.belongsTo(db.FreshLead, {
+    foreignKey: "freshLeadId",
+    as: "freshLead",
+  });
+
+  // One ProcessPerson can have many closed leads
+  db.ProcessPerson.hasMany(db.ProcessedFinal, {
+    foreignKey: "process_person_id",
+    as: "closedLeads",
+    onDelete: "CASCADE",
+  });
+
+  // Each closed lead belongs to one ProcessPerson
+  db.ProcessedFinal.belongsTo(db.ProcessPerson, {
+    foreignKey: "process_person_id",
+    as: "processPerson",
+  });
+
+  // One ProcessPerson has many activities
+  db.ProcessPerson.hasMany(db.ProcessPersonActivity, {
+    foreignKey: "process_person_id",
+    as: "activities",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  });
+
+  // Each activity belongs to one ProcessPerson
+  db.ProcessPersonActivity.belongsTo(db.ProcessPerson, {
+    foreignKey: "process_person_id",
+    as: "processPerson",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  });
+
+  // One HR can have many activities
+  db.Hr.hasMany(db.HrActivity, {
+    foreignKey: "hr_id",
+    as: "activities",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  });
+
+  // Each activity belongs to one HR
+  db.HrActivity.belongsTo(db.Hr, {
+    foreignKey: "hr_id",
+    as: "hr",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  });
+  // One Manager has many ManagerActivities
+  db.Manager.hasMany(db.ManagerActivity, {
+    foreignKey: "manager_id",
+    as: "activities",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  });
+
+  // Each ManagerActivity belongs to one Manager
+  db.ManagerActivity.belongsTo(db.Manager, {
+    foreignKey: "manager_id",
+    as: "manager",
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  });
+
+  db.Customer.hasMany(db.ProcessFollowUpHistory, {
+    foreignKey: "fresh_lead_id",
+    sourceKey: "fresh_lead_id",
+    as: "processfollowuphistories",
+  });
+
+  db.ProcessFollowUpHistory.belongsTo(db.Customer, {
+    foreignKey: "fresh_lead_id",
+    targetKey: "fresh_lead_id",
+    as: "customer",
+  });
+  // One User (executive) can have many LeaveApplications
+  db.Users.hasMany(db.LeaveApplication, {
+    foreignKey: "employeeId",
+    as: "leaveApplications",
+    onDelete: "CASCADE",
+  });
+  db.LeaveApplication.belongsTo(db.Users, {
+    foreignKey: "employeeId",
+    as: "employee",
+    onDelete: "CASCADE",
+  });
+  db.Notification.belongsTo(db.Customer, {
+    foreignKey: "customerId",
+    as: "customer",
+  });
+
+  db.Customer.hasMany(db.Notification, {
+    foreignKey: "customerId",
+    as: "notifications",
+  });
+
+  db.Hr.hasMany(db.Notification, {
+    foreignKey: "hr_id",
+    as: "notifications",
+  });
+  db.Notification.belongsTo(db.Hr, {
+    foreignKey: "hr_id",
+    as: "hr",
   });
 
   // ------------------------

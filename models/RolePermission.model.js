@@ -64,6 +64,7 @@ module.exports = (sequelize) => {
       sms_notifications: { type: DataTypes.BOOLEAN, defaultValue: false },
       email_notifications: { type: DataTypes.BOOLEAN, defaultValue: false },
       page_access: { type: DataTypes.BOOLEAN, defaultValue: false },
+      create_user: { type: DataTypes.BOOLEAN, defaultValue: false },
     },
     {
       tableName: "RolePermissions",

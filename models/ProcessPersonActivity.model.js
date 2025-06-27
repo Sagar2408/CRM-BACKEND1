@@ -2,34 +2,42 @@ const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
   return sequelize.define(
-    "Deal",
+    "ProcessPersonActivity",
     {
       id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      leadId: {
+      process_person_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "leads", // ✅ lowercase to match the actual table name
+          model: "process_persons",
           key: "id",
         },
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       },
-      revenue: {
-        type: DataTypes.DECIMAL(10, 2),
+      activityDate: {
+        type: DataTypes.DATEONLY,
         allowNull: false,
       },
-      profit: {
-        type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
+      workTime: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
       },
-      status: {
-        type: DataTypes.ENUM("Pending", "Closed"),
-        defaultValue: "Pending",
+      workStartTime: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      breakTime: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
+      breakStartTime: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -41,9 +49,14 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "deals", // ✅ Consistent lowercase table name
-      freezeTableName: true, // ✅ Prevent Sequelize from auto-pluralizing
+      tableName: "process_person_activities",
+      freezeTableName: true,
       timestamps: true,
+      uniqueKeys: {
+        daily_activity_unique: {
+          fields: ["process_person_id", "activityDate"],
+        },
+      },
     }
   );
 };

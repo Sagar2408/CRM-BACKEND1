@@ -22,7 +22,7 @@ module.exports = (sequelize) => {
 
       // Stage 1
       stage1_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for October 2023",
       },
@@ -37,7 +37,7 @@ module.exports = (sequelize) => {
 
       // Stage 2
       stage2_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for October 2024",
       },
@@ -52,7 +52,7 @@ module.exports = (sequelize) => {
 
       // Stage 3
       stage3_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for October 2025",
       },
@@ -67,7 +67,7 @@ module.exports = (sequelize) => {
 
       // Stage 4
       stage4_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for first October 2026",
       },
@@ -82,7 +82,7 @@ module.exports = (sequelize) => {
 
       // Stage 5
       stage5_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for second October 2026",
       },
@@ -97,7 +97,7 @@ module.exports = (sequelize) => {
 
       // Stage 6
       stage6_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for final October 2025",
       },
@@ -111,7 +111,7 @@ module.exports = (sequelize) => {
       },
       // Stage 7
       stage7_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for final October 2025",
       },
@@ -125,7 +125,7 @@ module.exports = (sequelize) => {
       },
       // Stage 8
       stage8_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for final October 2025",
       },
@@ -139,7 +139,7 @@ module.exports = (sequelize) => {
       },
       // Stage 9
       stage9_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for final October 2025",
       },
@@ -153,7 +153,7 @@ module.exports = (sequelize) => {
       },
       // Stage 10
       stage10_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for final October 2025",
       },
@@ -167,7 +167,7 @@ module.exports = (sequelize) => {
       },
       // Stage 11
       stage11_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for final October 2025",
       },
@@ -181,7 +181,7 @@ module.exports = (sequelize) => {
       },
       // Stage 12
       stage12_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for final October 2025",
       },
@@ -195,7 +195,7 @@ module.exports = (sequelize) => {
       },
       // Stage 13
       stage13_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for final October 2025",
       },
@@ -209,7 +209,7 @@ module.exports = (sequelize) => {
       },
       // Stage 14
       stage14_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for final October 2025",
       },
@@ -223,7 +223,7 @@ module.exports = (sequelize) => {
       },
       // Stage 15
       stage15_data: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: true,
         comment: "Custom data for final October 2025",
       },

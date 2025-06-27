@@ -32,8 +32,14 @@ module.exports = (sequelize) => {
           "document collection",
           "payment follow-up",
           "visa filing",
-          "other"
+          "other",
+          "rejected",
+          "final"
         ),
+        allowNull: false,
+      },
+      interaction_rating: {
+        type: DataTypes.ENUM("Hot", "Warm", "Cold"),
         allowNull: false,
       },
       follow_up_date: {

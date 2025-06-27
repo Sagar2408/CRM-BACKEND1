@@ -1,6 +1,5 @@
 require("dotenv").config();
 require("./cron/notificationCleaner");
-
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
@@ -8,32 +7,18 @@ const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
 const cron = require("node-cron");
 const notifyUpcomingMeetings = require("./cron/meetingNotifier");
-
 const { getTenantDB } = require("./config/sequelizeManager");
 const { initializeNotificationHelper } = require("./utils/notificationHelper");
-
+const corsOptions = require("./utils/corsOption");
 const app = express();
 const server = http.createServer(app);
-
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://crm-frontend-atozeevisas.vercel.app",
-  "https://crm-frontend-live.vercel.app",
-  "https://crm-frontend-eta-olive.vercel.app",
-];
-
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    credentials: true,
-  },
-});
+const io = new Server(server, { cors: corsOptions });
 
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors({ origin: allowedOrigins, credentials: true }));
-app.options("*", cors({ origin: allowedOrigins, credentials: true }));
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use((req, res, next) => {
@@ -59,7 +44,6 @@ app.use("/api/crew", auth(), tenantResolver, require("./routes/Agents.routes"));
 app.use("/api", tenantResolver, require("./routes/User.routes"));
 app.use("/api/manager", tenantResolver, require("./routes/Manager.routes"));
 app.use("/api/hr", tenantResolver, require("./routes/Hr.routes"));
-app.use("/api/deals", auth(), tenantResolver, require("./routes/Deal.routes"));
 app.use("/api/leads", auth(), tenantResolver, require("./routes/Lead.routes"));
 app.use(
   "/api/calldetails",
@@ -208,6 +192,36 @@ app.use(
   auth(),
   tenantResolver,
   require("./routes/RolePermission.routes")
+);
+app.use(
+  "/api/processed",
+  auth(),
+  tenantResolver,
+  require("./routes/ProcessedFinal.routes")
+);
+app.use(
+  "/api/process-person-activities",
+  auth(),
+  tenantResolver,
+  require("./routes/ProcessPersonActivity.routes")
+);
+app.use(
+  "/api/manager-activities",
+  auth(),
+  tenantResolver,
+  require("./routes/ManagerActivity.routes")
+);
+app.use(
+  "/api/hr-activities",
+  auth(),
+  tenantResolver,
+  require("./routes/HrActivity.routes")
+);
+app.use(
+  "/api/leave",
+  auth(),
+  tenantResolver,
+  require("./routes/LeaveApplication.routes")
 );
 
 // 🧠 Store connected users

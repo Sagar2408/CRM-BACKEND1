@@ -46,6 +46,18 @@ module.exports = (sequelize) => {
         onUpdate: "CASCADE",
         onDelete: "SET NULL",
       },
+
+      // ✅ OR Process Person who scheduled the meeting
+      processPersonId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "process_persons",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
       fresh_lead_id: {
         type: DataTypes.INTEGER,
         allowNull: false,

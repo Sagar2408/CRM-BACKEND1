@@ -7,7 +7,9 @@ const {
   getAllConvertedClients,
   importConvertedClientsToCustomers,
   getProcessSettings,
-  updateProcessSettings
+  updateProcessSettings,
+  getAllProcessPersons,
+  toggleProcessPersonLoginAccess,
 } = require("../controllers/ProcessPerson.controller");
 const auth = require("../middleware/auth");
 
@@ -25,5 +27,7 @@ router.post("/import-converted-customer", importConvertedClientsToCustomers);
 
 router.get("/process/settings", auth(), getProcessSettings);
 router.put("/process/settings", auth(), updateProcessSettings);
+router.post("/toggle-login", auth(), toggleProcessPersonLoginAccess);
+router.get("/", auth(), getAllProcessPersons);
 
 module.exports = router;

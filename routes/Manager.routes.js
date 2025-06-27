@@ -9,6 +9,8 @@ const {
   getManagerTeams,
   addExecutiveToTeam,
   getManagerProfile,
+  getAllManagers,
+  toggleManagerLoginAccess,
 } = require("../controllers/Manager.controller");
 
 router.post("/signup", signupManager);
@@ -18,5 +20,7 @@ router.post("/teams", auth(), createTeam);
 router.get("/teams", auth(), getManagerTeams);
 router.post("/addExecutive", auth(), addExecutiveToTeam);
 router.get("/profile", auth(), getManagerProfile);
+router.get("/", auth(), getAllManagers);
+router.post("/toggle-login", auth(), toggleManagerLoginAccess);
 
 module.exports = router;

@@ -1,4 +1,6 @@
 const { Op } = require("sequelize");
+const nodemailer = require("nodemailer");
+require("dotenv").config();
 
 exports.getEodReport = async (req, res) => {
   try {
@@ -62,3 +64,103 @@ exports.getEodReport = async (req, res) => {
       .json({ message: "Failed to generate EOD report", error });
   }
 };
+
+exports.scheduleEodReport = async (req, res) => {
+  try {
+    const { executiveId, email, fields } = req.body;
+
+    if (!executiveId || !email || !Array.isArray(fields)) {
+      return res.status(400).json({ message: "Missing required fields." });
+    }
+
+    const { ExecutiveActivity, Meeting } = req.db;
+
+    // Fetch executive activity for today (or adjust range as needed)
+    const today = new Date().toISOString().split("T")[0];
+
+    let reportData = {};
+
+    if (fields.includes("leadVisits") || fields.includes("executiveActivity")) {
+      const activity = await ExecutiveActivity.findOne({
+        where: { ExecutiveId: executiveId, activityDate: today },
+      });
+
+      if (activity) {
+        if (fields.includes("leadVisits")) {
+          reportData.leadVisits = activity.leadSectionVisits;
+        }
+
+        if (fields.includes("executiveActivity")) {
+          reportData.executiveActivity = {
+            workTime: activity.workTime,
+            breakTime: activity.breakTime,
+            dailyCallTime: activity.dailyCallTime,
+          };
+        }
+      } else {
+        reportData.activityMessage = "No activity data found for today.";
+      }
+    }
+
+    if (fields.includes("meeting")) {
+      const meetingCount = await Meeting.count({
+        where: { executiveId },
+      });
+
+      reportData.meetingCount = meetingCount;
+    }
+
+    // Format report into plain text or HTML
+    const emailContent = formatReport(reportData);
+
+    // Send email using Nodemailer
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Executive Report",
+      html: emailContent,
+    });
+
+    return res
+      .status(200)
+      .json({ message: "Report sent successfully.", reportData });
+  } catch (error) {
+    console.error("Error sending executive report:", error);
+    return res.status(500).json({ message: "Failed to send report." });
+  }
+};
+
+// Helper to format report into HTML
+function formatReport(data) {
+  let html = `<h2>Executive Report</h2><ul>`;
+
+  if ("leadVisits" in data) {
+    html += `<li><strong>Lead Section Visits:</strong> ${data.leadVisits}</li>`;
+  }
+
+  if ("executiveActivity" in data) {
+    const { workTime, breakTime, dailyCallTime } = data.executiveActivity;
+    html += `<li><strong>Work Time:</strong> ${workTime} minutes</li>`;
+    html += `<li><strong>Break Time:</strong> ${breakTime} minutes</li>`;
+    html += `<li><strong>Daily Call Time:</strong> ${dailyCallTime} minutes</li>`;
+  }
+
+  if ("meetingCount" in data) {
+    html += `<li><strong>Meetings Scheduled:</strong> ${data.meetingCount}</li>`;
+  }
+
+  if (data.activityMessage) {
+    html += `<li><i>${data.activityMessage}</i></li>`;
+  }
+
+  html += `</ul>`;
+  return html;
+}

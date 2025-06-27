@@ -1,37 +1,37 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  const Customer = sequelize.define(
-    "Customer",
+  return sequelize.define(
+    "ProcessedFinal",
     {
       id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
+        unique: true,
       },
-      fresh_lead_id: {
+      freshLeadId: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        unique: true, // Each FreshLead can be finaled only once
         references: {
-          model: "freshleads",
+          model: "freshleads", // ✅ matches actual table name
           key: "id",
         },
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       },
-      fullName: {
-        type: DataTypes.STRING,
+      process_person_id: {
+        type: DataTypes.INTEGER,
         allowNull: false,
-      },
-      email: {
-        type: DataTypes.STRING,
-        unique: true,
-        allowNull: false,
-        validate: {
-          isEmail: true,
+        references: {
+          model: "process_persons", // must match the table name in ProcessPerson model
+          key: "id",
         },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
-      country: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false,
       },
@@ -39,19 +39,9 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      password: {
+      email: {
         type: DataTypes.STRING,
-        allowNull: false,
-      },
-      status: {
-        type: DataTypes.ENUM(
-          "pending",
-          "under_review",
-          "approved",
-          "rejected",
-          "meeting"
-        ),
-        defaultValue: "pending",
+        allowNull: true,
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -63,11 +53,11 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "customers", // ✅ lowercase to match your convention
-      freezeTableName: true, // ✅ ensures table name stays 'customers'
+      tableName: "processed_final", // ✅ lowercase and consistent
+      freezeTableName: true, // ✅ disables auto-pluralization
       timestamps: true,
     }
   );
 
-  return Customer;
+  return CloseLead;
 };
