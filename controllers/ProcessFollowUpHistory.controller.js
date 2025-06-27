@@ -288,7 +288,14 @@ const moveToRejected = async (req, res) => {
 };
 
 const createMeetingForProcessPerson = async (req, res) => {
-  const { Meeting, FreshLead, Lead, ClientLead, Customer } = req.db;
+  const {
+    Meeting,
+    FreshLead,
+    Lead,
+    ClientLead,
+    Customer,
+    ProcessFollowUpHistory,
+  } = req.db;
 
   try {
     const {
@@ -369,25 +376,37 @@ const createMeetingForProcessPerson = async (req, res) => {
         { transaction }
       );
 
-      await transaction.commit();
+      await ProcessFollowUpHistory.create(
+        {
+          fresh_lead_id,
+          process_person_id: processPersonId,
+          connect_via,
+          follow_up_type,
+          interaction_rating,
+          follow_up_date,
+          follow_up_time,
+          comments: reasonForFollowup,
+        },
+        { transaction }
+      );
 
-      // Save follow-up entry
-      await ProcessFollowUpHistory.create({
-        fresh_lead_id,
-        process_person_id: processPersonId,
-        connect_via,
-        follow_up_type,
-        interaction_rating,
-        follow_up_date,
-        follow_up_time,
-        comments: reasonForFollowup,
+      const customer = await Customer.findOne({
+        where: { fresh_lead_id },
+        transaction,
       });
 
-      const customer = await Customer.findOne({ where: { fresh_lead_id } });
       if (customer) {
         customer.status = "meeting";
-        await customer.save();
+        await customer.save({ transaction });
       }
+
+      await transaction.commit();
+
+      // const customer = await Customer.findOne({ where: { fresh_lead_id } });
+      // if (customer) {
+      //   customer.status = "meeting";
+      //   await customer.save();
+      // }
 
       res.status(201).json({
         message: "Meeting created successfully for process person",
