@@ -1,11 +1,54 @@
-const nodemailer = require('nodemailer');
-const cron = require('node-cron');
+const nodemailer = require("nodemailer");
+const cron = require("node-cron");
 
 exports.scheduleEodReport = async (req, res) => {
   try {
-    const { executiveId, executiveName, email, fields, startDate, endDate, time } = req.body;
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS, // App password (keep secret)
+      },
+    });
 
-    if (!executiveId || !executiveName || !email || !Array.isArray(fields) || !startDate || !endDate || !time) {
+    const mailOptions = {
+      from: "mathurchetanya1@gmail.com",
+      to: email,
+      subject: "EOD Report from AtoZee Visas",
+      html: `
+        <h3>EOD Report</h3>
+        <pre style="font-family: monospace; white-space: pre-wrap;">${content}</pre>
+      `,
+    };
+    console.log("📧 Sending email to:", email);
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log("❌ Error sending email:", error);
+        return res.status(500).json({ status: 500, error: error.message });
+      } else {
+        console.log("✅ Email sent:", info.response);
+        return res.status(201).json({ message: "Email sent successfully" });
+      }
+    });
+    const {
+      executiveId,
+      executiveName,
+      email,
+      fields,
+      startDate,
+      endDate,
+      time,
+    } = req.body;
+
+    if (
+      !executiveId ||
+      !executiveName ||
+      !email ||
+      !Array.isArray(fields) ||
+      !startDate ||
+      !endDate ||
+      !time
+    ) {
       return res.status(400).json({ message: "Missing required fields." });
     }
 
@@ -27,14 +70,19 @@ exports.scheduleEodReport = async (req, res) => {
         const current = new Date(todayDateOnly);
 
         if (current < start || current > end) {
-          console.log(`Skipped report: ${todayDateOnly} is outside the selected range.`);
+          console.log(
+            `Skipped report: ${todayDateOnly} is outside the selected range.`
+          );
           return;
         }
 
         let freshReportData = {};
 
         // Fetch activity for today
-        if (fields.includes("leadVisits") || fields.includes("executiveActivity")) {
+        if (
+          fields.includes("leadVisits") ||
+          fields.includes("executiveActivity")
+        ) {
           const activities = await ExecutiveActivity.findAll({
             where: {
               ExecutiveId: executiveId,
@@ -48,7 +96,7 @@ exports.scheduleEodReport = async (req, res) => {
             let totalBreakTime = 0;
             let totalCallTime = 0;
 
-            activities.forEach(activity => {
+            activities.forEach((activity) => {
               if (fields.includes("leadVisits")) {
                 totalLeadVisits += activity.leadSectionVisits || 0;
               }
@@ -71,7 +119,8 @@ exports.scheduleEodReport = async (req, res) => {
               };
             }
           } else {
-            freshReportData.activityMessage = "No activity data found for today.";
+            freshReportData.activityMessage =
+              "No activity data found for today.";
           }
         }
 
@@ -109,7 +158,6 @@ exports.scheduleEodReport = async (req, res) => {
     return res.status(200).json({
       message: "Daily report scheduled successfully between given date range.",
     });
-
   } catch (error) {
     console.error("Error scheduling executive report:", error);
     return res.status(500).json({ message: "Failed to schedule report." });
@@ -134,8 +182,12 @@ function formatReport(data, executiveName) {
   if ("executiveActivity" in data) {
     const { workTime, breakTime, dailyCallTime } = data.executiveActivity;
     html += `<li><strong>Work Time:</strong> ${formatDuration(workTime)}</li>`;
-    html += `<li><strong>Break Time:</strong> ${formatDuration(breakTime)}</li>`;
-    html += `<li><strong>Daily Call Time:</strong> ${formatDuration(dailyCallTime)}</li>`;
+    html += `<li><strong>Break Time:</strong> ${formatDuration(
+      breakTime
+    )}</li>`;
+    html += `<li><strong>Daily Call Time:</strong> ${formatDuration(
+      dailyCallTime
+    )}</li>`;
   }
 
   if ("meetingCount" in data) {
@@ -149,10 +201,3 @@ function formatReport(data, executiveName) {
   html += `</ul>`;
   return html;
 }
-
-
-
-
-
-
-

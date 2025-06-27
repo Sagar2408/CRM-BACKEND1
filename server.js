@@ -284,13 +284,6 @@ cron.schedule("* * * * *", async () => {
   await notifyUpcomingMeetings();
 });
 
-// 🚀 Start Server
-if (process.env.NODE_ENV !== "test") {
-  server.listen(PORT, () =>
-    console.log(`🚀 Server running on http://localhost:${PORT}`)
-  );
-}
-
 module.exports = {
   app,
 };
