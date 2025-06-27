@@ -9,7 +9,6 @@
 //   origin: allowedOrigins,
 //   credentials: true,
 // };
-
 const allowedOrigins = [
   "http://localhost:3000",
   "https://crm-frontend-atozeevisas.vercel.app",
@@ -26,6 +25,12 @@ const corsOptions = {
     }
   },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "x-company-id", // if you're using this
+  ],
 };
 
 module.exports = corsOptions;
