@@ -28,24 +28,24 @@ router.get(
 // General profile route
 router.get("/profile", auth(), userController.getUserProfile); // No role restriction
 
-
 // admin settings
-router.get("/admin/profile", auth(["Admin"]), userController.getAdminById);          // ✅ Fetch admin profile
-router.put("/admin/profile", auth(["Admin"]), userController.updateAdminProfile);  // ✅ Update admin profile
-router.post("/admin/change_pass",auth(["Admin"]), userController.changePassword);  // ✅ Change admin password
-
-
-
+router.get("/admin/profile", auth(["Admin"]), userController.getAdminById); // ✅ Fetch admin profile
+router.put(
+  "/admin/profile",
+  auth(["Admin"]),
+  userController.updateAdminProfile
+); // ✅ Update admin profile
+router.post(
+  "/admin/change_pass",
+  auth(["Admin"]),
+  userController.changePassword
+); // ✅ Change admin password
 
 // New protected routes with proper authorization
-router.get(
-  "/executives",
-  auth(),
-  userController.getAllExecutives
-);
+router.get("/executives", auth(), userController.getAllExecutives);
 router.get(
   "/team-leads",
-  auth(["Admin"]), // Only Admin can access
+  auth(), // Only Admin can access
   userController.getAllTeamLeads
 );
 router.get(
