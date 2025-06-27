@@ -292,13 +292,14 @@ const getFollowUps = async (req, res) => {
       };
     });
 
-    return res.status(200).json({ message: "Follow-ups fetched", data: response });
+    return res
+      .status(200)
+      .json({ message: "Follow-ups fetched", data: response });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 module.exports = {
   createFollowUp,

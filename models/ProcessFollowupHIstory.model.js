@@ -33,7 +33,8 @@ module.exports = (sequelize) => {
           "payment follow-up",
           "visa filing",
           "other",
-          "rejected"
+          "rejected",
+          "final"
         ),
         allowNull: false,
       },

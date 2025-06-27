@@ -140,7 +140,8 @@ const logoutCustomer = async (req, res) => {
 const getAllCustomers = async (req, res) => {
   try {
     //const Customer = req.db.Customer;
-    const { ProcessFollowUpHistory, Customer } = req.db;
+    const { ProcessFollowUpHistory, Customer, FreshLead, Lead, ClientLead } =
+      req.db;
 
     const customers = await Customer.findAll({
       attributes: [
@@ -161,6 +162,32 @@ const getAllCustomers = async (req, res) => {
           limit: 1,
           separate: true,
           order: [["createdAt", "DESC"]],
+        },
+        {
+          model: FreshLead,
+          as: "freshLead",
+          attributes: ["name", "phone", "email"],
+          include: [
+            {
+              model: Lead,
+              as: "lead",
+              attributes: ["id", "clientLeadId"],
+              include: [
+                {
+                  model: ClientLead,
+                  as: "clientLead",
+                  attributes: [
+                    "status",
+                    "education",
+                    "experience",
+                    "state",
+                    "dob",
+                    "country",
+                  ],
+                },
+              ],
+            },
+          ],
         },
       ],
       order: [["createdAt", "DESC"]],
