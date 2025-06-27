@@ -166,24 +166,15 @@ const getAllCustomers = async (req, res) => {
         {
           model: FreshLead,
           as: "freshLead",
-          attributes: ["name", "phone", "email"],
           include: [
             {
               model: Lead,
               as: "lead",
-              attributes: ["id", "clientLeadId"],
               include: [
                 {
                   model: ClientLead,
                   as: "clientLead",
-                  attributes: [
-                    "status",
-                    "education",
-                    "experience",
-                    "state",
-                    "dob",
-                    "country",
-                  ],
+                  attributes: ["education", "experience", "state", "dob"],
                 },
               ],
             },
