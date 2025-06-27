@@ -62,6 +62,12 @@ const loginProcessPerson = async (req, res) => {
         .json({ message: "Account not found or inactive." });
     }
 
+    if (!person.can_login) {
+      return res
+        .status(403)
+        .json({ message: "Login access is disabled. Please contact admin." });
+    }
+
     const isMatch = await bcrypt.compare(password, person.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials." });
@@ -491,6 +497,43 @@ const getAllProcessPersons = async (req, res) => {
   }
 };
 
+const toggleProcessPersonLoginAccess = async (req, res) => {
+  try {
+    const { ProcessPerson } = req.db;
+
+    // ✳️ Only Admins are allowed
+    if (req.user.role !== "Admin") {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized: Only Admin can change login access." });
+    }
+
+    const { processPersonId, can_login } = req.body;
+
+    const person = await ProcessPerson.findByPk(processPersonId);
+
+    if (!person) {
+      return res.status(404).json({ message: "Process Person not found." });
+    }
+
+    person.can_login = can_login;
+    await person.save();
+
+    res.status(200).json({
+      message: `Process Person login access updated to '${can_login}'`,
+      processPerson: {
+        id: person.id,
+        fullName: person.fullName,
+        email: person.email,
+        can_login: person.can_login,
+      },
+    });
+  } catch (error) {
+    console.error("Error toggling Process Person login access:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signupProcessPerson,
   loginProcessPerson,
@@ -500,4 +543,5 @@ module.exports = {
   importConvertedClientsToCustomers,
   getAllConvertedClients,
   getAllProcessPersons,
+  toggleProcessPersonLoginAccess,
 };

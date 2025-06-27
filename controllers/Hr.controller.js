@@ -46,6 +46,12 @@ const loginHr = async (req, res) => {
       return res.status(404).json({ error: "HR not found." });
     }
 
+    if (!hr.can_login) {
+      return res
+        .status(403)
+        .json({ message: "Login access is disabled. Please contact admin." });
+    }
+
     const isMatch = await bcrypt.compare(password, hr.password);
     if (!isMatch) {
       return res.status(401).json({ error: "Invalid credentials." });
@@ -139,10 +145,48 @@ const getAllHrs = async (req, res) => {
   }
 };
 
+const toggleHrLoginAccess = async (req, res) => {
+  try {
+    const Hr = req.db.Hr;
+
+    // ✳️ Only Admins are allowed
+    if (req.user.role !== "Admin") {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized: Only Admin can change login access." });
+    }
+
+    const { hrId, can_login } = req.body;
+
+    const hr = await Hr.findByPk(hrId);
+
+    if (!hr) {
+      return res.status(404).json({ message: "HR user not found." });
+    }
+
+    hr.can_login = can_login;
+    await hr.save();
+
+    res.status(200).json({
+      message: `HR login access updated to '${can_login}'`,
+      hr: {
+        id: hr.id,
+        name: hr.name,
+        email: hr.email,
+        can_login: hr.can_login,
+      },
+    });
+  } catch (error) {
+    console.error("Error toggling HR login access:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signupHr,
   loginHr,
   logoutHr,
   getHrProfile,
   getAllHrs,
+  toggleHrLoginAccess,
 };

@@ -46,6 +46,12 @@ const loginManager = async (req, res) => {
       return res.status(404).json({ error: "Manager not found." });
     }
 
+    if (!manager.can_login) {
+      return res
+        .status(403)
+        .json({ message: "Login access is disabled. Please contact admin." });
+    }
+
     const isMatch = await bcrypt.compare(password, manager.password);
     if (!isMatch) {
       return res.status(401).json({ error: "Invalid credentials." });
@@ -239,6 +245,43 @@ const getAllManagers = async (req, res) => {
   }
 };
 
+const toggleManagerLoginAccess = async (req, res) => {
+  try {
+    const Manager = req.db.Manager;
+
+    // ✳️ Only Admins are allowed
+    if (req.user.role !== "Admin") {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized: Only Admin can change login access." });
+    }
+
+    const { managerId, can_login } = req.body;
+
+    const manager = await Manager.findByPk(managerId);
+
+    if (!manager) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    manager.can_login = can_login;
+    await manager.save();
+
+    res.status(200).json({
+      message: `Manager login access updated to '${can_login}'`,
+      manager: {
+        id: manager.id,
+        username: manager.username,
+        email: manager.email,
+        can_login: manager.can_login,
+      },
+    });
+  } catch (error) {
+    console.error("Error toggling login access:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signupManager,
   loginManager,
@@ -248,4 +291,5 @@ module.exports = {
   addExecutiveToTeam,
   getManagerProfile,
   getAllManagers,
+  toggleManagerLoginAccess,
 };
