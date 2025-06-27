@@ -299,6 +299,11 @@ const createMeetingForProcessPerson = async (req, res) => {
       startTime,
       endTime,
       fresh_lead_id,
+      connect_via,
+      follow_up_type,
+      interaction_rating,
+      follow_up_date,
+      follow_up_time,
     } = req.body;
 
     const processPersonId = req.user?.id;
@@ -365,6 +370,18 @@ const createMeetingForProcessPerson = async (req, res) => {
       );
 
       await transaction.commit();
+
+      // Save follow-up entry
+      await ProcessFollowUpHistory.create({
+        fresh_lead_id,
+        process_person_id: processPersonId,
+        connect_via,
+        follow_up_type,
+        interaction_rating,
+        follow_up_date,
+        follow_up_time,
+        comments: reasonForFollowup,
+      });
 
       const customer = await Customer.findOne({ where: { fresh_lead_id } });
       if (customer) {
