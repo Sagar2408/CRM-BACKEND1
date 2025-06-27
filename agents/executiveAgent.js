@@ -1,7 +1,6 @@
 require("dotenv").config();
 const axios = require("axios");
 const searchWeb = require("../utils/websearch");
-const fetchLatestCrsFromWeb = require("../utils/fetchCrsScore");
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = process.env.GEMINI_API_URL;

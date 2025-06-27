@@ -1,14 +1,11 @@
-
-
-
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 const sendEodEmail = async (req, res) => {
   const { email, content } = req.body;
 
   try {
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS, // App password (keep secret)
@@ -16,15 +13,15 @@ const sendEodEmail = async (req, res) => {
     });
 
     const mailOptions = {
-      from: 'mathurchetanya1@gmail.com',
+      from: "mathurchetanya1@gmail.com",
       to: email,
-      subject: 'EOD Report from AtoZee Visas',
+      subject: "EOD Report from AtoZee Visas",
       html: `
         <h3>EOD Report</h3>
         <pre style="font-family: monospace; white-space: pre-wrap;">${content}</pre>
       `,
     };
-
+    console.log("📧 Sending email to:", email);
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.log("❌ Error sending email:", error);
@@ -34,7 +31,6 @@ const sendEodEmail = async (req, res) => {
         return res.status(201).json({ message: "Email sent successfully" });
       }
     });
-
   } catch (error) {
     console.error("❌ Server error:", error);
     res.status(500).json({ status: 500, error: error.message });
@@ -42,11 +38,6 @@ const sendEodEmail = async (req, res) => {
 };
 
 module.exports = { sendEodEmail };
-
-
-
-
-
 
 // const nodemailer = require('nodemailer');
 
