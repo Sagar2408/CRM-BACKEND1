@@ -78,7 +78,8 @@ const createProcessFollowUp = async (req, res) => {
 
 const getProcessFollowUpsByFreshLeadId = async (req, res) => {
   try {
-    const { ProcessFollowUpHistory, FreshLead, Customer } = req.db;
+    const { ProcessFollowUpHistory, FreshLead, Customer, Lead, ClientLead } =
+      req.db;
     const { fresh_lead_id } = req.params;
 
     if (!fresh_lead_id) {
@@ -93,14 +94,6 @@ const getProcessFollowUpsByFreshLeadId = async (req, res) => {
       return res.status(404).json({ message: "FreshLead not found." });
     }
 
-    // const followUps = await ProcessFollowUpHistory.findAll({
-    //   where: { fresh_lead_id },
-    //   order: [
-    //     ["follow_up_date", "DESC"],
-    //     ["follow_up_time", "DESC"],
-    //   ],
-    // });
-
     const followUps = await ProcessFollowUpHistory.findAll({
       where: { fresh_lead_id },
       order: [
@@ -114,6 +107,18 @@ const getProcessFollowUpsByFreshLeadId = async (req, res) => {
           as: "freshLead",
           attributes: ["name", "phone", "email"],
           include: [
+            {
+              model: Lead,
+              as: "lead",
+              attributes: ["id"],
+              include: [
+                {
+                  model: ClientLead,
+                  as: "clientLead",
+                  attributes: ["education", "experience", "state", "dob"],
+                },
+              ],
+            },
             {
               model: Customer,
               as: "customer",
