@@ -11,6 +11,7 @@ const {
   getManagerProfile,
   getAllManagers,
   toggleManagerLoginAccess,
+  getAllTeamMember,
 } = require("../controllers/Manager.controller");
 
 router.post("/signup", signupManager);
