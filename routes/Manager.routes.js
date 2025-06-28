@@ -22,5 +22,6 @@ router.post("/addExecutive", auth(), addExecutiveToTeam);
 router.get("/profile", auth(), getManagerProfile);
 router.get("/", auth(), getAllManagers);
 router.post("/toggle-login", auth(), toggleManagerLoginAccess);
+router.post("/get-team", auth(), getAllTeamMember);
 
 module.exports = router;

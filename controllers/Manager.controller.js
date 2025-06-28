@@ -282,6 +282,39 @@ const toggleManagerLoginAccess = async (req, res) => {
   }
 };
 
+const getAllTeamMember = async (req, res) => {
+  try {
+    const { team_id } = req.body;
+    const User = req.db.User;
+    if (!team_id) {
+      return res
+        .status(400)
+        .json({ error: "team_id is required in request body" });
+    }
+
+    const teamMembers = await User.findAll({
+      where: {
+        team_id,
+        role: "Executive", // only executives
+      },
+      attributes: [
+        "id",
+        "username",
+        "email",
+        "firstname",
+        "lastname",
+        "profile_picture",
+      ],
+      order: [["username", "ASC"]],
+    });
+
+    res.json(teamMembers);
+  } catch (error) {
+    console.error("Error fetching team members:", error);
+    res.status(500).json({ error: "Failed to fetch team members" });
+  }
+};
+
 module.exports = {
   signupManager,
   loginManager,
@@ -292,4 +325,5 @@ module.exports = {
   getManagerProfile,
   getAllManagers,
   toggleManagerLoginAccess,
+  getAllTeamMember,
 };
