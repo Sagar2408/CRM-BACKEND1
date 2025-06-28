@@ -285,14 +285,14 @@ const toggleManagerLoginAccess = async (req, res) => {
 const getAllTeamMember = async (req, res) => {
   try {
     const { team_id } = req.body;
-    const User = req.db.User;
+    const Users = req.db.Users;
     if (!team_id) {
       return res
         .status(400)
         .json({ error: "team_id is required in request body" });
     }
 
-    const teamMembers = await User.findAll({
+    const teamMembers = await Users.findAll({
       where: {
         team_id,
         role: "Executive", // only executives
