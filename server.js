@@ -223,7 +223,6 @@ app.use(
   tenantResolver,
   require("./routes/LeaveApplication.routes")
 );
-app.use("/api/botpress", tenantResolver, require("./routes/BotRoutes.routes"))
 // 🧠 Store connected users
 const connectedUsers = {};
 
