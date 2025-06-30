@@ -1,13 +1,10 @@
-// routes/botRoutes.js
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 
-// Your Botpress bot config
 const BOT_ID = '15c92e13-1777-460f-992e-95a63d7b0749';
-const MESSAGING_URL = 'https://messaging.botpress.cloud';
+const CONVERSE_URL = `https://api.botpress.cloud/v1/bots/${BOT_ID}/converse`;
 
-// Route to handle chat messages
 router.post('/chat', async (req, res) => {
   const { userId, message } = req.body;
 
@@ -16,13 +13,9 @@ router.post('/chat', async (req, res) => {
   }
 
   try {
-    const response = await axios.post(`${MESSAGING_URL}/v1/messages`, {
-      botId: BOT_ID,
-      conversationId: userId,
-      payload: {
-        type: 'text',
-        text: message
-      }
+    const response = await axios.post(`${CONVERSE_URL}/${userId}`, {
+      type: 'text',
+      text: message
     });
 
     res.json(response.data);
