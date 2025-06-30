@@ -1,6 +1,7 @@
 require("dotenv").config();
 const axios = require("axios");
 const searchWeb = require("../utils/websearch");
+const fetchWebPage = require("../utils/fetchWebPage"); // 📥 Scraper utility
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = process.env.GEMINI_API_URL;
@@ -25,10 +26,29 @@ async function askExecutiveAgent(question, userId, db) {
     const truncatedWebData = webData.slice(0, 3000); // Gemini size constraint
 
     // 📊 Fetch latest CRS score
-    const crsData = await fetchLatestCrsFromWeb();
+    const crsData = await fetchLatestCrsFromWeb(); // You should already have this utility
     const crsSummary = crsData
       ? `As of ${crsData.drawDate}, the minimum CRS cutoff was ${crsData.crs}. (source: ${crsData.url})`
       : "CRS data could not be fetched at this moment.";
+
+    // 🌍 Trusted immigration websites
+    const trustedUrls = [
+      "https://www.canada.ca",
+      "https://www.canadavisa.com",
+      "https://www.vfsglobal.com",
+      "https://www.cicnews.com",
+    ];
+
+    const websiteKnowledgeArray = await Promise.all(
+      trustedUrls.map(async (url) => {
+        const content = await fetchWebPage(url);
+        return content
+          ? `📌 From ${url}:\n${content.slice(0, 1000)}\n`
+          : `❌ Failed to fetch content from ${url}`;
+      })
+    );
+
+    const combinedWebsiteKnowledge = websiteKnowledgeArray.join("\n\n");
 
     // 🧠 Compose full prompt
     const prompt = `You are an experienced senior immigration advisor at AtoZee Visas — a trusted firm known for helping clients successfully navigate immigration pathways to Canada, the UK, Australia, and more.
@@ -54,6 +74,9 @@ ${truncatedWebData}
 
 📊 **Latest CRS Score Insight**:
 ${crsSummary}
+
+🌍 **Knowledge from Trusted Immigration Websites**:
+${combinedWebsiteKnowledge}
 
 ---
 
