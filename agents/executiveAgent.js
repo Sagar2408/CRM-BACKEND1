@@ -21,10 +21,6 @@ async function askExecutiveAgent(question, userId, db) {
       .map((msg) => `${msg.role === "user" ? "User" : "Agent"}: ${msg.message}`)
       .join("\n");
 
-    // 🌐 Fetch relevant web data
-    const webData = await searchWeb(question);
-    const truncatedWebData = webData.slice(0, 3000);
-
     // 🌍 Trusted immigration websites
     const trustedUrls = [
       "https://www.canada.ca",
@@ -44,7 +40,11 @@ async function askExecutiveAgent(question, userId, db) {
 
     const combinedWebsiteKnowledge = websiteKnowledgeArray.join("\n\n");
 
-    // 🧠 Compose full prompt
+    // 🌐 Fetch relevant web data
+    const webData = await searchWeb(question);
+    const truncatedWebData = webData.slice(0, 3000); // Gemini token constraint
+
+    // 🧠 Compose full prompt — trusted sites come FIRST
     const prompt = `You are an experienced senior immigration advisor at AtoZee Visas — a trusted firm known for helping clients successfully navigate immigration pathways to Canada, the UK, Australia, and more.
 
 You speak with clarity, confidence, and professionalism. Your tone is warm, helpful, and focused on **actionable immigration advice**.
@@ -63,11 +63,11 @@ Use the following to guide your answer:
 📜 **Conversation History**:
 ${historyMessages}
 
-🌐 **Recent Immigration Info from Web** (auto-extracted, may not be fully verified):
-${truncatedWebData}
-
 🌍 **Knowledge from Trusted Immigration Websites**:
 ${combinedWebsiteKnowledge}
+
+🌐 **Recent Immigration Info from Web** (auto-extracted, may not be fully verified):
+${truncatedWebData}
 
 ---
 
