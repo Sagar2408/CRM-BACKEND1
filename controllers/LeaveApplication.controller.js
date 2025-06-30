@@ -69,7 +69,7 @@ const createLeaveApplication = async (req, res) => {
 
     // ✅ Create notification for customer
     await Notification.create({
-      message: `Reminder: New leave Application by ${fullName}`,
+      message: `Reminder: New leave Application by ${fullName,employeeId,leaveType,appliedDate}`,
       targetRole: "hr",
     });
 
