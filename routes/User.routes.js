@@ -57,7 +57,7 @@ router.get(
 // Get online users (accessible to Admin and TL)
 router.get(
   "/online",
-  auth(["Admin", "TL"]),
+  auth(["Admin", "TL", "Manager"]),
   userController.getOnlineExecutives
 );
 
