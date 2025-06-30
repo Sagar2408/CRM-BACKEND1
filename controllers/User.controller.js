@@ -600,9 +600,9 @@ const getOnlineExecutives = async (req, res) => {
     const { role } = req.user;
 
     // Authorization: Only Admin and TL are allowed
-    if (role !== "Admin" && role !== "TL") {
+    if (role !== "Admin" && role !== "TL" && role !== "Manager") {
       return res.status(403).json({
-        message: "Unauthorized: Only Admin and TL can view online executives",
+        message: "Unauthorized: Only Admin and TL,Manager can view online executives",
       });
     }
 
