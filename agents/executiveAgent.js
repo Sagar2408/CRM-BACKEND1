@@ -1,7 +1,7 @@
 require("dotenv").config();
 const axios = require("axios");
 const searchWeb = require("../utils/websearch");
-const fetchWebPage = require("../utils/fetchWebPage"); // 📥 Scraper utility
+const fetchWebPage = require("../utils/fetchWebPage");
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = process.env.GEMINI_API_URL;
@@ -23,13 +23,7 @@ async function askExecutiveAgent(question, userId, db) {
 
     // 🌐 Fetch relevant web data
     const webData = await searchWeb(question);
-    const truncatedWebData = webData.slice(0, 3000); // Gemini size constraint
-
-    // 📊 Fetch latest CRS score
-    const crsData = await fetchLatestCrsFromWeb(); // You should already have this utility
-    const crsSummary = crsData
-      ? `As of ${crsData.drawDate}, the minimum CRS cutoff was ${crsData.crs}. (source: ${crsData.url})`
-      : "CRS data could not be fetched at this moment.";
+    const truncatedWebData = webData.slice(0, 3000);
 
     // 🌍 Trusted immigration websites
     const trustedUrls = [
@@ -71,9 +65,6 @@ ${historyMessages}
 
 🌐 **Recent Immigration Info from Web** (auto-extracted, may not be fully verified):
 ${truncatedWebData}
-
-📊 **Latest CRS Score Insight**:
-${crsSummary}
 
 🌍 **Knowledge from Trusted Immigration Websites**:
 ${combinedWebsiteKnowledge}
