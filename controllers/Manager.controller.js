@@ -126,7 +126,7 @@ const createTeam = async (req, res) => {
 
     res.status(201).json({
       message: "Team created successfully.",
-      team,
+      team: team.toJSON(),
     });
   } catch (err) {
     console.error("Create team error:", err);
@@ -162,7 +162,7 @@ const addExecutiveToTeam = async (req, res) => {
     }
 
     // Validation
-    if (!team_id || !user_id || managerId) {
+    if (!team_id || !user_id || !managerId) {
       return res
         .status(400)
         .json({ error: "Team ID, User ID and Manager Id is required." });
