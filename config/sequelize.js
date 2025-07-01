@@ -439,7 +439,7 @@ module.exports = function initializeModels(sequelize) {
 
   db.Customer.belongsTo(db.FreshLead, {
     foreignKey: "fresh_lead_id",
-    as: "freshLead",
+    as: "customerFreshLead",
   });
 
   db.FreshLead.hasOne(db.Customer, {
