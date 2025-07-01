@@ -182,6 +182,36 @@ const toggleHrLoginAccess = async (req, res) => {
   }
 };
 
+const getHrById = async (req, res) => {
+  try {
+    const Hr = req.db.Hr;
+    const hrId = req.params.id;
+    const requestingUser = req.user;
+    // Restrict Hr from accessing other Hr profiles
+    if (
+      requestingUser.role === "HR" &&
+      requestingUser.id !== parseInt(hrId, 10)
+    ) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const hr = await Hr.findOne({
+      where: { id: hrId },
+      attributes: ["id", "name", "email", "role", "createdAt"],
+    });
+
+    if (!hr) {
+      return res.status(404).json({ message: "Hr not found." });
+    }
+
+    // ✅ Send the response
+    return res.status(200).json({ hr });
+  } catch (error) {
+    console.error("Error fetching Hrs:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
 module.exports = {
   signupHr,
   loginHr,
@@ -189,4 +219,5 @@ module.exports = {
   getHrProfile,
   getAllHrs,
   toggleHrLoginAccess,
+  getHrById,
 };

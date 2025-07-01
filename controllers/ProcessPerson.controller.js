@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { where } = require("sequelize");
 
 // SIGNUP
 const signupProcessPerson = async (req, res) => {
@@ -534,6 +535,37 @@ const toggleProcessPersonLoginAccess = async (req, res) => {
   }
 };
 
+const getProcessPersonById = async (req, res) => {
+  try {
+    const ProcessPerson = req.db.ProcessPerson;
+    const processPersonId = req.params.id;
+    const requestingUser = req.user;
+
+    // Restrict Process Person from accessing other Process Persons profiles
+    if (
+      requestingUser.type === "processperson" &&
+      requestingUser.id !== parseInt(processPersonId, 10)
+    ) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const processPerson = await ProcessPerson.findOne({
+      where: { id: processPersonId },
+      attributes: ["id", "fullName", "email", "createdAt"],
+    });
+
+    if (!processPerson) {
+      return res.status(404).json({ message: "Process Person not found." });
+    }
+
+    // ✅ Send the response
+    return res.status(200).json({ processPerson });
+  } catch (error) {
+    console.error("Error fetching process person:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
 module.exports = {
   signupProcessPerson,
   loginProcessPerson,
@@ -544,4 +576,5 @@ module.exports = {
   getAllConvertedClients,
   getAllProcessPersons,
   toggleProcessPersonLoginAccess,
+  getProcessPersonById,
 };

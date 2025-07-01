@@ -12,6 +12,7 @@ const {
   getAllManagers,
   toggleManagerLoginAccess,
   getAllTeamMember,
+  getManagerById,
 } = require("../controllers/Manager.controller");
 
 router.post("/signup", signupManager);
@@ -24,5 +25,6 @@ router.get("/profile", auth(), getManagerProfile);
 router.get("/", auth(), getAllManagers);
 router.post("/toggle-login", auth(), toggleManagerLoginAccess);
 router.post("/get-team", auth(), getAllTeamMember);
+router.get("/:id", auth(), getManagerById);
 
 module.exports = router;

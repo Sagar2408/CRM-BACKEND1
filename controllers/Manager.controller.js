@@ -315,6 +315,37 @@ const getAllTeamMember = async (req, res) => {
   }
 };
 
+const getManagerById = async (req, res) => {
+  try {
+    const Manager = req.db.Manager;
+    const managerId = req.params.id;
+    const requestingUser = req.user;
+
+    // Restrict Manager from accessing other Manager profiles
+    if (
+      requestingUser.role === "manager" &&
+      requestingUser.id !== parseInt(managerId, 10)
+    ) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const manager = await Manager.findOne({
+      where: { id: managerId },
+      attributes: ["id", "name", "email", "role", "createdAt"],
+    });
+
+    if (!manager) {
+      return res.status(404).json({ message: "Manager not found." });
+    }
+
+    // ✅ Send the response
+    return res.status(200).json({ manager });
+  } catch (error) {
+    console.error("Error fetching Managers:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
 module.exports = {
   signupManager,
   loginManager,
@@ -326,4 +357,5 @@ module.exports = {
   getAllManagers,
   toggleManagerLoginAccess,
   getAllTeamMember,
+  getManagerById,
 };
