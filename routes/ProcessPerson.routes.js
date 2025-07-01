@@ -13,6 +13,7 @@ const {
   getProcessPersonById,
   updateProcessPersonProfile,
   getProcessPersonLoginStatus,
+  changeProcessPersonPassword,
 } = require("../controllers/ProcessPerson.controller");
 const auth = require("../middleware/auth");
 
@@ -23,6 +24,8 @@ router.post("/login", loginProcessPerson);
 router.post("/signup", signupProcessPerson);
 
 router.post("/logout", auth(), logoutProcessPerson);
+
+router.post("/change-password", auth(), changeProcessPersonPassword);
 
 router.get("/convertedclients", auth(), getAllConvertedClients);
 

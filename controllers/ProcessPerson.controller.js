@@ -650,6 +650,39 @@ const getProcessPersonLoginStatus = async (req, res) => {
   }
 };
 
+const changeProcessPersonPassword = async (req, res) => {
+  try {
+    const ProcessPerson = req.db.ProcessPerson; // ✅ Scoped model
+    const { currentPassword, newPassword } = req.body;
+    const { id } = req.user; // ✅ User ID from token
+
+    if (!id) {
+      return res.status(401).json({ message: "Unauthorized access" });
+    }
+
+    const processPerson = await ProcessPerson.findByPk(id);
+    if (!processPerson) {
+      return res.status(404).json({ message: "Process Person not found" });
+    }
+
+    const isMatch = await bcrypt.compare(
+      currentPassword,
+      processPerson.password
+    );
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    processPerson.password = await bcrypt.hash(newPassword, 10);
+    await processPerson.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Password update error:", error); // ✅ Error log
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signupProcessPerson,
   loginProcessPerson,
@@ -663,4 +696,5 @@ module.exports = {
   getProcessPersonById,
   updateProcessPersonProfile,
   getProcessPersonLoginStatus,
+  changeProcessPersonPassword,
 };

@@ -407,6 +407,36 @@ const getManagerLoginStatus = async (req, res) => {
   }
 };
 
+const changeManagerPassword = async (req, res) => {
+  try {
+    const Manager = req.db.Manager; // ✅ Scoped model
+    const { currentPassword, newPassword } = req.body;
+    const { id } = req.user; // ✅ User ID from token
+
+    if (!id) {
+      return res.status(401).json({ message: "Unauthorized access" });
+    }
+
+    const manager = await Manager.findByPk(id);
+    if (!manager) {
+      return res.status(404).json({ message: "Manager not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, manager.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    manager.password = await bcrypt.hash(newPassword, 10);
+    await manager.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Password update error:", error); // ✅ Error log
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signupManager,
   loginManager,
@@ -421,4 +451,5 @@ module.exports = {
   getManagerById,
   updateManagerProfile,
   getManagerLoginStatus,
+  changeManagerPassword,
 };

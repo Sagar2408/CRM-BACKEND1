@@ -15,11 +15,14 @@ const {
   getManagerById,
   updateManagerProfile,
   getManagerLoginStatus,
+  changeManagerPassword,
 } = require("../controllers/Manager.controller");
 
 router.post("/signup", signupManager);
 router.post("/login", loginManager);
 router.post("/logout", auth(), logoutManager);
+//change manager password
+router.post("/change-password", auth(), changeManagerPassword);
 router.post("/teams", auth(), createTeam);
 router.get("/teams", auth(), getManagerTeams);
 router.post("/addExecutive", auth(), addExecutiveToTeam);
