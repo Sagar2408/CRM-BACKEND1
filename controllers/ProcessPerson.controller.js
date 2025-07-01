@@ -569,7 +569,7 @@ const getProcessPersonById = async (req, res) => {
 const updateProcessPersonProfile = async (req, res) => {
   try {
     const ProcessPerson = req.db.ProcessPerson;
-    const processPersonId = req.params.id;
+    const processPersonId = parseInt(req.params.id, 10);
     const requestingUser = req.user;
 
     // Only the logged-in Process Person can update their own profile

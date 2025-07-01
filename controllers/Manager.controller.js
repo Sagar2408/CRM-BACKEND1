@@ -349,7 +349,7 @@ const getManagerById = async (req, res) => {
 const updateManagerProfile = async (req, res) => {
   try {
     const Manager = req.db.Manager;
-    const managerId = req.params.id;
+    const managerId = parseInt(req.params.id, 10);
     const requestingUser = req.user;
 
     // Restrict access: A manager can only update their own profile

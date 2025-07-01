@@ -215,7 +215,7 @@ const getHrById = async (req, res) => {
 const updateHrProfile = async (req, res) => {
   try {
     const Hr = req.db.Hr;
-    const hrId = req.params.id;
+    const hrId = parseInt(req.params.id, 10);
     const requestingUser = req.user;
 
     // Restrict: Only the logged-in HR can update their own profile
