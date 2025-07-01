@@ -10,6 +10,7 @@ const {
   toggleHrLoginAccess,
   getHrById,
   updateHrProfile,
+  getHrLoginStatus,
 } = require("../controllers/Hr.controller");
 
 router.post("/signup", signupHr);
@@ -20,5 +21,6 @@ router.post("/toggle-login", auth(), toggleHrLoginAccess);
 router.get("/", auth(), getAllHrs);
 router.get("/:id", auth(), getHrById);
 router.put("/:id", auth(), updateHrProfile);
+router.get("/login-status/:id", auth(), getHrLoginStatus);
 
 module.exports = router;

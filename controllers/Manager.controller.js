@@ -378,6 +378,35 @@ const updateManagerProfile = async (req, res) => {
   }
 };
 
+const getManagerLoginStatus = async (req, res) => {
+  try {
+    const Manager = req.db.Manager;
+    const managerId = parseInt(req.params.id, 10);
+
+    if (!managerId) {
+      return res.status(400).json({
+        message: "Manager ID is required",
+      });
+    }
+
+    const manager = await Manager.findByPk(managerId, {
+      attributes: ["id", "name", "email", "role", "can_login"],
+    });
+
+    if (!manager) {
+      return res.status(404).json({ message: "Manager not found" });
+    }
+
+    res.status(200).json({
+      message: "Manager status retrieved successfully",
+      manager,
+    });
+  } catch (error) {
+    console.error("Error getting manager login status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signupManager,
   loginManager,
@@ -391,4 +420,5 @@ module.exports = {
   getAllTeamMember,
   getManagerById,
   updateManagerProfile,
+  getManagerLoginStatus,
 };

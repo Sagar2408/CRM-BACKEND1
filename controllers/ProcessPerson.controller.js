@@ -621,6 +621,35 @@ const updateProcessPersonProfile = async (req, res) => {
   }
 };
 
+const getProcessPersonLoginStatus = async (req, res) => {
+  try {
+    const ProcessPerson = req.db.ProcessPerson;
+    const processPersonId = parseInt(req.params.id, 10);
+
+    if (!processPersonId) {
+      return res.status(400).json({
+        message: "Process Person ID is required",
+      });
+    }
+
+    const processPerson = await ProcessPerson.findByPk(processPersonId, {
+      attributes: ["id", "fullName", "email", "can_login"],
+    });
+
+    if (!processPerson) {
+      return res.status(404).json({ message: "Process Person not found" });
+    }
+
+    res.status(200).json({
+      message: "Process Person status retrieved successfully",
+      processPerson,
+    });
+  } catch (error) {
+    console.error("Error getting Process Person login status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signupProcessPerson,
   loginProcessPerson,
@@ -633,4 +662,5 @@ module.exports = {
   toggleProcessPersonLoginAccess,
   getProcessPersonById,
   updateProcessPersonProfile,
+  getProcessPersonLoginStatus,
 };

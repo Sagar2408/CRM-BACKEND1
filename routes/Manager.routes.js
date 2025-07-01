@@ -14,6 +14,7 @@ const {
   getAllTeamMember,
   getManagerById,
   updateManagerProfile,
+  getManagerLoginStatus,
 } = require("../controllers/Manager.controller");
 
 router.post("/signup", signupManager);
@@ -27,6 +28,8 @@ router.get("/profile", auth(), getManagerProfile);
 router.get("/", auth(), getAllManagers);
 //toggle if manager can login or not
 router.post("/toggle-login", auth(), toggleManagerLoginAccess);
+//get managers login status
+router.get("login-status/:id", auth(), getManagerLoginStatus);
 //get all team members of a team
 router.post("/get-team", auth(), getAllTeamMember);
 //get manager by id

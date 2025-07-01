@@ -244,6 +244,35 @@ const updateHrProfile = async (req, res) => {
   }
 };
 
+const getHrLoginStatus = async (req, res) => {
+  try {
+    const Hr = req.db.Hr;
+    const hrId = parseInt(req.params.id, 10);
+
+    if (!hrId) {
+      return res.status(400).json({
+        message: "Hr ID is required",
+      });
+    }
+
+    const hr = await Hr.findByPk(hrId, {
+      attributes: ["id", "name", "email", "role", "can_login"],
+    });
+
+    if (!hr) {
+      return res.status(404).json({ message: "Hr not found" });
+    }
+
+    res.status(200).json({
+      message: "Hr status retrieved successfully",
+      hr,
+    });
+  } catch (error) {
+    console.error("Error getting hr login status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signupHr,
   loginHr,
@@ -253,4 +282,5 @@ module.exports = {
   toggleHrLoginAccess,
   getHrById,
   updateHrProfile,
+  getHrLoginStatus,
 };
