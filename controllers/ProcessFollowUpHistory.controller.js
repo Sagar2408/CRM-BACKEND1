@@ -441,10 +441,11 @@ const getProcessPersonMeetings = async (req, res) => {
         {
           model: FreshLead,
           as: "freshLead",
+          attributes: ["name"],
           include: [
             {
               model: Customer,
-              as: "freshLeadCustomer",
+              as: "CustomerStatus",
               attributes: ["status"],
             },
           ],

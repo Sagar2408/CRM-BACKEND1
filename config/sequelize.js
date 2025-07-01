@@ -444,7 +444,7 @@ module.exports = function initializeModels(sequelize) {
 
   db.FreshLead.hasOne(db.Customer, {
     foreignKey: "fresh_lead_id",
-    as: "freshLeadCustomer",
+    as: "CustomerStatus",
   });
 
   // ------------------------
