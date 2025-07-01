@@ -108,9 +108,12 @@ const logoutManager = async (req, res) => {
 
 const createTeam = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, managerId } = req.body;
     const Team = req.db.Team;
-    const managerId = req.user.id; // req.user is set by auth middleware
+
+    if (req.user.role != "Admin") {
+      return res.status(401).json({ error: "Only admin can Create a Team" });
+    }
 
     if (!name) {
       return res.status(400).json({ error: "Team name is required." });
@@ -147,18 +150,22 @@ const getManagerTeams = async (req, res) => {
 
 const addExecutiveToTeam = async (req, res) => {
   try {
-    const { team_id, user_id } = req.body;
+    const { team_id, user_id, managerId } = req.body;
     const Team = req.db.Team;
     const Users = req.db.Users;
     const Manager = req.db.Manager;
 
-    const managerId = req.user.id;
+    if (req.user.role != "Admin") {
+      return res
+        .status(401)
+        .json({ error: "Only admin can add Executives in a Team" });
+    }
 
     // Validation
-    if (!team_id || !user_id) {
+    if (!team_id || !user_id || managerId) {
       return res
         .status(400)
-        .json({ error: "Team ID and User ID are required." });
+        .json({ error: "Team ID, User ID and Manager Id is required." });
     }
 
     // Verify ownership
@@ -166,7 +173,9 @@ const addExecutiveToTeam = async (req, res) => {
       where: { id: team_id, manager_id: managerId },
     });
     if (!team) {
-      return res.status(403).json({ error: "You do not own this team." });
+      return res
+        .status(403)
+        .json({ error: "This manager does not own this team." });
     }
 
     const manager = await Manager.findByPk(managerId);
