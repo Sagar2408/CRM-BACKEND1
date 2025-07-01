@@ -308,6 +308,59 @@ const updateAdminProfile = async (req, res) => {
   }
 };
 
+const updateUserProfile = async (req, res) => {
+  try {
+    const Users = req.db.User;
+    const userId = parseInt(req.params.id, 10);
+    const requestingUser = req.user;
+
+    // Only allow the user to update their own profile
+    if (requestingUser.id !== userId) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const user = await Users.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const {
+      username,
+      email,
+      profile_picture,
+      firstname,
+      lastname,
+      country,
+      city,
+      state,
+      postal_code,
+      tax_id,
+    } = req.body;
+
+    // Update only allowed fields
+    user.username = username || user.username;
+    user.email = email || user.email;
+    user.profile_picture = profile_picture || user.profile_picture;
+    user.firstname = firstname || user.firstname;
+    user.lastname = lastname || user.lastname;
+    user.country = country || user.country;
+    user.city = city || user.city;
+    user.state = state || user.state;
+    user.postal_code = postal_code || user.postal_code;
+    user.tax_id = tax_id || user.tax_id;
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Profile updated successfully.",
+      user,
+    });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
+};
+
 const changePassword = async (req, res) => {
   try {
     const Users = req.db.Users; // ✅ Scoped model
@@ -412,6 +465,45 @@ const getExecutiveById = async (req, res) => {
     res.status(200).json({ executive });
   } catch (error) {
     console.error("Error fetching executive:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+const getTLById = async (req, res) => {
+  try {
+    const Users = req.db.Users; // ✅ Dynamic database selection
+    const tlId = req.params.id;
+    const requestingUser = req.user;
+
+    // Restrict TL from accessing other TL profiles
+    if (
+      requestingUser.role === "TL" &&
+      requestingUser.id !== parseInt(userId, 10)
+    ) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const tl = await Users.findOne({
+      where: { id: tlId, role: "TL" },
+      attributes: [
+        "id",
+        "username",
+        "email",
+        "profile_picture",
+        "firstname",
+        "lastname",
+        "country",
+        "city",
+        "state",
+        "postal_code",
+        "role",
+        "createdAt",
+      ],
+    });
+
+    res.status(200).json({ tl });
+  } catch (error) {
+    console.error("Error fetching TL:", error);
     res.status(500).json({ message: "Server error." });
   }
 };
@@ -602,7 +694,8 @@ const getOnlineExecutives = async (req, res) => {
     // Authorization: Only Admin and TL are allowed
     if (role !== "Admin" && role !== "TL" && role !== "Manager") {
       return res.status(403).json({
-        message: "Unauthorized: Only Admin and TL,Manager can view online executives",
+        message:
+          "Unauthorized: Only Admin and TL,Manager can view online executives",
       });
     }
 
@@ -931,6 +1024,7 @@ module.exports = {
 
   getAdminDashboard,
   updateAdminProfile,
+  updateUserProfile,
   changePassword,
 
   getTLDashboard,
@@ -945,4 +1039,5 @@ module.exports = {
   createExecutive,
   createTeamLead,
   createAdmin,
+  getTLById,
 };

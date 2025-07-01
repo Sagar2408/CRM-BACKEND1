@@ -30,11 +30,15 @@ router.get("/profile", auth(), userController.getUserProfile); // No role restri
 
 // admin settings
 router.get("/admin/profile", auth(["Admin"]), userController.getAdminById); // ✅ Fetch admin profile
+
 router.put(
   "/admin/profile",
   auth(["Admin"]),
   userController.updateAdminProfile
 ); // ✅ Update admin profile
+
+router.put("/user/profile/:id", auth(), userController.updateUserProfile); //can update profiles of executives as well as tl
+
 router.post(
   "/admin/change_pass",
   auth(["Admin"]),
@@ -53,6 +57,8 @@ router.get(
   auth(),
   userController.getExecutiveById
 );
+
+router.get("/executives/:id", auth(), userController.getTLById);
 
 // Get online users (accessible to Admin and TL)
 router.get(
