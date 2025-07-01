@@ -24,7 +24,7 @@ router.post("/logout", auth(), logoutManager);
 //change manager password
 router.post("/change-password", auth(), changeManagerPassword);
 router.post("/teams", auth(), createTeam);
-router.post("/teams", auth(), getManagerTeams);
+router.post("/get-teams", auth(), getManagerTeams);
 router.post("/addExecutive", auth(), addExecutiveToTeam);
 router.get("/profile", auth(), getManagerProfile);
 //fetch all managers
