@@ -444,7 +444,7 @@ const getProcessPersonMeetings = async (req, res) => {
           include: [
             {
               model: Customer,
-              as: "customer",
+              as: "freshLeadCustomer",
               attributes: ["status"],
             },
           ],
