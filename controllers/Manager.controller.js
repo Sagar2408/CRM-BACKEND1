@@ -346,6 +346,38 @@ const getManagerById = async (req, res) => {
   }
 };
 
+const updateManagerProfile = async (req, res) => {
+  try {
+    const Manager = req.db.Manager;
+    const managerId = req.params.id;
+    const requestingUser = req.user;
+
+    // Restrict access: A manager can only update their own profile
+    if (requestingUser.role !== "manager" || requestingUser.id !== managerId) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const manager = await Manager.findByPk(managerId);
+    if (!manager) {
+      return res.status(404).json({ message: "Manager not found." });
+    }
+
+    const { name, email } = req.body;
+
+    manager.name = name || manager.name;
+    manager.email = email || manager.email;
+
+    await manager.save();
+
+    return res
+      .status(200)
+      .json({ message: "Profile updated successfully.", manager });
+  } catch (error) {
+    console.error("Error updating manager profile:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
 module.exports = {
   signupManager,
   loginManager,
@@ -358,4 +390,5 @@ module.exports = {
   toggleManagerLoginAccess,
   getAllTeamMember,
   getManagerById,
+  updateManagerProfile,
 };

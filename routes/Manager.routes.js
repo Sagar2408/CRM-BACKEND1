@@ -13,6 +13,7 @@ const {
   toggleManagerLoginAccess,
   getAllTeamMember,
   getManagerById,
+  updateManagerProfile,
 } = require("../controllers/Manager.controller");
 
 router.post("/signup", signupManager);
@@ -22,9 +23,15 @@ router.post("/teams", auth(), createTeam);
 router.get("/teams", auth(), getManagerTeams);
 router.post("/addExecutive", auth(), addExecutiveToTeam);
 router.get("/profile", auth(), getManagerProfile);
+//fetch all managers
 router.get("/", auth(), getAllManagers);
+//toggle if manager can login or not
 router.post("/toggle-login", auth(), toggleManagerLoginAccess);
+//get all team members of a team
 router.post("/get-team", auth(), getAllTeamMember);
+//get manager by id
 router.get("/:id", auth(), getManagerById);
+//update manager profile
+router.put("/:id", auth(), updateManagerProfile);
 
 module.exports = router;

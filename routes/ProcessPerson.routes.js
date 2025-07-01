@@ -11,6 +11,7 @@ const {
   getAllProcessPersons,
   toggleProcessPersonLoginAccess,
   getProcessPersonById,
+  updateProcessPersonProfile,
 } = require("../controllers/ProcessPerson.controller");
 const auth = require("../middleware/auth");
 
@@ -31,5 +32,6 @@ router.put("/process/settings", auth(), updateProcessSettings);
 router.post("/toggle-login", auth(), toggleProcessPersonLoginAccess);
 router.get("/", auth(), getAllProcessPersons);
 router.get("/:id", auth(), getProcessPersonById);
+router.put("/:id", auth(), updateProcessPersonProfile);
 
 module.exports = router;

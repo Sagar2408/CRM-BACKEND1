@@ -212,6 +212,38 @@ const getHrById = async (req, res) => {
   }
 };
 
+const updateHrProfile = async (req, res) => {
+  try {
+    const Hr = req.db.Hr;
+    const hrId = req.params.id;
+    const requestingUser = req.user;
+
+    // Restrict: Only the logged-in HR can update their own profile
+    if (requestingUser.role !== "HR" || requestingUser.id !== hrId) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const hr = await Hr.findByPk(hrId);
+    if (!hr) {
+      return res.status(404).json({ message: "HR not found." });
+    }
+
+    const { name, email } = req.body;
+
+    hr.name = name || hr.name;
+    hr.email = email || hr.email;
+
+    await hr.save();
+
+    return res
+      .status(200)
+      .json({ message: "Profile updated successfully.", hr });
+  } catch (error) {
+    console.error("Error updating HR profile:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
 module.exports = {
   signupHr,
   loginHr,
@@ -220,4 +252,5 @@ module.exports = {
   getAllHrs,
   toggleHrLoginAccess,
   getHrById,
+  updateHrProfile,
 };

@@ -566,6 +566,59 @@ const getProcessPersonById = async (req, res) => {
   }
 };
 
+const updateProcessPersonProfile = async (req, res) => {
+  try {
+    const ProcessPerson = req.db.ProcessPerson;
+    const processPersonId = req.params.id;
+    const requestingUser = req.user;
+
+    // Only the logged-in Process Person can update their own profile
+    if (
+      requestingUser.type !== "processperson" ||
+      requestingUser.id !== processPersonId
+    ) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const processPerson = await ProcessPerson.findByPk(processPersonId);
+    if (!processPerson) {
+      return res.status(404).json({ message: "Process Person not found." });
+    }
+
+    const {
+      fullName,
+      email,
+      nationality,
+      dob,
+      phone,
+      passportNumber,
+      profession,
+      location,
+    } = req.body;
+
+    // Update only allowed fields if present in request
+    processPerson.fullName = fullName || processPerson.fullName;
+    processPerson.email = email || processPerson.email;
+    processPerson.nationality = nationality || processPerson.nationality;
+    processPerson.dob = dob || processPerson.dob;
+    processPerson.phone = phone || processPerson.phone;
+    processPerson.passportNumber =
+      passportNumber || processPerson.passportNumber;
+    processPerson.profession = profession || processPerson.profession;
+    processPerson.location = location || processPerson.location;
+
+    await processPerson.save();
+
+    return res.status(200).json({
+      message: "Profile updated successfully.",
+      processPerson,
+    });
+  } catch (error) {
+    console.error("Error updating process person profile:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
 module.exports = {
   signupProcessPerson,
   loginProcessPerson,
@@ -577,4 +630,5 @@ module.exports = {
   getAllProcessPersons,
   toggleProcessPersonLoginAccess,
   getProcessPersonById,
+  updateProcessPersonProfile,
 };
