@@ -219,7 +219,7 @@ const updateHrProfile = async (req, res) => {
     const requestingUser = req.user;
 
     // Restrict: Only the logged-in HR can update their own profile
-    if (requestingUser.role !== "HR" || requestingUser.id !== hrId) {
+    if (requestingUser.id !== hrId) {
       return res.status(403).json({ message: "Access denied." });
     }
 

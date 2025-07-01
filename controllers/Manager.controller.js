@@ -353,7 +353,7 @@ const updateManagerProfile = async (req, res) => {
     const requestingUser = req.user;
 
     // Restrict access: A manager can only update their own profile
-    if (requestingUser.role !== "manager" || requestingUser.id !== managerId) {
+    if (requestingUser.id !== managerId) {
       return res.status(403).json({ message: "Access denied." });
     }
 

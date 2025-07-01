@@ -75,7 +75,12 @@ const loginProcessPerson = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: person.id, email: person.email, fullName: person.fullName },
+      {
+        id: person.id,
+        email: person.email,
+        fullName: person.fullName,
+        type: "processperson",
+      },
       process.env.JWT_SECRET,
       { expiresIn: "12h" }
     );
@@ -573,10 +578,7 @@ const updateProcessPersonProfile = async (req, res) => {
     const requestingUser = req.user;
 
     // Only the logged-in Process Person can update their own profile
-    if (
-      requestingUser.type !== "processperson" ||
-      requestingUser.id !== processPersonId
-    ) {
+    if (requestingUser.id !== processPersonId) {
       return res.status(403).json({ message: "Access denied." });
     }
 
