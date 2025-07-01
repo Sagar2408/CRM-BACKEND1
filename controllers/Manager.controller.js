@@ -137,7 +137,8 @@ const createTeam = async (req, res) => {
 const getManagerTeams = async (req, res) => {
   try {
     const Team = req.db.Team;
-    const managerId = req.user.id;
+    const { managerId } = req.body;
+    //const managerId = req.user.id;
 
     const teams = await Team.findAll({ where: { manager_id: managerId } });
 

@@ -437,6 +437,16 @@ module.exports = function initializeModels(sequelize) {
     as: "hr",
   });
 
+  db.Customer.belongsTo(db.FreshLead, {
+    foreignKey: "fresh_lead_id",
+    as: "freshLead",
+  });
+
+  db.FreshLead.hasOne(db.Customer, {
+    foreignKey: "fresh_lead_id",
+    as: "customer",
+  });
+
   // ------------------------
   // Sync Models
   // ------------------------
