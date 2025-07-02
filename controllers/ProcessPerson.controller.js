@@ -488,6 +488,8 @@ const importConvertedClientsToCustomers = async (req, res) => {
 const importConvertedClientsToProcessPerson = async (req, res) => {
   const { processPersonId, selectedClientIds = [] } = req.body;
 
+  const { ConvertedClient, Customer } = req.db;
+
   if (!processPersonId || !Array.isArray(selectedClientIds)) {
     return res
       .status(400)
