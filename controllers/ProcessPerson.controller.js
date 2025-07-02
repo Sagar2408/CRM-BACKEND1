@@ -490,12 +490,17 @@ const importConvertedClientsToCustomers = async (req, res) => {
 const importConvertedClientsToProcessPerson = async (req, res) => {
   try {
     const { processPersonId, selectedClientIds = [] } = req.body;
-    const { ConvertedClient, Customer } = req.db;
+    const { ConvertedClient, Customer, ProcessPerson } = req.db;
 
     if (!processPersonId || !Array.isArray(selectedClientIds)) {
       return res
         .status(400)
         .json({ message: "Missing processPersonId or client IDs" });
+    }
+
+    const processPerson = await ProcessPerson.findByPk(processPersonId);
+    if (!processPerson) {
+      return res.status(404).json({ message: "Process person not found" });
     }
 
     const convertedClients = await ConvertedClient.findAll({
@@ -537,6 +542,12 @@ const importConvertedClientsToProcessPerson = async (req, res) => {
           fresh_lead_id: client.fresh_lead_id,
           process_person_id: processPersonId,
         });
+
+        // Update assignedTo in ConvertedClient table
+        await ConvertedClient.update(
+          { assignedTo: processPerson.fullName },
+          { where: { id: client.id } }
+        );
 
         imported++;
       } catch (err) {
