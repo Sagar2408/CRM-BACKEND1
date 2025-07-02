@@ -22,14 +22,14 @@ app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
-app.use((req, res, next) => {
-  console.log("📥 [REQUEST]");
-  console.log("Method:", req.method);
-  console.log("URL:", req.originalUrl);
-  console.log("Headers:", req.headers);
-  console.log("Body:", req.body);
-  next();
-});
+// app.use((req, res, next) => {
+//   console.log("📥 [REQUEST]");
+//   console.log("Method:", req.method);
+//   console.log("URL:", req.originalUrl);
+//   console.log("Headers:", req.headers);
+//   console.log("Body:", req.body);
+//   next();
+// });
 
 // 🔐 Middleware for protected routes
 const auth = require("./middleware/auth");
