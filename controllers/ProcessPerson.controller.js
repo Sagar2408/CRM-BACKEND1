@@ -486,7 +486,6 @@ const importConvertedClientsToCustomers = async (req, res) => {
 };
 
 //new one api to assign converted leads to a particular process person
-
 const importConvertedClientsToProcessPerson = async (req, res) => {
   try {
     const { processPersonId, selectedClientIds = [] } = req.body;
