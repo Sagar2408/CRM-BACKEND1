@@ -86,6 +86,13 @@ module.exports = (sequelize) => {
         allowNull: true,
       },
 
+      // HR Response
+      hrComment: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "HR comment for approval/rejection decision",
+      },
+
       // Supporting Document Path
       supportingDocumentPath: {
         type: DataTypes.STRING,
@@ -107,6 +114,6 @@ module.exports = (sequelize) => {
       tableName: "leave_applications",
       freezeTableName: true,
       timestamps: true,
-    }
-  );
+    }
+  );
 };

@@ -112,7 +112,7 @@ const getLeaveApplication = async (req, res) => {
 const updateLeaveStatus = async (req, res) => {
   try {
     const { LeaveApplication } = req.db;
-    const { leaveId, status } = req.body;
+    const { leaveId, status, hrComment } = req.body;
 
     // ✅ Validate presence
     if (!leaveId || !status) {
@@ -135,8 +135,11 @@ const updateLeaveStatus = async (req, res) => {
       return res.status(404).json({ error: "Leave application not found" });
     }
 
-    // ✅ Update status
+    // ✅ Update status and HR comment
     leave.status = status;
+    if (hrComment) {
+      leave.hrComment = hrComment;
+    }
     await leave.save();
 
     return res.status(200).json({
