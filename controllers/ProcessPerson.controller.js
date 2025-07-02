@@ -485,6 +485,42 @@ const importConvertedClientsToCustomers = async (req, res) => {
   }
 };
 
+const importConvertedClientsToProcessPerson = async (req, res) => {
+  const { processPersonId, selectedClientIds = [] } = req.body;
+
+  if (!processPersonId || !Array.isArray(selectedClientIds)) {
+    return res
+      .status(400)
+      .json({ message: "Missing processPersonId or client IDs" });
+  }
+
+  const convertedClients = await ConvertedClient.findAll({
+    where: { id: selectedClientIds },
+  });
+
+  for (const client of convertedClients) {
+    const existing = await Customer.findOne({ where: { email: client.email } });
+    if (existing) continue;
+
+    const hashedPassword = await bcrypt.hash(client.phone, 10);
+
+    await Customer.create({
+      fullName: client.name,
+      email: client.email,
+      phone: client.phone,
+      country: client.country,
+      password: hashedPassword,
+      status: "pending",
+      fresh_lead_id: client.fresh_lead_id,
+      process_person_id: processPersonId,
+    });
+  }
+
+  return res
+    .status(200)
+    .json({ message: "Selected leads imported and assigned." });
+};
+
 const getAllProcessPersons = async (req, res) => {
   try {
     const { ProcessPerson } = req.db;
@@ -683,6 +719,72 @@ const changeProcessPersonPassword = async (req, res) => {
   }
 };
 
+const getProcessPersonCustomers = async (req, res) => {
+  try {
+    const processPersonId = req.user?.id;
+    //const Customer = req.db.Customer;
+    const { ProcessFollowUpHistory, Customer, FreshLead, Lead, ClientLead } =
+      req.db;
+
+    const customers = await Customer.findAll({
+      where: { process_person_id: processPersonId },
+      attributes: [
+        "id",
+        "fullName",
+        "email",
+        "phone",
+        "status",
+        "country",
+        "createdAt",
+        "updatedAt",
+      ],
+      include: [
+        {
+          model: ProcessFollowUpHistory,
+          as: "processfollowuphistories",
+          attributes: ["follow_up_type"],
+          limit: 1,
+          separate: true,
+          order: [["createdAt", "DESC"]],
+        },
+        {
+          model: FreshLead,
+          as: "freshLead",
+          attributes: ["name"],
+          include: [
+            {
+              model: Lead,
+              as: "lead",
+              attributes: ["id"],
+              include: [
+                {
+                  model: ClientLead,
+                  as: "clientLead",
+                  attributes: ["education", "experience", "state", "dob"],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    if (!customers || customers.length === 0) {
+      return res.status(200).json({ customers: [] });
+    }
+
+    return res.status(200).json({ customers });
+  } catch (error) {
+    console.error("Fetch all customers error:", {
+      message: error.message,
+      stack: error.stack,
+      sql: error?.sql,
+    });
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signupProcessPerson,
   loginProcessPerson,
@@ -697,4 +799,6 @@ module.exports = {
   updateProcessPersonProfile,
   getProcessPersonLoginStatus,
   changeProcessPersonPassword,
+  importConvertedClientsToProcessPerson,
+  getProcessPersonCustomers,
 };

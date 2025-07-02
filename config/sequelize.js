@@ -447,6 +447,17 @@ module.exports = function initializeModels(sequelize) {
     as: "CustomerStatus",
   });
 
+  db.ProcessPerson.hasMany(db.Customer, {
+    foreignKey: "process_person_id",
+    as: "assignedCustomers", // ✅ UNIQUE alias
+    onDelete: "SET NULL",
+  });
+
+  db.Customer.belongsTo(db.ProcessPerson, {
+    foreignKey: "process_person_id",
+    as: "assignedProcessPerson", // ✅ UNIQUE alias
+  });
+
   // ------------------------
   // Sync Models
   // ------------------------
