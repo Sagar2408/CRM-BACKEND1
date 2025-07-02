@@ -1,5 +1,6 @@
 require("dotenv").config();
 require("./cron/notificationCleaner");
+require("./cron/blacklistExpired");
 const express = require("express");
 const cors = require("cors");
 const http = require("http");

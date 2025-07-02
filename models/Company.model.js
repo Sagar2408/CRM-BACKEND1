@@ -35,6 +35,15 @@ module.exports = (sequelize) => {
         allowNull: true,
         defaultValue: "3306",
       },
+      status: {
+        type: DataTypes.ENUM("active", "paused", "blacklisted"),
+        allowNull: false,
+        defaultValue: "active",
+      },
+      expiryDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       tableName: "Companies",

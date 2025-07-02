@@ -1,4 +1,8 @@
+// middleware/tenantResolver.js
+
 const { getTenantDB } = require("../config/sequelizeManager");
+const { masterDB } = require("../config/masterDB");
+const { Op } = require("sequelize");
 
 const skipTenantPaths = ["/api/masteruser/login", "/api/masteruser/signup"];
 
@@ -20,7 +24,7 @@ function extractCompanyId(req) {
 }
 
 module.exports = async (req, res, next) => {
-  // ⏭️ Skip middleware for master-level endpoints
+  // ⏭️ Skip middleware for master‐level endpoints
   if (skipTenantPaths.some((path) => req.originalUrl.startsWith(path))) {
     if (process.env.NODE_ENV !== "production") {
       console.log(`🏁 [TENANT] Skipping tenantResolver for ${req.originalUrl}`);
@@ -28,48 +32,64 @@ module.exports = async (req, res, next) => {
     return next();
   }
 
+  // 🔍 Extract companyId
+  const companyId = extractCompanyId(req);
+  if (!companyId) {
+    console.warn("⚠️ [TENANT] Missing or invalid companyId");
+    return res.status(400).json({ message: "Missing or invalid companyId" });
+  }
+
   try {
-    // 🔍 Extract and clean companyId
-    const companyId = extractCompanyId(req);
+    // 📖 Load company metadata from master DB
+    const Company = masterDB.models.Company;
+    const company = await Company.findByPk(companyId);
 
-    if (process.env.NODE_ENV !== "production") {
-      console.log("📦 Raw companyId resolved from request:", companyId);
-    }
-
-    if (!companyId) {
-      console.warn("⚠️ [TENANT] Missing or invalid companyId");
-      return res.status(400).json({ message: "Missing or invalid companyId" });
-    }
-
-    // 🔌 Connect to tenant DB
-    const tenantDB = await getTenantDB(companyId);
-
-    if (!tenantDB) {
-      console.error(
-        "❌ [TENANT] No DB returned from getTenantDB for:",
-        companyId
-      );
+    if (!company) {
       return res
         .status(404)
-        .json({ message: "Invalid companyId or tenant DB not configured" });
+        .json({ message: "Invalid companyId or company not found" });
     }
 
-    // 💾 Attach DB and companyId to request
+    // ⏰ Expiration check
+    if (company.expiryDate && company.expiryDate < new Date()) {
+      // Optionally auto-flip status: await company.update({ status: "blacklisted" });
+      return res
+        .status(403)
+        .json({ message: "Subscription expired – please renew." });
+    }
+
+    // ⏸️ Pause check
+    if (company.status === "paused") {
+      return res.status(403).json({ message: "Access is temporarily paused." });
+    }
+
+    // ⛔ Blacklist check (in case cron hasn't run yet)
+    if (company.status === "blacklisted") {
+      return res
+        .status(403)
+        .json({ message: "Company is blacklisted – please contact support." });
+    }
+
+    // 🔌 Connect to tenant DB (all checks passed)
+    const tenantDB = await getTenantDB(companyId);
+    if (!tenantDB) {
+      console.error("❌ [TENANT] No DB returned for:", companyId);
+      return res
+        .status(500)
+        .json({ message: "Error resolving tenant database" });
+    }
+
+    // 💾 Attach tenant context and continue
     req.db = tenantDB;
     req.companyId = companyId;
-
-    console.log(`✅ [TENANT] Tenant DB resolved for companyId: ${companyId}`);
-
-    console.log('✅ [TENANT] DB resolved and models:', Object.keys(tenantDB));
-
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`✅ [TENANT] Resolved tenant for ${companyId}`);
+    }
     return next();
   } catch (err) {
-    console.error("❌ [TENANT] Error resolving tenant:", err.message || err);
-    if (process.env.NODE_ENV !== "production") {
-      console.error("📋 Stack trace:", err);
-    }
+    console.error("❌ [TENANT] Error in tenantResolver:", err);
     return res
       .status(500)
-      .json({ message: "Error resolving tenant", error: err.message });
+      .json({ message: "Internal error resolving tenant", error: err.message });
   }
 };
