@@ -14,7 +14,7 @@ const {
   updateProcessPersonProfile,
   getProcessPersonLoginStatus,
   changeProcessPersonPassword,
-  //importConvertedClientsToProcessPerson,
+  importConvertedClientsToProcessPerson,
   getProcessPersonCustomers,
 } = require("../controllers/ProcessPerson.controller");
 const auth = require("../middleware/auth");
@@ -32,11 +32,11 @@ router.post("/change-password", auth(), changeProcessPersonPassword);
 router.get("/convertedclients", auth(), getAllConvertedClients);
 
 //assign selected converted leads to particular process person and move them to customer table
-// router.post(
-//   "/assign-process-person",
-//   auth(),
-//   importConvertedClientsToProcessPerson
-// );
+router.post(
+  "/assign-process-person",
+  auth(),
+  importConvertedClientsToProcessPerson
+);
 
 //get customers for logged in process person
 router.get("/get-customers", auth(), getProcessPersonCustomers);
