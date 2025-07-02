@@ -447,6 +447,21 @@ const changeManagerPassword = async (req, res) => {
   }
 };
 
+const getAllTeams = async (req, res) => {
+  try {
+    const Team = req.db.Team;
+
+    const teams = await Team.findAll({
+      order: [["createdAt", "DESC"]], // Optional: latest teams first
+    });
+
+    res.status(200).json({ teams });
+  } catch (error) {
+    console.error("Fetch all teams error:", error);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
 module.exports = {
   signupManager,
   loginManager,
@@ -462,4 +477,5 @@ module.exports = {
   updateManagerProfile,
   getManagerLoginStatus,
   changeManagerPassword,
+  getAllTeams,
 };
