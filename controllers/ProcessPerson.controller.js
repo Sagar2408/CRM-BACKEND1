@@ -486,41 +486,82 @@ const importConvertedClientsToCustomers = async (req, res) => {
 };
 
 const importConvertedClientsToProcessPerson = async (req, res) => {
-  const { processPersonId, selectedClientIds = [] } = req.body;
+  try {
+    const { processPersonId, selectedClientIds = [] } = req.body;
+    const { ConvertedClient, Customer } = req.db;
 
-  const { ConvertedClient, Customer } = req.db;
+    if (!processPersonId || !Array.isArray(selectedClientIds)) {
+      return res
+        .status(400)
+        .json({ message: "Missing processPersonId or client IDs" });
+    }
 
-  if (!processPersonId || !Array.isArray(selectedClientIds)) {
-    return res
-      .status(400)
-      .json({ message: "Missing processPersonId or client IDs" });
-  }
+    const convertedClients = await ConvertedClient.findAll({
+      where: { id: selectedClientIds },
+    });
 
-  const convertedClients = await ConvertedClient.findAll({
-    where: { id: selectedClientIds },
-  });
+    if (!convertedClients.length) {
+      return res.status(404).json({ message: "No converted clients found" });
+    }
 
-  for (const client of convertedClients) {
-    const existing = await Customer.findOne({ where: { email: client.email } });
-    if (existing) continue;
+    let imported = 0;
+    let skipped = 0;
+    const errors = [];
 
-    const hashedPassword = await bcrypt.hash(client.phone, 10);
+    for (const client of convertedClients) {
+      try {
+        const existing = await Customer.findOne({
+          where: { email: client.email },
+        });
 
-    await Customer.create({
-      fullName: client.name,
-      email: client.email,
-      phone: client.phone,
-      country: client.country,
-      password: hashedPassword,
-      status: "pending",
-      fresh_lead_id: client.fresh_lead_id,
-      process_person_id: processPersonId,
+        if (existing) {
+          skipped++;
+          errors.push({
+            email: client.email,
+            reason: "Email already exists in Customer table",
+          });
+          continue;
+        }
+
+        const hashedPassword = await bcrypt.hash(client.phone, 10);
+
+        await Customer.create({
+          fullName: client.name,
+          email: client.email,
+          phone: client.phone,
+          country: client.country,
+          password: hashedPassword,
+          status: "pending",
+          fresh_lead_id: client.fresh_lead_id,
+          process_person_id: processPersonId,
+        });
+
+        imported++;
+      } catch (err) {
+        errors.push({
+          email: client.email || "unknown",
+          reason: err.message,
+        });
+      }
+    }
+
+    return res.status(200).json({
+      message: "Import completed",
+      imported,
+      skipped,
+      errors,
+    });
+  } catch (error) {
+    console.error("❌ importConvertedClientsToProcessPerson error:", {
+      message: error.message,
+      stack: error.stack,
+    });
+
+    return res.status(500).json({
+      message: "Internal server error during import",
+      error: error.message,
     });
   }
-
-  return res
-    .status(200)
-    .json({ message: "Selected leads imported and assigned." });
 };
 
 const getAllProcessPersons = async (req, res) => {
