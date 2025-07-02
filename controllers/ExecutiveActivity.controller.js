@@ -350,3 +350,28 @@ exports.getAllExecutiveActivitiesByDate = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch activity data." });
   }
 };
+// ✅ NEW: Get Executive Summary by Date Range
+exports.getExecutiveSummaryByRange = async (req, res) => {
+  const { ExecutiveActivity } = req.db;
+  const { executiveId } = req.params;
+  const { startDate, endDate } = req.query;
+
+  if (!executiveId || !startDate || !endDate) {
+    return res.status(400).json({ message: "Missing parameters" });
+  }
+
+  try {
+    const data = await ExecutiveActivity.findAll({
+      where: {
+        ExecutiveId: executiveId,
+        activityDate: { [Op.between]: [startDate, endDate] },
+      },
+      order: [["activityDate", "ASC"]],
+    });
+
+    res.status(200).json(data);
+  } catch (err) {
+    console.error("Error fetching summary:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

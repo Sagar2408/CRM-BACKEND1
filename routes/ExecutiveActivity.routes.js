@@ -18,5 +18,10 @@ router.get(
   "/:executiveId",
   executiveActivityController.getExecutiveActivityByExecutiveId
 );
+// ✅ New route for summary by date range
+router.get(
+  "/summary/:executiveId",
+  executiveActivityController.getExecutiveSummaryByRange
+);
 
 module.exports = router;
