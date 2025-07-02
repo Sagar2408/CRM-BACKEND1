@@ -1,6 +1,7 @@
 require("dotenv").config();
 const axios = require("axios");
 const searchWeb = require("../utils/websearch");
+const fetchWebPage = require("../utils/fetchWebPage");
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = process.env.GEMINI_API_URL;
@@ -20,17 +21,30 @@ async function askExecutiveAgent(question, userId, db) {
       .map((msg) => `${msg.role === "user" ? "User" : "Agent"}: ${msg.message}`)
       .join("\n");
 
+    // 🌍 Trusted immigration websites
+    const trustedUrls = [
+      "https://www.canada.ca",
+      "https://www.canadavisa.com",
+      "https://www.vfsglobal.com",
+      "https://www.cicnews.com",
+    ];
+
+    const websiteKnowledgeArray = await Promise.all(
+      trustedUrls.map(async (url) => {
+        const content = await fetchWebPage(url);
+        return content
+          ? `📌 From ${url}:\n${content.slice(0, 1000)}\n`
+          : `❌ Failed to fetch content from ${url}`;
+      })
+    );
+
+    const combinedWebsiteKnowledge = websiteKnowledgeArray.join("\n\n");
+
     // 🌐 Fetch relevant web data
     const webData = await searchWeb(question);
-    const truncatedWebData = webData.slice(0, 3000); // Gemini size constraint
+    const truncatedWebData = webData.slice(0, 3000); // Gemini token constraint
 
-    // 📊 Fetch latest CRS score
-    const crsData = await fetchLatestCrsFromWeb();
-    const crsSummary = crsData
-      ? `As of ${crsData.drawDate}, the minimum CRS cutoff was ${crsData.crs}. (source: ${crsData.url})`
-      : "CRS data could not be fetched at this moment.";
-
-    // 🧠 Compose full prompt
+    // 🧠 Compose full prompt — trusted sites come FIRST
     const prompt = `You are an experienced senior immigration advisor at AtoZee Visas — a trusted firm known for helping clients successfully navigate immigration pathways to Canada, the UK, Australia, and more.
 
 You speak with clarity, confidence, and professionalism. Your tone is warm, helpful, and focused on **actionable immigration advice**.
@@ -49,11 +63,11 @@ Use the following to guide your answer:
 📜 **Conversation History**:
 ${historyMessages}
 
+🌍 **Knowledge from Trusted Immigration Websites**:
+${combinedWebsiteKnowledge}
+
 🌐 **Recent Immigration Info from Web** (auto-extracted, may not be fully verified):
 ${truncatedWebData}
-
-📊 **Latest CRS Score Insight**:
-${crsSummary}
 
 ---
 

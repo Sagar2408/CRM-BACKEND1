@@ -182,6 +182,127 @@ const toggleHrLoginAccess = async (req, res) => {
   }
 };
 
+const getHrById = async (req, res) => {
+  try {
+    const Hr = req.db.Hr;
+    const hrId = req.params.id;
+    const requestingUser = req.user;
+    // Restrict Hr from accessing other Hr profiles
+    if (
+      requestingUser.role === "HR" &&
+      requestingUser.id !== parseInt(hrId, 10)
+    ) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const hr = await Hr.findOne({
+      where: { id: hrId },
+      attributes: ["id", "name", "email", "role", "createdAt"],
+    });
+
+    if (!hr) {
+      return res.status(404).json({ message: "Hr not found." });
+    }
+
+    // ✅ Send the response
+    return res.status(200).json({ hr });
+  } catch (error) {
+    console.error("Error fetching Hrs:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+const updateHrProfile = async (req, res) => {
+  try {
+    const Hr = req.db.Hr;
+    const hrId = parseInt(req.params.id, 10);
+    const requestingUser = req.user;
+
+    // Restrict: Only the logged-in HR can update their own profile
+    if (requestingUser.id !== hrId) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const hr = await Hr.findByPk(hrId);
+    if (!hr) {
+      return res.status(404).json({ message: "HR not found." });
+    }
+
+    const { name, email } = req.body;
+
+    hr.name = name || hr.name;
+    hr.email = email || hr.email;
+
+    await hr.save();
+
+    return res
+      .status(200)
+      .json({ message: "Profile updated successfully.", hr });
+  } catch (error) {
+    console.error("Error updating HR profile:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+const getHrLoginStatus = async (req, res) => {
+  try {
+    const Hr = req.db.Hr;
+    const hrId = parseInt(req.params.id, 10);
+
+    if (!hrId) {
+      return res.status(400).json({
+        message: "Hr ID is required",
+      });
+    }
+
+    const hr = await Hr.findByPk(hrId, {
+      attributes: ["id", "name", "email", "role", "can_login"],
+    });
+
+    if (!hr) {
+      return res.status(404).json({ message: "Hr not found" });
+    }
+
+    res.status(200).json({
+      message: "Hr status retrieved successfully",
+      hr,
+    });
+  } catch (error) {
+    console.error("Error getting hr login status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const changeHrPassword = async (req, res) => {
+  try {
+    const Hr = req.db.Hr; // ✅ Scoped model
+    const { currentPassword, newPassword } = req.body;
+    const { id } = req.user; // ✅ User ID from token
+
+    if (!id) {
+      return res.status(401).json({ message: "Unauthorized access" });
+    }
+
+    const hr = await Hr.findByPk(id);
+    if (!hr) {
+      return res.status(404).json({ message: "Hr not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, hr.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    hr.password = await bcrypt.hash(newPassword, 10);
+    await hr.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Password update error:", error); // ✅ Error log
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signupHr,
   loginHr,
@@ -189,4 +310,8 @@ module.exports = {
   getHrProfile,
   getAllHrs,
   toggleHrLoginAccess,
+  getHrById,
+  updateHrProfile,
+  getHrLoginStatus,
+  changeHrPassword,
 };

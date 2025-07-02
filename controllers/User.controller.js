@@ -237,8 +237,8 @@ const getAdminDashboard = async (req, res) => {
 
     const users = await Users.findAll({
       attributes: {
-        exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"]
-      }
+        exclude: ["password", "resetPasswordToken", "resetPasswordExpiry"],
+      },
     });
 
     res.json({
@@ -247,36 +247,30 @@ const getAdminDashboard = async (req, res) => {
       currentUser: {
         id: req.user.id,
         email: req.user.email,
-        role: req.user.role // Make sure `req.user` includes this from auth middleware
-      }
-     
+        role: req.user.role, // Make sure `req.user` includes this from auth middleware
+      },
     });
-     console.log("Admin dashboard accessed by user:", req.user.role)
+    console.log("Admin dashboard accessed by user:", req.user.role);
   } catch (error) {
     console.error("Admin dashboard error:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-
-
-
-
-
-
-
 const updateAdminProfile = async (req, res) => {
   try {
-    
-
     // Authentication check
     if (!req.user || !req.user.id) {
-      return res.status(401).json({ message: "Unauthorized: User not authenticated" });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: User not authenticated" });
     }
 
     // Ensure Users model exists
     if (!req.db?.Users) {
-      return res.status(500).json({ message: "Database model Users not available" });
+      return res
+        .status(500)
+        .json({ message: "Database model Users not available" });
     }
 
     const Users = req.db.Users;
@@ -294,7 +288,9 @@ const updateAdminProfile = async (req, res) => {
     });
 
     if (updatedCount === 0) {
-      return res.status(404).json({ message: "Admin not found or no changes made" });
+      return res
+        .status(404)
+        .json({ message: "Admin not found or no changes made" });
     }
 
     const updatedAdmin = await Users.findOne({
@@ -306,19 +302,64 @@ const updateAdminProfile = async (req, res) => {
       message: "Profile updated successfully",
       admin: updatedAdmin,
     });
-
   } catch (error) {
     console.error("❌ Error updating admin profile:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
+const updateUserProfile = async (req, res) => {
+  try {
+    const Users = req.db.User;
+    const userId = parseInt(req.params.id, 10);
+    const requestingUser = req.user;
 
+    // Only allow the user to update their own profile
+    if (requestingUser.id !== userId) {
+      return res.status(403).json({ message: "Access denied." });
+    }
 
+    const user = await Users.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
 
+    const {
+      username,
+      email,
+      profile_picture,
+      firstname,
+      lastname,
+      country,
+      city,
+      state,
+      postal_code,
+      tax_id,
+    } = req.body;
 
+    // Update only allowed fields
+    user.username = username || user.username;
+    user.email = email || user.email;
+    user.profile_picture = profile_picture || user.profile_picture;
+    user.firstname = firstname || user.firstname;
+    user.lastname = lastname || user.lastname;
+    user.country = country || user.country;
+    user.city = city || user.city;
+    user.state = state || user.state;
+    user.postal_code = postal_code || user.postal_code;
+    user.tax_id = tax_id || user.tax_id;
 
+    await user.save();
 
+    return res.status(200).json({
+      message: "Profile updated successfully.",
+      user,
+    });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
+};
 
 const changePassword = async (req, res) => {
   try {
@@ -349,58 +390,6 @@ const changePassword = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 const getTLDashboard = async (req, res) => {
   try {
@@ -476,6 +465,45 @@ const getExecutiveById = async (req, res) => {
     res.status(200).json({ executive });
   } catch (error) {
     console.error("Error fetching executive:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+const getTLById = async (req, res) => {
+  try {
+    const Users = req.db.Users; // ✅ Dynamic database selection
+    const tlId = req.params.id;
+    const requestingUser = req.user;
+
+    // Restrict TL from accessing other TL profiles
+    if (
+      requestingUser.role === "TL" &&
+      requestingUser.id !== parseInt(userId, 10)
+    ) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const tl = await Users.findOne({
+      where: { id: tlId, role: "TL" },
+      attributes: [
+        "id",
+        "username",
+        "email",
+        "profile_picture",
+        "firstname",
+        "lastname",
+        "country",
+        "city",
+        "state",
+        "postal_code",
+        "role",
+        "createdAt",
+      ],
+    });
+
+    res.status(200).json({ tl });
+  } catch (error) {
+    console.error("Error fetching TL:", error);
     res.status(500).json({ message: "Server error." });
   }
 };
@@ -612,7 +640,6 @@ const getAllExecutives = async (req, res) => {
   try {
     const Users = req.db.Users; // ✅ Dynamic DB selection
 
-
     const executives = await Users.findAll({
       where: { role: "Executive" },
       attributes: {
@@ -633,14 +660,14 @@ const getAllExecutives = async (req, res) => {
 const getAllTeamLeads = async (req, res) => {
   try {
     const Users = req.db.Users; // ✅ Use dynamic DB
-    const { role } = req.user;
+    //const { role } = req.user;
 
     // Access control: Only Admin can access
-    if (role !== "Admin") {
-      return res.status(403).json({
-        message: "Unauthorized: Only Admin can view all team leads",
-      });
-    }
+    // if (role !== "Admin") {
+    //   return res.status(403).json({
+    //     message: "Unauthorized: Only Admin can view all team leads",
+    //   });
+    // }
 
     const teamLeads = await Users.findAll({
       where: { role: "TL" },
@@ -665,9 +692,10 @@ const getOnlineExecutives = async (req, res) => {
     const { role } = req.user;
 
     // Authorization: Only Admin and TL are allowed
-    if (role !== "Admin" && role !== "TL") {
+    if (role !== "Admin" && role !== "TL" && role !== "Manager") {
       return res.status(403).json({
-        message: "Unauthorized: Only Admin and TL can view online executives",
+        message:
+          "Unauthorized: Only Admin and TL,Manager can view online executives",
       });
     }
 
@@ -996,8 +1024,9 @@ module.exports = {
 
   getAdminDashboard,
   updateAdminProfile,
+  updateUserProfile,
   changePassword,
-  
+
   getTLDashboard,
   getAdminById,
   logout,
@@ -1010,4 +1039,5 @@ module.exports = {
   createExecutive,
   createTeamLead,
   createAdmin,
+  getTLById,
 };

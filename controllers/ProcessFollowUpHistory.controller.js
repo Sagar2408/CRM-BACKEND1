@@ -428,7 +428,7 @@ const createMeetingForProcessPerson = async (req, res) => {
 
 const getProcessPersonMeetings = async (req, res) => {
   try {
-    const { Meeting, FreshLead, Lead, ClientLead } = req.db;
+    const { Meeting, FreshLead, Customer } = req.db; // ✅ also include Customer here
     const processPersonId = req.user?.id;
 
     if (!processPersonId) {
@@ -437,25 +437,21 @@ const getProcessPersonMeetings = async (req, res) => {
 
     const meetings = await Meeting.findAll({
       where: { processPersonId },
-      // include: [
-      //   {
-      //     model: FreshLead,
-      //     as: "freshLead",
-      //     include: [
-      //       {
-      //         model: Lead,
-      //         as: "lead",
-      //         include: [
-      //           {
-      //             model: ClientLead,
-      //             as: "clientLead",
-      //           },
-      //         ],
-      //       },
-      //     ],
-      //   },
-      // ],
-      order: [["startTime", "ASC"]],
+      include: [
+        {
+          model: FreshLead,
+          as: "freshLead",
+          attributes: ["name"],
+          include: [
+            {
+              model: Customer,
+              as: "CustomerStatus",
+              attributes: ["status"],
+            },
+          ],
+        },
+      ],
+      order: [["startTime", "ASC"]], // ✅ missing comma added here
     });
 
     return res.status(200).json({ meetings });

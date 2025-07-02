@@ -34,7 +34,8 @@ module.exports = (sequelize) => {
           "visa filing",
           "other",
           "rejected",
-          "final"
+          "final",
+          "meeting"
         ),
         allowNull: false,
       },

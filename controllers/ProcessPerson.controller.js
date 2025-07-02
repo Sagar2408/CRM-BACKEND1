@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { where } = require("sequelize");
 
 // SIGNUP
 const signupProcessPerson = async (req, res) => {
@@ -74,7 +75,12 @@ const loginProcessPerson = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: person.id, email: person.email, fullName: person.fullName },
+      {
+        id: person.id,
+        email: person.email,
+        fullName: person.fullName,
+        type: "processperson",
+      },
       process.env.JWT_SECRET,
       { expiresIn: "12h" }
     );
@@ -479,6 +485,85 @@ const importConvertedClientsToCustomers = async (req, res) => {
   }
 };
 
+const importConvertedClientsToProcessPerson = async (req, res) => {
+  try {
+    const { processPersonId, selectedClientIds = [] } = req.body;
+    const { ConvertedClient, Customer } = req.db;
+
+    if (!processPersonId || !Array.isArray(selectedClientIds)) {
+      return res
+        .status(400)
+        .json({ message: "Missing processPersonId or client IDs" });
+    }
+
+    const convertedClients = await ConvertedClient.findAll({
+      where: { id: selectedClientIds },
+    });
+
+    if (!convertedClients.length) {
+      return res.status(404).json({ message: "No converted clients found" });
+    }
+
+    let imported = 0;
+    let skipped = 0;
+    const errors = [];
+
+    for (const client of convertedClients) {
+      try {
+        const existing = await Customer.findOne({
+          where: { email: client.email },
+        });
+
+        if (existing) {
+          skipped++;
+          errors.push({
+            email: client.email,
+            reason: "Email already exists in Customer table",
+          });
+          continue;
+        }
+
+        const hashedPassword = await bcrypt.hash(client.phone, 10);
+
+        await Customer.create({
+          fullName: client.name,
+          email: client.email,
+          phone: client.phone,
+          country: client.country,
+          password: hashedPassword,
+          status: "pending",
+          fresh_lead_id: client.fresh_lead_id,
+          process_person_id: processPersonId,
+        });
+
+        imported++;
+      } catch (err) {
+        errors.push({
+          email: client.email || "unknown",
+          reason: err.message,
+        });
+      }
+    }
+
+    return res.status(200).json({
+      message: "Import completed",
+      imported,
+      skipped,
+      errors,
+    });
+  } catch (error) {
+    console.error("❌ importConvertedClientsToProcessPerson error:", {
+      message: error.message,
+      stack: error.stack,
+    });
+
+    return res.status(500).json({
+      message: "Internal server error during import",
+      error: error.message,
+    });
+  }
+};
+
 const getAllProcessPersons = async (req, res) => {
   try {
     const { ProcessPerson } = req.db;
@@ -534,6 +619,215 @@ const toggleProcessPersonLoginAccess = async (req, res) => {
   }
 };
 
+const getProcessPersonById = async (req, res) => {
+  try {
+    const ProcessPerson = req.db.ProcessPerson;
+    const processPersonId = req.params.id;
+    const requestingUser = req.user;
+
+    // Restrict Process Person from accessing other Process Persons profiles
+    if (
+      requestingUser.type === "processperson" &&
+      requestingUser.id !== parseInt(processPersonId, 10)
+    ) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const processPerson = await ProcessPerson.findOne({
+      where: { id: processPersonId },
+      attributes: ["id", "fullName", "email", "createdAt"],
+    });
+
+    if (!processPerson) {
+      return res.status(404).json({ message: "Process Person not found." });
+    }
+
+    // ✅ Send the response
+    return res.status(200).json({ processPerson });
+  } catch (error) {
+    console.error("Error fetching process person:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+const updateProcessPersonProfile = async (req, res) => {
+  try {
+    const ProcessPerson = req.db.ProcessPerson;
+    const processPersonId = parseInt(req.params.id, 10);
+    const requestingUser = req.user;
+
+    // Only the logged-in Process Person can update their own profile
+    if (requestingUser.id !== processPersonId) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const processPerson = await ProcessPerson.findByPk(processPersonId);
+    if (!processPerson) {
+      return res.status(404).json({ message: "Process Person not found." });
+    }
+
+    const {
+      fullName,
+      email,
+      nationality,
+      dob,
+      phone,
+      passportNumber,
+      profession,
+      location,
+    } = req.body;
+
+    // Update only allowed fields if present in request
+    processPerson.fullName = fullName || processPerson.fullName;
+    processPerson.email = email || processPerson.email;
+    processPerson.nationality = nationality || processPerson.nationality;
+    processPerson.dob = dob || processPerson.dob;
+    processPerson.phone = phone || processPerson.phone;
+    processPerson.passportNumber =
+      passportNumber || processPerson.passportNumber;
+    processPerson.profession = profession || processPerson.profession;
+    processPerson.location = location || processPerson.location;
+
+    await processPerson.save();
+
+    return res.status(200).json({
+      message: "Profile updated successfully.",
+      processPerson,
+    });
+  } catch (error) {
+    console.error("Error updating process person profile:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+const getProcessPersonLoginStatus = async (req, res) => {
+  try {
+    const ProcessPerson = req.db.ProcessPerson;
+    const processPersonId = parseInt(req.params.id, 10);
+
+    if (!processPersonId) {
+      return res.status(400).json({
+        message: "Process Person ID is required",
+      });
+    }
+
+    const processPerson = await ProcessPerson.findByPk(processPersonId, {
+      attributes: ["id", "fullName", "email", "can_login"],
+    });
+
+    if (!processPerson) {
+      return res.status(404).json({ message: "Process Person not found" });
+    }
+
+    res.status(200).json({
+      message: "Process Person status retrieved successfully",
+      processPerson,
+    });
+  } catch (error) {
+    console.error("Error getting Process Person login status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const changeProcessPersonPassword = async (req, res) => {
+  try {
+    const ProcessPerson = req.db.ProcessPerson; // ✅ Scoped model
+    const { currentPassword, newPassword } = req.body;
+    const { id } = req.user; // ✅ User ID from token
+
+    if (!id) {
+      return res.status(401).json({ message: "Unauthorized access" });
+    }
+
+    const processPerson = await ProcessPerson.findByPk(id);
+    if (!processPerson) {
+      return res.status(404).json({ message: "Process Person not found" });
+    }
+
+    const isMatch = await bcrypt.compare(
+      currentPassword,
+      processPerson.password
+    );
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    processPerson.password = await bcrypt.hash(newPassword, 10);
+    await processPerson.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Password update error:", error); // ✅ Error log
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getProcessPersonCustomers = async (req, res) => {
+  try {
+    const processPersonId = req.user?.id;
+    //const Customer = req.db.Customer;
+    const { ProcessFollowUpHistory, Customer, FreshLead, Lead, ClientLead } =
+      req.db;
+
+    const customers = await Customer.findAll({
+      where: { process_person_id: processPersonId },
+      attributes: [
+        "id",
+        "fullName",
+        "email",
+        "phone",
+        "status",
+        "country",
+        "createdAt",
+        "updatedAt",
+      ],
+      include: [
+        {
+          model: ProcessFollowUpHistory,
+          as: "processfollowuphistories",
+          attributes: ["follow_up_type"],
+          limit: 1,
+          separate: true,
+          order: [["createdAt", "DESC"]],
+        },
+        {
+          model: FreshLead,
+          as: "freshLead",
+          attributes: ["name"],
+          include: [
+            {
+              model: Lead,
+              as: "lead",
+              attributes: ["id"],
+              include: [
+                {
+                  model: ClientLead,
+                  as: "clientLead",
+                  attributes: ["education", "experience", "state", "dob"],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    if (!customers || customers.length === 0) {
+      return res.status(200).json({ customers: [] });
+    }
+
+    return res.status(200).json({ customers });
+  } catch (error) {
+    console.error("Fetch all customers error:", {
+      message: error.message,
+      stack: error.stack,
+      sql: error?.sql,
+    });
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signupProcessPerson,
   loginProcessPerson,
@@ -544,4 +838,10 @@ module.exports = {
   getAllConvertedClients,
   getAllProcessPersons,
   toggleProcessPersonLoginAccess,
+  getProcessPersonById,
+  updateProcessPersonProfile,
+  getProcessPersonLoginStatus,
+  changeProcessPersonPassword,
+  importConvertedClientsToProcessPerson,
+  getProcessPersonCustomers,
 };

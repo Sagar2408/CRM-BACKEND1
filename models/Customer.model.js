@@ -53,6 +53,17 @@ module.exports = (sequelize) => {
         ),
         defaultValue: "pending",
       },
+      process_person_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true, // Only assigned clients will have a value
+        references: {
+          model: "process_persons",
+          key: "id",
+        },
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
+      },
+
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,

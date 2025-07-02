@@ -108,9 +108,12 @@ const logoutManager = async (req, res) => {
 
 const createTeam = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, managerId } = req.body;
     const Team = req.db.Team;
-    const managerId = req.user.id; // req.user is set by auth middleware
+
+    if (req.user.role != "Admin") {
+      return res.status(401).json({ error: "Only admin can Create a Team" });
+    }
 
     if (!name) {
       return res.status(400).json({ error: "Team name is required." });
@@ -123,7 +126,7 @@ const createTeam = async (req, res) => {
 
     res.status(201).json({
       message: "Team created successfully.",
-      team,
+      team: team.toJSON(),
     });
   } catch (err) {
     console.error("Create team error:", err);
@@ -134,7 +137,8 @@ const createTeam = async (req, res) => {
 const getManagerTeams = async (req, res) => {
   try {
     const Team = req.db.Team;
-    const managerId = req.user.id;
+    const { managerId } = req.body;
+    //const managerId = req.user.id;
 
     const teams = await Team.findAll({ where: { manager_id: managerId } });
 
@@ -147,18 +151,22 @@ const getManagerTeams = async (req, res) => {
 
 const addExecutiveToTeam = async (req, res) => {
   try {
-    const { team_id, user_id } = req.body;
+    const { team_id, user_id, managerId } = req.body;
     const Team = req.db.Team;
     const Users = req.db.Users;
     const Manager = req.db.Manager;
 
-    const managerId = req.user.id;
+    if (req.user.role != "Admin") {
+      return res
+        .status(401)
+        .json({ error: "Only admin can add Executives in a Team" });
+    }
 
     // Validation
-    if (!team_id || !user_id) {
+    if (!team_id || !user_id || !managerId) {
       return res
         .status(400)
-        .json({ error: "Team ID and User ID are required." });
+        .json({ error: "Team ID, User ID and Manager Id is required." });
     }
 
     // Verify ownership
@@ -166,7 +174,9 @@ const addExecutiveToTeam = async (req, res) => {
       where: { id: team_id, manager_id: managerId },
     });
     if (!team) {
-      return res.status(403).json({ error: "You do not own this team." });
+      return res
+        .status(403)
+        .json({ error: "This manager does not own this team." });
     }
 
     const manager = await Manager.findByPk(managerId);
@@ -282,6 +292,176 @@ const toggleManagerLoginAccess = async (req, res) => {
   }
 };
 
+const getAllTeamMember = async (req, res) => {
+  try {
+    const { team_id } = req.body;
+    const Users = req.db.Users;
+    if (!team_id) {
+      return res
+        .status(400)
+        .json({ error: "team_id is required in request body" });
+    }
+
+    const teamMembers = await Users.findAll({
+      where: {
+        team_id,
+        role: "Executive", // only executives
+      },
+      attributes: [
+        "id",
+        "username",
+        "email",
+        "firstname",
+        "lastname",
+        "profile_picture",
+      ],
+      order: [["username", "ASC"]],
+    });
+
+    res.json(teamMembers);
+  } catch (error) {
+    console.error("Error fetching team members:", error);
+    res.status(500).json({ error: "Failed to fetch team members" });
+  }
+};
+
+const getManagerById = async (req, res) => {
+  try {
+    const Manager = req.db.Manager;
+    const managerId = req.params.id;
+    const requestingUser = req.user;
+
+    // Restrict Manager from accessing other Manager profiles
+    if (
+      requestingUser.role === "manager" &&
+      requestingUser.id !== parseInt(managerId, 10)
+    ) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const manager = await Manager.findOne({
+      where: { id: managerId },
+      attributes: ["id", "name", "email", "role", "createdAt"],
+    });
+
+    if (!manager) {
+      return res.status(404).json({ message: "Manager not found." });
+    }
+
+    // ✅ Send the response
+    return res.status(200).json({ manager });
+  } catch (error) {
+    console.error("Error fetching Managers:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+const updateManagerProfile = async (req, res) => {
+  try {
+    const Manager = req.db.Manager;
+    const managerId = parseInt(req.params.id, 10);
+    const requestingUser = req.user;
+
+    // Restrict access: A manager can only update their own profile
+    if (requestingUser.id !== managerId) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const manager = await Manager.findByPk(managerId);
+    if (!manager) {
+      return res.status(404).json({ message: "Manager not found." });
+    }
+
+    const { name, email } = req.body;
+
+    manager.name = name || manager.name;
+    manager.email = email || manager.email;
+
+    await manager.save();
+
+    return res
+      .status(200)
+      .json({ message: "Profile updated successfully.", manager });
+  } catch (error) {
+    console.error("Error updating manager profile:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+const getManagerLoginStatus = async (req, res) => {
+  try {
+    const Manager = req.db.Manager;
+    const managerId = parseInt(req.params.id, 10);
+
+    if (!managerId) {
+      return res.status(400).json({
+        message: "Manager ID is required",
+      });
+    }
+
+    const manager = await Manager.findByPk(managerId, {
+      attributes: ["id", "name", "email", "role", "can_login"],
+    });
+
+    if (!manager) {
+      return res.status(404).json({ message: "Manager not found" });
+    }
+
+    res.status(200).json({
+      message: "Manager status retrieved successfully",
+      manager,
+    });
+  } catch (error) {
+    console.error("Error getting manager login status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const changeManagerPassword = async (req, res) => {
+  try {
+    const Manager = req.db.Manager; // ✅ Scoped model
+    const { currentPassword, newPassword } = req.body;
+    const { id } = req.user; // ✅ User ID from token
+
+    if (!id) {
+      return res.status(401).json({ message: "Unauthorized access" });
+    }
+
+    const manager = await Manager.findByPk(id);
+    if (!manager) {
+      return res.status(404).json({ message: "Manager not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, manager.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    manager.password = await bcrypt.hash(newPassword, 10);
+    await manager.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Password update error:", error); // ✅ Error log
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getAllTeams = async (req, res) => {
+  try {
+    const Team = req.db.Team;
+
+    const teams = await Team.findAll({
+      order: [["createdAt", "DESC"]], // Optional: latest teams first
+    });
+
+    res.status(200).json({ teams });
+  } catch (error) {
+    console.error("Fetch all teams error:", error);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
 module.exports = {
   signupManager,
   loginManager,
@@ -292,4 +472,10 @@ module.exports = {
   getManagerProfile,
   getAllManagers,
   toggleManagerLoginAccess,
+  getAllTeamMember,
+  getManagerById,
+  updateManagerProfile,
+  getManagerLoginStatus,
+  changeManagerPassword,
+  getAllTeams,
 };
