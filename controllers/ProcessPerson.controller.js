@@ -485,97 +485,6 @@ const importConvertedClientsToCustomers = async (req, res) => {
   }
 };
 
-//new one api to assign converted leads to a particular process person
-const importConvertedClientsToProcessPerson = async (req, res) => {
-  try {
-    const { processPersonId, selectedClientIds = [] } = req.body;
-    const { ConvertedClient, Customer, ProcessPerson } = req.db;
-
-    if (!processPersonId || !Array.isArray(selectedClientIds)) {
-      return res
-        .status(400)
-        .json({ message: "Missing processPersonId or client IDs" });
-    }
-
-    const processPerson = await ProcessPerson.findByPk(processPersonId);
-    if (!processPerson) {
-      return res.status(404).json({ message: "Process person not found" });
-    }
-
-    const convertedClients = await ConvertedClient.findAll({
-      where: { id: selectedClientIds },
-    });
-
-    if (!convertedClients.length) {
-      return res.status(404).json({ message: "No converted clients found" });
-    }
-
-    let imported = 0;
-    let skipped = 0;
-    const errors = [];
-
-    for (const client of convertedClients) {
-      try {
-        const existing = await Customer.findOne({
-          where: { email: client.email },
-        });
-
-        if (existing) {
-          skipped++;
-          errors.push({
-            email: client.email,
-            reason: "Email already exists in Customer table",
-          });
-          continue;
-        }
-
-        const hashedPassword = await bcrypt.hash(client.phone, 10);
-
-        await Customer.create({
-          fullName: client.name,
-          email: client.email,
-          phone: client.phone,
-          country: client.country,
-          password: hashedPassword,
-          status: "pending",
-          fresh_lead_id: client.fresh_lead_id,
-          process_person_id: processPersonId,
-        });
-
-        // Update assignedTo in ConvertedClient table
-        await ConvertedClient.update(
-          { assignedTo: processPerson.fullName },
-          { where: { id: client.id } }
-        );
-
-        imported++;
-      } catch (err) {
-        errors.push({
-          email: client.email || "unknown",
-          reason: err.message,
-        });
-      }
-    }
-
-    return res.status(200).json({
-      message: "Import completed",
-      imported,
-      skipped,
-      errors,
-    });
-  } catch (error) {
-    console.error("❌ importConvertedClientsToProcessPerson error:", {
-      message: error.message,
-      stack: error.stack,
-    });
-
-    return res.status(500).json({
-      message: "Internal server error during import",
-      error: error.message,
-    });
-  }
-};
-
 const getAllProcessPersons = async (req, res) => {
   try {
     const { ProcessPerson } = req.db;
@@ -854,6 +763,6 @@ module.exports = {
   updateProcessPersonProfile,
   getProcessPersonLoginStatus,
   changeProcessPersonPassword,
-  importConvertedClientsToProcessPerson,
+  //importConvertedClientsToProcessPerson,
   getProcessPersonCustomers,
 };
