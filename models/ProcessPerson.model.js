@@ -58,6 +58,11 @@ module.exports = (sequelize) => {
         allowNull: false,
         defaultValue: true,
       },
+      assignedTo: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        comment: "Name of the ProcessPerson the converted lead was assigned to",
+      },
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
