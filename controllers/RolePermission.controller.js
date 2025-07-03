@@ -207,13 +207,11 @@ exports.getAllRolePermissions = async (req, res) => {
       let label = `Role: ${p.role} | `;
 
       if (p.manager_id && managerMap.has(p.manager_id)) {
-        label += `Manager: ${managerMap.get(p.manager_id)} (ID: ${
-          p.manager_id
-        })`;
+        label += `${managerMap.get(p.manager_id)} (ID: ${p.manager_id})`;
       } else if (p.hr_id && hrMap.has(p.hr_id)) {
-        label += `HR: ${hrMap.get(p.hr_id)} (ID: ${p.hr_id})`;
+        label += `${hrMap.get(p.hr_id)} (ID: ${p.hr_id})`;
       } else if (p.user_id && userMap.has(p.user_id)) {
-        label += `User: ${userMap.get(p.user_id)} (ID: ${p.user_id})`;
+        label += `${userMap.get(p.user_id)} (ID: ${p.user_id})`;
       } else {
         label += "Unknown Role Holder";
       }
