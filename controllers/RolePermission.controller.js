@@ -279,6 +279,7 @@ exports.getAllUsersHrsAndManagers = async (req, res) => {
   const User = req.db.Users;
   const Manager = req.db.Manager;
   const Hr = req.db.Hr;
+  const RolePermission = req.db.RolePermission;
 
   try {
     // Step 1: Fetch all RolePermissions to get already assigned IDs
