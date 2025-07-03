@@ -1,5 +1,3 @@
-// middleware/tenantResolver.js
-
 const { getTenantDB } = require("../config/sequelizeManager");
 const { masterDB } = require("../config/masterDB");
 const { Op } = require("sequelize");
@@ -50,12 +48,22 @@ module.exports = async (req, res, next) => {
         .json({ message: "Invalid companyId or company not found" });
     }
 
+    const now = new Date();
+
     // ⏰ Expiration check
-    if (company.expiryDate && company.expiryDate < new Date()) {
-      // Optionally auto-flip status: await company.update({ status: "blacklisted" });
+    if (company.expiryDate && new Date(company.expiryDate) <= now) {
       return res
         .status(403)
         .json({ message: "Subscription expired – please renew." });
+    }
+
+    // 📆 SetDate (start date) check
+    if (company.setDate && now < new Date(company.setDate)) {
+      return res.status(403).json({
+        message: `Access not allowed until ${new Date(
+          company.setDate
+        ).toDateString()}.`,
+      });
     }
 
     // ⏸️ Pause check
