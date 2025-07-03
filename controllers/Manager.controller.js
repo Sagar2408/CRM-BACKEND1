@@ -1,9 +1,10 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { sendTeamAssignmentEmail } = require("../services/emailService");
+
 const signupManager = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, username, jobTitle } = req.body;
     const Manager = req.db.Manager;
 
     if (!name || !email || !password) {
@@ -15,11 +16,21 @@ const signupManager = async (req, res) => {
       return res.status(400).json({ error: "Email already registered." });
     }
 
+    // Check if username already exists (if provided)
+    if (username) {
+      const existingUsername = await Manager.findOne({ where: { username } });
+      if (existingUsername) {
+        return res.status(400).json({ error: "Username already taken." });
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const manager = await Manager.create({
       name,
+      username,
       email,
       password: hashedPassword,
+      jobTitle,
     });
 
     res.status(201).json({
@@ -27,7 +38,9 @@ const signupManager = async (req, res) => {
       manager: {
         id: manager.id,
         name: manager.name,
+        username: manager.username,
         email: manager.email,
+        jobTitle: manager.jobTitle,
       },
     });
   } catch (err) {
@@ -62,7 +75,9 @@ const loginManager = async (req, res) => {
         id: manager.id,
         email: manager.email,
         name: manager.name,
+        username: manager.username,
         role: manager.role,
+        jobTitle: manager.jobTitle,
       },
       process.env.JWT_SECRET,
       { expiresIn: "12h" }
@@ -82,7 +97,9 @@ const loginManager = async (req, res) => {
         id: manager.id,
         email: manager.email,
         name: manager.name,
+        username: manager.username,
         role: manager.role,
+        jobTitle: manager.jobTitle,
       },
     });
   } catch (err) {
@@ -223,7 +240,7 @@ const getManagerProfile = async (req, res) => {
     const managerId = req.user.id; // from token middleware
 
     const manager = await Manager.findByPk(managerId, {
-      attributes: ["id", "name", "email", "role", "createdAt"],
+      attributes: ["id", "name", "username", "email", "role", "jobTitle", "createdAt"],
     });
 
     if (!manager) {
@@ -341,7 +358,7 @@ const getManagerById = async (req, res) => {
 
     const manager = await Manager.findOne({
       where: { id: managerId },
-      attributes: ["id", "name", "email", "role", "createdAt"],
+      attributes: ["id", "name", "username", "email", "role", "jobTitle", "createdAt"],
     });
 
     if (!manager) {
@@ -372,10 +389,22 @@ const updateManagerProfile = async (req, res) => {
       return res.status(404).json({ message: "Manager not found." });
     }
 
-    const { name, email } = req.body;
+    const { name, username, email, jobTitle } = req.body;
+
+    // Check if username is being updated and if it's unique
+    if (username && username !== manager.username) {
+      const existingUsername = await Manager.findOne({ 
+        where: { username, id: { [require('sequelize').Op.ne]: managerId } } 
+      });
+      if (existingUsername) {
+        return res.status(400).json({ message: "Username already taken." });
+      }
+    }
 
     manager.name = name || manager.name;
+    manager.username = username || manager.username;
     manager.email = email || manager.email;
+    manager.jobTitle = jobTitle || manager.jobTitle;
 
     await manager.save();
 
@@ -400,7 +429,7 @@ const getManagerLoginStatus = async (req, res) => {
     }
 
     const manager = await Manager.findByPk(managerId, {
-      attributes: ["id", "name", "email", "role", "can_login"],
+      attributes: ["id", "name", "username", "email", "role", "jobTitle", "can_login"],
     });
 
     if (!manager) {

@@ -112,7 +112,7 @@ const getHrProfile = async (req, res) => {
     const hrId = req.user.id; // assumes auth middleware sets req.user
 
     const hr = await HR.findByPk(hrId, {
-      attributes: ["id", "name", "email", "role"], // add more fields if needed
+      attributes: ["id", "name", "email", "username", "role", "jobTitle"], // added username and jobTitle
     });
 
     if (!hr) {
@@ -197,7 +197,7 @@ const getHrById = async (req, res) => {
 
     const hr = await Hr.findOne({
       where: { id: hrId },
-      attributes: ["id", "name", "email", "role", "createdAt"],
+      attributes: ["id", "name", "email", "username", "role", "jobTitle", "createdAt"], // added username and jobTitle
     });
 
     if (!hr) {
@@ -228,10 +228,13 @@ const updateHrProfile = async (req, res) => {
       return res.status(404).json({ message: "HR not found." });
     }
 
-    const { name, email } = req.body;
+    const { name, email, username, jobTitle } = req.body;
 
+    // Update fields only if provided
     hr.name = name || hr.name;
     hr.email = email || hr.email;
+    hr.username = username || hr.username;
+    hr.jobTitle = jobTitle || hr.jobTitle;
 
     await hr.save();
 

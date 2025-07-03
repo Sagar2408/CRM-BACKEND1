@@ -21,6 +21,11 @@ module.exports = (sequelize) => {
           isEmail: true,
         },
       },
+      username: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+      },
       password: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -29,6 +34,10 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
         defaultValue: "HR",
+      },
+      jobTitle: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
       can_login: {
         type: DataTypes.BOOLEAN,
