@@ -516,7 +516,7 @@ const getAdminById = async (req, res) => {
 
     const admin = await Users.findOne({
       where: { id: adminId, role: "Admin" },
-      attributes: ["id", "username", "email", "role"],
+      attributes: ["id", "username", "email", "role" ,"firstname", "lastname" ],
     });
 
     if (!admin) {
