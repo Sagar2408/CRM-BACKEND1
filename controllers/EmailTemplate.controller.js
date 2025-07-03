@@ -62,10 +62,16 @@ exports.createTemplate = async (req, res) => {
   try {
     const EmailTemplate = req.db.EmailTemplate;
     const { name, subject, body } = req.body;
-    const createdBy = req.user.id; // Assuming token middleware adds req.user
+    const createdBy = req.user?.id; // ✅ Use optional chaining for safety
 
     if (!name || !subject || !body) {
       return res.status(400).json({ message: "All fields are required." });
+    }
+
+    if (!createdBy) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized. Missing user ID." });
     }
 
     const template = await EmailTemplate.create({
@@ -77,8 +83,14 @@ exports.createTemplate = async (req, res) => {
 
     res.status(201).json(template);
   } catch (error) {
-    console.error("Create template error:", error);
-    res.status(500).json({ message: "Server error creating template." });
+    console.error("❌ Create template error:", error);
+    // ✅ Send detailed error for debugging (remove in production)
+    res
+      .status(500)
+      .json({
+        message: "Server error creating template.",
+        error: error.message,
+      });
   }
 };
 
