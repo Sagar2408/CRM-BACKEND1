@@ -140,24 +140,91 @@ exports.togglePermission = async (req, res) => {
   }
 };
 
+// exports.getAllRolePermissions = async (req, res) => {
+//   const RolePermission = req.db.RolePermission;
+
+//   try {
+//     const permissions = await RolePermission.findAll({
+//       attributes: ["id", "role", "manager_id", "user_id", "hr_id"],
+//     });
+
+//     const formatted = permissions.map((p) => ({
+//       id: p.id,
+//       label: `Role: ${p.role} | ${
+//         p.manager_id
+//           ? "Manager ID: " + p.manager_id
+//           : p.hr_id
+//           ? "HR ID: " + p.hr_id
+//           : "User ID: " + p.user_id
+//       }`,
+//     }));
+
+//     res.status(200).json(formatted);
+//   } catch (error) {
+//     console.error("Error fetching permissions:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
+//fetching permission only by id
+
 exports.getAllRolePermissions = async (req, res) => {
-  const RolePermission = req.db.RolePermission;
+  const { RolePermission, Users, Manager, Hr } = req.db;
 
   try {
     const permissions = await RolePermission.findAll({
       attributes: ["id", "role", "manager_id", "user_id", "hr_id"],
     });
 
-    const formatted = permissions.map((p) => ({
-      id: p.id,
-      label: `Role: ${p.role} | ${
-        p.manager_id
-          ? "Manager ID: " + p.manager_id
-          : p.hr_id
-          ? "HR ID: " + p.hr_id
-          : "User ID: " + p.user_id
-      }`,
-    }));
+    // Collect unique IDs to fetch names in batch
+    const userIds = permissions.map((p) => p.user_id).filter(Boolean);
+    const managerIds = permissions.map((p) => p.manager_id).filter(Boolean);
+    const hrIds = permissions.map((p) => p.hr_id).filter(Boolean);
+
+    // Fetch names for users, managers, hrs
+    const users = await Users.findAll({
+      where: { id: userIds },
+      attributes: ["id", "firstname", "lastname"],
+    });
+
+    const managers = await Manager.findAll({
+      where: { id: managerIds },
+      attributes: ["id", "name"],
+    });
+
+    const hrs = await Hr.findAll({
+      where: { id: hrIds },
+      attributes: ["id", "name"],
+    });
+
+    // Create lookup maps for quick access
+    const userMap = new Map(
+      users.map((u) => [u.id, `${u.firstname} ${u.lastname}`.trim()])
+    );
+    const managerMap = new Map(managers.map((m) => [m.id, m.name]));
+    const hrMap = new Map(hrs.map((h) => [h.id, h.name]));
+
+    // Format with names
+    const formatted = permissions.map((p) => {
+      let label = `Role: ${p.role} | `;
+
+      if (p.manager_id && managerMap.has(p.manager_id)) {
+        label += `Manager: ${managerMap.get(p.manager_id)} (ID: ${
+          p.manager_id
+        })`;
+      } else if (p.hr_id && hrMap.has(p.hr_id)) {
+        label += `HR: ${hrMap.get(p.hr_id)} (ID: ${p.hr_id})`;
+      } else if (p.user_id && userMap.has(p.user_id)) {
+        label += `User: ${userMap.get(p.user_id)} (ID: ${p.user_id})`;
+      } else {
+        label += "Unknown Role Holder";
+      }
+
+      return {
+        id: p.id,
+        label,
+      };
+    });
 
     res.status(200).json(formatted);
   } catch (error) {
@@ -166,7 +233,6 @@ exports.getAllRolePermissions = async (req, res) => {
   }
 };
 
-//fetching permission only by id
 exports.getPermissionById = async (req, res) => {
   try {
     const userId = req.params.id;
@@ -333,17 +399,17 @@ exports.getAllUsersHrsAndManagers = async (req, res) => {
     // Step 3: Format options
     const userOptions = users.map((user) => ({
       id: user.id,
-      label: `id - ${user.id} - ${user.role} - ${user.username}`,
+      label: `{user.role} - ${user.username} (id: ${user.id})`,
     }));
 
     const managerOptions = managers.map((manager) => ({
       id: manager.id,
-      label: `id - ${manager.id} - Manager - ${manager.name}`,
+      label: `Manager - ${manager.name} (id: ${manager.id})`,
     }));
 
     const hrOptions = hrs.map((hr) => ({
       id: hr.id,
-      label: `id - ${hr.id} - HR - ${hr.name}`,
+      label: `HR - ${hr.name} (id: ${hr.id})`,
     }));
 
     // Step 4: Combine
