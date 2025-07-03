@@ -221,51 +221,131 @@ exports.getPermissionByRoleAndId = async (req, res) => {
   }
 };
 
+// exports.getAllUsersHrsAndManagers = async (req, res) => {
+//   const User = req.db.Users;
+//   const Manager = req.db.Manager;
+//   const Hr = req.db.Hr;
+
+//   try {
+//     // Fetch users with their roles
+//     const users = await User.findAll({
+//       attributes: ["id", "role"],
+//       where: {
+//         role: {
+//           [Op.notIn]: ["Admin"],
+//         },
+//       },
+//     });
+
+//     // Fetch managers (role = Manager)
+//     const managers = await Manager.findAll({
+//       attributes: ["id"],
+//     });
+
+//     //Fetch Hrs (role = Hr)
+//     const hrs = await Hr.findAll({
+//       attributes: ["id"],
+//     });
+
+//     // Format users: "Executive - id - 2", "TL - id - 5", etc.
+//     const userOptions = users.map((user) => ({
+//       id: user.id,
+//       label: `id - ${user.id} - ${user.role}`,
+//     }));
+
+//     // Format managers: "Manager - id - 2"
+//     const managerOptions = managers.map((manager) => ({
+//       id: manager.id,
+//       label: `id - ${manager.id} - Manager`,
+//     }));
+
+//     // Format HRs
+//     const hrOptions = hrs.map((hr) => ({
+//       id: hr.id,
+//       label: `id - ${hr.id} - HR`,
+//     }));
+
+//     // Combine both lists
+//     const combinedOptions = [...userOptions, ...managerOptions, ...hrOptions];
+
+//     res.status(200).json(combinedOptions);
+//   } catch (error) {
+//     console.error("Error generating dropdown options:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
+
 exports.getAllUsersHrsAndManagers = async (req, res) => {
   const User = req.db.Users;
   const Manager = req.db.Manager;
   const Hr = req.db.Hr;
 
   try {
-    // Fetch users with their roles
+    // Step 1: Fetch all RolePermissions to get already assigned IDs
+    const rolePermissions = await RolePermission.findAll({
+      attributes: ["user_id", "manager_id", "hr_id"],
+    });
+
+    const assignedUserIds = rolePermissions
+      .filter((rp) => rp.user_id !== null)
+      .map((rp) => rp.user_id);
+
+    const assignedManagerIds = rolePermissions
+      .filter((rp) => rp.manager_id !== null)
+      .map((rp) => rp.manager_id);
+
+    const assignedHrIds = rolePermissions
+      .filter((rp) => rp.hr_id !== null)
+      .map((rp) => rp.hr_id);
+
+    // Step 2: Fetch users whose permissions are NOT yet created
     const users = await User.findAll({
       attributes: ["id", "role"],
       where: {
         role: {
           [Op.notIn]: ["Admin"],
         },
+        id: {
+          [Op.notIn]: assignedUserIds.length ? assignedUserIds : [0], // If empty, provide dummy ID to avoid SQL error
+        },
       },
     });
 
-    // Fetch managers (role = Manager)
     const managers = await Manager.findAll({
       attributes: ["id"],
+      where: {
+        id: {
+          [Op.notIn]: assignedManagerIds.length ? assignedManagerIds : [0],
+        },
+      },
     });
 
-    //Fetch Hrs (role = Hr)
     const hrs = await Hr.findAll({
       attributes: ["id"],
+      where: {
+        id: {
+          [Op.notIn]: assignedHrIds.length ? assignedHrIds : [0],
+        },
+      },
     });
 
-    // Format users: "Executive - id - 2", "TL - id - 5", etc.
+    // Step 3: Format options
     const userOptions = users.map((user) => ({
       id: user.id,
       label: `id - ${user.id} - ${user.role}`,
     }));
 
-    // Format managers: "Manager - id - 2"
     const managerOptions = managers.map((manager) => ({
       id: manager.id,
       label: `id - ${manager.id} - Manager`,
     }));
 
-    // Format HRs
     const hrOptions = hrs.map((hr) => ({
       id: hr.id,
       label: `id - ${hr.id} - HR`,
     }));
 
-    // Combine both lists
+    // Step 4: Combine
     const combinedOptions = [...userOptions, ...managerOptions, ...hrOptions];
 
     res.status(200).json(combinedOptions);
