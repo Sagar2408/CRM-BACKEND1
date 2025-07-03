@@ -184,7 +184,7 @@ exports.getAllRolePermissions = async (req, res) => {
     // Fetch names for users, managers, hrs
     const users = await Users.findAll({
       where: { id: userIds },
-      attributes: ["id", "firstname", "lastname"],
+      attributes: ["id", "username"],
     });
 
     const managers = await Manager.findAll({
@@ -198,7 +198,7 @@ exports.getAllRolePermissions = async (req, res) => {
     });
 
     // Create lookup maps for quick access
-    const userMap = new Map(users.map((u) => [u.id, u.usernmae]));
+    const userMap = new Map(users.map((u) => [u.id, u.username]));
     const managerMap = new Map(managers.map((m) => [m.id, m.name]));
     const hrMap = new Map(hrs.map((h) => [h.id, h.name]));
 
