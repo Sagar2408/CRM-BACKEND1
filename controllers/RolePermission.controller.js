@@ -198,9 +198,7 @@ exports.getAllRolePermissions = async (req, res) => {
     });
 
     // Create lookup maps for quick access
-    const userMap = new Map(
-      users.map((u) => [u.id, `${u.firstname} ${u.lastname}`.trim()])
-    );
+    const userMap = new Map(users.map((u) => [u.id, u.username]));
     const managerMap = new Map(managers.map((m) => [m.id, m.name]));
     const hrMap = new Map(hrs.map((h) => [h.id, h.name]));
 
@@ -399,7 +397,7 @@ exports.getAllUsersHrsAndManagers = async (req, res) => {
     // Step 3: Format options
     const userOptions = users.map((user) => ({
       id: user.id,
-      label: `{user.role} - ${user.username} (id: ${user.id})`,
+      label: `${user.role} - ${user.username} (id: ${user.id})`,
     }));
 
     const managerOptions = managers.map((manager) => ({
