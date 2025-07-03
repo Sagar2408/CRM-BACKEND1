@@ -301,7 +301,7 @@ exports.getAllUsersHrsAndManagers = async (req, res) => {
 
     // Step 2: Fetch users whose permissions are NOT yet created
     const users = await User.findAll({
-      attributes: ["id", "role"],
+      attributes: ["id", "role", "username"],
       where: {
         role: {
           [Op.notIn]: ["Admin"],
@@ -313,7 +313,7 @@ exports.getAllUsersHrsAndManagers = async (req, res) => {
     });
 
     const managers = await Manager.findAll({
-      attributes: ["id"],
+      attributes: ["id", "name"],
       where: {
         id: {
           [Op.notIn]: assignedManagerIds.length ? assignedManagerIds : [0],
@@ -322,7 +322,7 @@ exports.getAllUsersHrsAndManagers = async (req, res) => {
     });
 
     const hrs = await Hr.findAll({
-      attributes: ["id"],
+      attributes: ["id", "name"],
       where: {
         id: {
           [Op.notIn]: assignedHrIds.length ? assignedHrIds : [0],
@@ -333,17 +333,17 @@ exports.getAllUsersHrsAndManagers = async (req, res) => {
     // Step 3: Format options
     const userOptions = users.map((user) => ({
       id: user.id,
-      label: `id - ${user.id} - ${user.role}`,
+      label: `id - ${user.id} - ${user.role} - ${user.username}`,
     }));
 
     const managerOptions = managers.map((manager) => ({
       id: manager.id,
-      label: `id - ${manager.id} - Manager`,
+      label: `id - ${manager.id} - Manager - ${manager.name}`,
     }));
 
     const hrOptions = hrs.map((hr) => ({
       id: hr.id,
-      label: `id - ${hr.id} - HR`,
+      label: `id - ${hr.id} - HR - ${hr.name}`,
     }));
 
     // Step 4: Combine
