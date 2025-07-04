@@ -23,9 +23,19 @@ module.exports = (sequelize, DataTypes) => {
       },
       createdBy: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
           model: "users", // 👈 matches the User model table name
+          key: "id",
+        },
+        onDelete: "CASCADE",
+      },
+      // For Process Persons
+      processPersonId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "process_persons",
           key: "id",
         },
         onDelete: "CASCADE",
