@@ -17,6 +17,7 @@ const {
   getManagerLoginStatus,
   changeManagerPassword,
   getAllTeams,
+  deleteTeam,
 } = require("../controllers/Manager.controller");
 
 router.post("/signup", signupManager);
@@ -25,6 +26,7 @@ router.post("/logout", auth(), logoutManager);
 //change manager password
 router.post("/change-password", auth(), changeManagerPassword);
 router.post("/teams", auth(), createTeam);
+
 //get all the teams
 router.get("/all-teams", auth(), getAllTeams);
 router.post("/get-teams", auth(), getManagerTeams);
