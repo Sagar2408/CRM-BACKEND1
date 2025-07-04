@@ -240,7 +240,15 @@ const getManagerProfile = async (req, res) => {
     const managerId = req.user.id; // from token middleware
 
     const manager = await Manager.findByPk(managerId, {
-      attributes: ["id", "name", "username", "email", "role", "jobTitle", "createdAt"],
+      attributes: [
+        "id",
+        "name",
+        "username",
+        "email",
+        "role",
+        "jobTitle",
+        "createdAt",
+      ],
     });
 
     if (!manager) {
@@ -358,7 +366,15 @@ const getManagerById = async (req, res) => {
 
     const manager = await Manager.findOne({
       where: { id: managerId },
-      attributes: ["id", "name", "username", "email", "role", "jobTitle", "createdAt"],
+      attributes: [
+        "id",
+        "name",
+        "username",
+        "email",
+        "role",
+        "jobTitle",
+        "createdAt",
+      ],
     });
 
     if (!manager) {
@@ -393,8 +409,8 @@ const updateManagerProfile = async (req, res) => {
 
     // Check if username is being updated and if it's unique
     if (username && username !== manager.username) {
-      const existingUsername = await Manager.findOne({ 
-        where: { username, id: { [require('sequelize').Op.ne]: managerId } } 
+      const existingUsername = await Manager.findOne({
+        where: { username, id: { [require("sequelize").Op.ne]: managerId } },
       });
       if (existingUsername) {
         return res.status(400).json({ message: "Username already taken." });
@@ -429,7 +445,15 @@ const getManagerLoginStatus = async (req, res) => {
     }
 
     const manager = await Manager.findByPk(managerId, {
-      attributes: ["id", "name", "username", "email", "role", "jobTitle", "can_login"],
+      attributes: [
+        "id",
+        "name",
+        "username",
+        "email",
+        "role",
+        "jobTitle",
+        "can_login",
+      ],
     });
 
     if (!manager) {
@@ -491,6 +515,45 @@ const getAllTeams = async (req, res) => {
   }
 };
 
+const deleteTeam = async (req, res) => {
+  try {
+    const { team_id } = req.params;
+    const { Team, Users } = req.db;
+
+    if (!team_id) {
+      return res
+        .status(400)
+        .json({ error: "Team id is required to delete a Team" });
+    }
+
+    if (req.user.role !== "Admin") {
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to delete this team." });
+    }
+
+    const team = await Team.findByPk(team_id);
+    if (!team) {
+      return res.status(404).json({ error: "Team not found" });
+    }
+
+    await Users.update({ team_id: null }, { where: { team_id: team_id } });
+
+    await team.destroy();
+
+    res.status(200).json({
+      message: "Team deleted successfully",
+      deletedTeam: {
+        id: team.id,
+        name: team.name,
+      },
+    });
+  } catch (error) {
+    console.error("Error deleting team:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signupManager,
   loginManager,
@@ -507,4 +570,5 @@ module.exports = {
   getManagerLoginStatus,
   changeManagerPassword,
   getAllTeams,
+  deleteTeam,
 };
