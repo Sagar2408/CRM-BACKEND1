@@ -39,6 +39,7 @@ const getOrganizationHierarchy = async (req, res) => {
           model: Team,
           as: "team",
           attributes: ["id", "name", "manager_id"],
+          required: false, // Handle Executives without a team
         },
       ],
     });
@@ -48,9 +49,9 @@ const getOrganizationHierarchy = async (req, res) => {
       attributes: ["id", "name", "role"],
     });
 
-    // Fetch all Process Persons
+    // Fetch all Process Persons (without role field)
     const processPersons = await ProcessPerson.findAll({
-      attributes: ["id", "fullName", "role"],
+      attributes: ["id", "fullName"],
     });
 
     // Build the hierarchy
@@ -79,7 +80,7 @@ const getOrganizationHierarchy = async (req, res) => {
               })),
           ],
         })),
-        // TLs under Admin (not connected to Managers or Executives)
+        // TLs under Admin
         ...tls.map((tl) => ({
           id: tl.id,
           name: tl.username,
@@ -91,11 +92,11 @@ const getOrganizationHierarchy = async (req, res) => {
           name: hr.name,
           role: hr.role,
         })),
-        // Process Persons under Admin
+        // Process Persons under Admin (with fixed role as "ProcessPerson")
         ...processPersons.map((processPerson) => ({
           id: processPerson.id,
           name: processPerson.fullName,
-          role: processPerson.role,
+          role: "ProcessPerson", // Hardcode role since it’s not in the database
         })),
       ],
     }));
@@ -106,10 +107,14 @@ const getOrganizationHierarchy = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching organization hierarchy:", error);
-    return res.status(500).json({ message: "Internal server error." });
+    return res.status(500).json({
+      message: "Internal server error.",
+      error: error.message,
+    });
   }
 };
 
 module.exports = {
   getOrganizationHierarchy,
+  // Include other controller functions here if needed
 };
