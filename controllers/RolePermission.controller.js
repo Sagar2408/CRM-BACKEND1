@@ -114,6 +114,8 @@ exports.togglePermission = async (req, res) => {
       "push_notifications",
       "sms_notifications",
       "email_notifications",
+      "create_user",
+      "page_access",
     ];
 
     if (!validPermissions.includes(permissionKey)) {
