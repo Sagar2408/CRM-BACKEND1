@@ -266,41 +266,51 @@ const updateAdminProfile = async (req, res) => {
         .json({ message: "Unauthorized: User not authenticated" });
     }
 
-    // Ensure Users model exists
-    if (!req.db?.Users) {
+    const Users = req.db.Users;
+
+    if (!Users) {
       return res
         .status(500)
         .json({ message: "Database model Users not available" });
     }
 
-    const Users = req.db.Users;
-    const { email, username } = req.body;
+    const userId = req.user.id;
+    const user = await Users.findByPk(userId);
 
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
+    if (!user) {
+      return res.status(404).json({ message: "Admin not found." });
     }
 
-    const updateData = { email };
-    if (typeof username !== "undefined") updateData.username = username;
+    const {
+      email,
+      username,
+      profile_picture,
+      firstname,
+      lastname,
+      country,
+      city,
+      state,
+      postal_code,
+      tax_id,
+    } = req.body;
 
-    const [updatedCount] = await Users.update(updateData, {
-      where: { id: req.user.id },
-    });
+    // Update only provided fields (fallback to existing values)
+    user.username = username || user.username;
+    user.email = email || user.email;
+    user.profile_picture = profile_picture || user.profile_picture;
+    user.firstname = firstname || user.firstname;
+    user.lastname = lastname || user.lastname;
+    user.country = country || user.country;
+    user.city = city || user.city;
+    user.state = state || user.state;
+    user.postal_code = postal_code || user.postal_code;
+    user.tax_id = tax_id || user.tax_id;
 
-    if (updatedCount === 0) {
-      return res
-        .status(404)
-        .json({ message: "Admin not found or no changes made" });
-    }
-
-    const updatedAdmin = await Users.findOne({
-      where: { id: req.user.id },
-      attributes: ["email", "username"], // ✅ Only return relevant fields
-    });
+    await user.save();
 
     return res.status(200).json({
-      message: "Profile updated successfully",
-      admin: updatedAdmin,
+      message: "Admin profile updated successfully.",
+      user,
     });
   } catch (error) {
     console.error("❌ Error updating admin profile:", error);
@@ -516,7 +526,7 @@ const getAdminById = async (req, res) => {
 
     const admin = await Users.findOne({
       where: { id: adminId, role: "Admin" },
-      attributes: ["id", "username", "email", "role" ,"firstname", "lastname" ],
+      attributes: ["id", "username", "email", "role", "firstname", "lastname"],
     });
 
     if (!admin) {
