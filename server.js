@@ -224,6 +224,11 @@ app.use(
   tenantResolver,
   require("./routes/LeaveApplication.routes")
 );
+app.use(
+  "/api/organization",
+  tenantResolver,
+  require("./routes/Organisation.routes")
+);
 // 🧠 Store connected users
 const connectedUsers = {};
 
