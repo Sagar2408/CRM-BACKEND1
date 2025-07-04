@@ -5,6 +5,6 @@ const {
 } = require("../controllers/Organisation.controller");
 
 // Route to get the organization hierarchy
-router.get("/hierarchy", authenticate, getOrganizationHierarchy);
+router.get("/hierarchy", getOrganizationHierarchy);
 
 module.exports = router;
