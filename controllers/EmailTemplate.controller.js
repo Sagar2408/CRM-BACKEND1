@@ -62,31 +62,24 @@ exports.createTemplate = async (req, res) => {
   try {
     const EmailTemplate = req.db.EmailTemplate;
     const { name, subject, body } = req.body;
-    //const createdBy = req.user?.id; // ✅ Use optional chaining for safety
-
-    const user = req.user;
+    const createdBy = req.user?.id; // ✅ Use optional chaining for safety
 
     if (!name || !subject || !body) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    if (!user || !user.id) {
-      return res.status(401).json({ message: "Unauthorized. Missing user." });
+    if (!createdBy) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized. Missing user ID." });
     }
 
-    const payload = {
+    const template = await EmailTemplate.create({
       name,
       subject,
       body,
-    };
-
-    if (user.type === "processperson") {
-      payload.processPersonId = user.id;
-    } else {
-      payload.createdBy = user.id;
-    }
-
-    const template = await EmailTemplate.create(payload);
+      createdBy,
+    });
 
     res.status(201).json(template);
   } catch (error) {
@@ -102,25 +95,7 @@ exports.createTemplate = async (req, res) => {
 exports.getAllTemplates = async (req, res) => {
   try {
     const EmailTemplate = req.db.EmailTemplate;
-
-    const user = req.user;
-
-    if (!user || !user.id) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized. Missing user info." });
-    }
-
-    let whereCondition = {};
-
-    if (user.type === "processperson") {
-      whereCondition = { processPersonId: user.id };
-    } else {
-      whereCondition = { createdBy: user.id };
-    }
-
     const templates = await EmailTemplate.findAll({
-      where: whereCondition,
       order: [["createdAt", "DESC"]],
     });
 
@@ -136,22 +111,11 @@ exports.getTemplateById = async (req, res) => {
     const EmailTemplate = req.db.EmailTemplate;
     const { id } = req.params;
 
-    const user = req.user;
-
-    if (!user || !user.id) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized. Missing user info." });
-    }
-
-    const whereCondition = {
-      id,
-      ...(user.type === "processperson"
-        ? { processPersonId: user.id }
-        : { createdBy: user.id }),
-    };
-
-    const template = await EmailTemplate.findOne({ where: whereCondition });
+    const template = await EmailTemplate.findOne({
+      where: {
+        id,
+      },
+    });
 
     if (!template) {
       return res.status(404).json({ message: "Template not found." });
