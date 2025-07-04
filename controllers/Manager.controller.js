@@ -515,6 +515,45 @@ const getAllTeams = async (req, res) => {
   }
 };
 
+const deleteTeam = async (req, res) => {
+  try {
+    const { id: team_id } = req.params;
+    const { Team, Users } = req.db;
+
+    if (!team_id) {
+      return res
+        .status(400)
+        .json({ error: "Team id is required to delete a Team" });
+    }
+
+    if (req.user.role !== "Admin") {
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to delete this team." });
+    }
+
+    const team = await Team.findByPk(team_id);
+    if (!team) {
+      return res.status(404).json({ error: "Team not found" });
+    }
+
+    await Users.update({ team_id: null }, { where: { team_id: team_id } });
+
+    await team.destroy();
+
+    res.status(200).json({
+      message: "Team deleted successfully",
+      deletedTeam: {
+        id: team.id,
+        name: team.name,
+      },
+    });
+  } catch (error) {
+    console.error("Error deleting team:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signupManager,
   loginManager,
@@ -531,4 +570,5 @@ module.exports = {
   getManagerLoginStatus,
   changeManagerPassword,
   getAllTeams,
+  deleteTeam,
 };
