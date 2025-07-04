@@ -226,6 +226,7 @@ app.use(
 );
 app.use(
   "/api/organization",
+  auth(),
   tenantResolver,
   require("./routes/Organisation.routes")
 );
