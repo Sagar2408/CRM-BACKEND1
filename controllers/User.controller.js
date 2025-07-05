@@ -320,7 +320,7 @@ const updateAdminProfile = async (req, res) => {
 
 const updateUserProfile = async (req, res) => {
   try {
-    const Users = req.db.User;
+    const Users = req.db.Users;
     const userId = parseInt(req.params.id, 10);
     const requestingUser = req.user;
 
@@ -488,7 +488,7 @@ const getTLById = async (req, res) => {
     // Restrict TL from accessing other TL profiles
     if (
       requestingUser.role === "TL" &&
-      requestingUser.id !== parseInt(userId, 10)
+      requestingUser.id !== parseInt(tlId, 10)
     ) {
       return res.status(403).json({ message: "Access denied." });
     }
