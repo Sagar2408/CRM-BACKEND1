@@ -58,7 +58,7 @@ router.get(
   userController.getExecutiveById
 );
 
-router.get("/executives/:id", auth(), userController.getTLById);
+router.get("/tls/:id", auth(), userController.getTLById);
 
 // Get online users (accessible to Admin and TL)
 router.get(
