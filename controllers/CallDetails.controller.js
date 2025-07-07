@@ -128,32 +128,18 @@ const getCallTimeByDateRange = async (req, res) => {
       return res.status(500).json({ error: "CallDetails model not found" });
     }
 
-    // Create start and end boundaries (local time first)
-    const startTime = new Date(`${startDate}T00:00:00`);
-    const endTime = new Date(`${endDate}T23:59:59`);
-
-    console.log("🔍 Executing Call Duration Query:");
-    console.log("executiveId:", executiveId);
-    console.log("startTime:", startTime);
-    console.log("endTime:", endTime);
+    const startTime = moment(`${startDate} 00:00:00`).toDate();
+    const endTime = moment(`${endDate} 23:59:59`).toDate();
 
     const calls = await db.CallDetails.findAll({
       where: {
         executiveId,
         startTime: {
-          [Op.gte]: startTime,
-          [Op.lte]: endTime,
+          [Op.between]: [startTime, endTime],
         },
         durationSeconds: { [Op.gt]: 0 },
       },
     });
-
-    console.log("✅ Total calls fetched:", calls.length);
-    if (calls.length > 0) {
-      console.log("Sample record:", calls[0].dataValues);
-    } else {
-      console.log("⚠️ No calls found in given range.");
-    }
 
     const totalSeconds = calls.reduce(
       (sum, call) => sum + (call.durationSeconds || 0),
@@ -173,7 +159,6 @@ const getCallTimeByDateRange = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
 
 module.exports = {
   saveCallDetails,
