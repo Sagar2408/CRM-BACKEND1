@@ -19,7 +19,21 @@ const masterDB = new Sequelize(
     },
   }
 );
+const pool = masterDB.connectionManager.pool;
 
+if (pool) {
+  pool.on("acquire", (connection) => {
+    console.log("📥 Connection acquired from pool");
+  });
+
+  pool.on("release", (connection) => {
+    console.log("📤 Connection released back to pool");
+  });
+
+  pool.on("enqueue", () => {
+    console.log("⏳ Waiting for available connection (pool full)");
+  });
+}
 // ✅ Import and initialize the Company model
 const CompanyModel = require("../models/Company.model");
 const Company = CompanyModel(masterDB, DataTypes);

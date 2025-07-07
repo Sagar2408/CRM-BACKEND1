@@ -12,7 +12,7 @@ const sequelize = new Sequelize(
     dialect: "mysql",
     logging: false,
     pool: {
-      max: 10, // Maximum number of connection in pool
+      max: 30, // Maximum number of connection in pool
       min: 0, // Minimum number of connection in pool
       acquire: 30000, // Maximum time, in ms, that pool will try to get connection before throwing error
       idle: 10000, // Maximum time, in ms, that a connection can be idle before being released
@@ -20,6 +20,21 @@ const sequelize = new Sequelize(
   }
 );
 
+const pool = sequelize.connectionManager.pool;
+
+if (pool && typeof pool.on === "function") {
+  pool.on("acquire", () => {
+    console.log("📥 Connection acquired from pool");
+  });
+
+  pool.on("release", () => {
+    console.log("📤 Connection released back to pool");
+  });
+
+  pool.on("enqueue", () => {
+    console.log("⏳ Waiting for available connection (pool full)");
+  });
+}
 // Test MasterDB connection
 sequelize
   .authenticate()
