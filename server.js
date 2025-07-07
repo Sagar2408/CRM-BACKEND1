@@ -30,6 +30,9 @@ app.use((req, res, next) => {
   console.log("Body:", req.body);
   next();
 });
+app.get("/api/ping", (req, res) => {
+  res.send("✅ Backend is reachable!");
+});
 
 // 🔐 Middleware for protected routes
 const auth = require("./middleware/auth");
@@ -231,9 +234,6 @@ app.use(
   require("./routes/Organisation.routes")
 );
 
-app.get("/api/ping", (req, res) => {
-  res.send("✅ Backend is reachable!");
-});
 // 🧠 Store connected users
 const connectedUsers = {};
 
