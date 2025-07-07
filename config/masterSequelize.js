@@ -20,21 +20,6 @@ const sequelize = new Sequelize(
   }
 );
 
-const pool = sequelize.connectionManager.pool;
-
-if (pool && typeof pool.on === "function") {
-  pool.on("acquire", () => {
-    console.log("📥 Connection acquired from pool");
-  });
-
-  pool.on("release", () => {
-    console.log("📤 Connection released back to pool");
-  });
-
-  pool.on("enqueue", () => {
-    console.log("⏳ Waiting for available connection (pool full)");
-  });
-}
 // Test MasterDB connection
 sequelize
   .authenticate()
