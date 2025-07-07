@@ -230,6 +230,10 @@ app.use(
   tenantResolver,
   require("./routes/Organisation.routes")
 );
+
+app.get("/api/ping", (req, res) => {
+  res.send("✅ Backend is reachable!");
+});
 // 🧠 Store connected users
 const connectedUsers = {};
 
