@@ -156,5 +156,10 @@ router.use(
   tenantResolver,
   require("./LeaveApplication.routes")
 );
-
+router.use(
+  "/api/organization",
+  auth(),
+  tenantResolver,
+  require("./routes/Organisation.routes")
+);
 module.exports = router;
