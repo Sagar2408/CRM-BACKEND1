@@ -111,8 +111,58 @@ const getWeeklyCallDurations = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+const getCallTimeByDateRange = async (req, res) => {
+  try {
+    const { executiveId } = req.params;
+    const { startDate, endDate } = req.query;
+
+    if (!executiveId || !startDate || !endDate) {
+      return res.status(400).json({
+        error: "Missing required parameters",
+        required: ["executiveId", "startDate", "endDate"],
+      });
+    }
+
+    const db = req.db;
+    if (!db || !db.CallDetails) {
+      return res.status(500).json({ error: "CallDetails model not found" });
+    }
+
+    const calls = await db.CallDetails.findAll({
+      where: {
+        executiveId,
+        startTime: {
+          [Op.between]: [
+            new Date(`${startDate}T00:00:00.000Z`),
+            new Date(`${endDate}T23:59:59.999Z`)
+          ],
+        },
+        durationSeconds: { [Op.gt]: 0 },
+      },
+    });
+
+    const totalSeconds = calls.reduce(
+      (sum, call) => sum + (call.durationSeconds || 0),
+      0
+    );
+
+    return res.status(200).json({
+      executiveId,
+      startDate,
+      endDate,
+      totalCallTimeSeconds: totalSeconds,
+      totalCallTimeMinutes: +(totalSeconds / 60).toFixed(2),
+      totalCallTimeHours: +(totalSeconds / 3600).toFixed(2),
+    });
+  } catch (err) {
+    console.error("🔥 Error in getCallTimeByDateRange:", err.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 
 module.exports = {
   saveCallDetails,
   getWeeklyCallDurations,
+  getCallTimeByDateRange,
 };

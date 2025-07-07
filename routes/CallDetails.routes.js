@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   saveCallDetails,
   getWeeklyCallDurations,
+  getCallTimeByDateRange,
 } = require("../controllers/CallDetails.controller");
 
 const auth = require("../middleware/auth");
@@ -14,5 +15,9 @@ router.post("/", auth(), upload.none(), saveCallDetails);
 
 // ✅ Fetch weekly call durations (GET)
 router.get("/call-duration-weekly/:executiveId", auth(), getWeeklyCallDurations);
+
+// ✅ Fetch Call Data by time range
+router.get("/call-time/:executiveId", auth(), getCallTimeByDateRange);
+
 
 module.exports = router;
