@@ -116,5 +116,4 @@ const getOrganizationHierarchy = async (req, res) => {
 
 module.exports = {
   getOrganizationHierarchy,
-  // Include other controller functions here if needed
 };
