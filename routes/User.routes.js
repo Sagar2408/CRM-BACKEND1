@@ -39,11 +39,7 @@ router.put(
 
 router.put("/user/profile/:id", auth(), userController.updateUserProfile); //can update profiles of executives as well as tl
 
-router.post(
-  "/admin/change_pass",
-  auth(["Admin"]),
-  userController.changePassword
-); // ✅ Change admin password
+router.post("/admin/change_pass", auth(), userController.changePassword); // ✅ Change admin password
 
 // New protected routes with proper authorization
 router.get("/executives", auth(), userController.getAllExecutives);
