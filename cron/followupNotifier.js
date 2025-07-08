@@ -13,9 +13,9 @@ async function scheduledNotifier() {
   for (const company of companies) {
     try {
       const db = await getTenantDB(company.id);
-      const { ScheduledNotification, Notification } = db;
+      const { FollowupNotification, Notification } = db;
 
-      const scheduledList = await ScheduledNotification.findAll({
+      const scheduledList = await FollowupNotification.findAll({
         where: {
           remindAt: {
             [db.Sequelize.Op.between]: [windowStart, windowEnd],
