@@ -5,8 +5,8 @@ const { sendNotificationToUser } = require("../utils/notificationHelper");
 
 async function scheduledNotifier() {
   const nowIST = moment.tz("Asia/Kolkata");
-  const windowStart = nowUTC.clone().subtract(30, "seconds").toDate();
-  const windowEnd = nowUTC.clone().add(30, "seconds").toDate();
+  const windowStart = nowIST.clone().subtract(30, "seconds").toDate();
+  const windowEnd = nowIST.clone().add(30, "seconds").toDate();
 
   const companies = await Company.findAll();
 
