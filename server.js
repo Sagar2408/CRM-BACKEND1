@@ -235,7 +235,7 @@ app.use(
   require("./routes/Organisation.routes")
 );
 app.use(
-  "api/schedule",
+  "/api/schedule",
   auth(),
   tenantResolver,
   require("./routes/FollowupNotification.routes")
