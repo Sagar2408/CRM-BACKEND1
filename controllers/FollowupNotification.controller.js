@@ -34,7 +34,8 @@ const scheduleFollowUpNotification = async (req, res) => {
     // ✅ Subtract 2 minutes in IST
     const reminderTime = istDateTime.clone().subtract(2, "minutes").toDate();
 
-    const message = `Reminder: Follow up with ${clientName} scheduled on ${date} at ${time}.`;
+    const formattedTime = istDateTime.format("hh.mm A");
+    const message = `Reminder: Follow up with ${clientName} scheduled on ${date} at ${formattedTime}.`;
 
     const scheduled = await FollowupNotification.create({
       userId,
