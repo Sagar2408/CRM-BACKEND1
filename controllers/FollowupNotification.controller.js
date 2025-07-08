@@ -12,12 +12,17 @@ const scheduleFollowUpNotification = async (req, res) => {
     if (!userId || !clientName || !date || !time) {
       return res.status(400).json({ message: "Missing required fields." });
     }
-    // ✅ Combine date and time and parse as IST
+
+    const combined = `${date} ${time}`;
     const istDateTime = moment.tz(
-      `${date} ${time}`,
+      combined,
       "YYYY-MM-DD HH:mm:ss",
       "Asia/Kolkata"
     );
+
+    if (!istDateTime.isValid()) {
+      return res.status(400).json({ message: "Invalid date/time format." });
+    }
 
     // ✅ Subtract 2 minutes in IST
     const reminderTime = istDateTime.clone().subtract(2, "minutes").toDate();
