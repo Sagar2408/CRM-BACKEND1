@@ -1,3 +1,5 @@
+const moment = require("moment-timezone");
+
 const scheduleFollowUpNotification = async (req, res) => {
   try {
     const {
@@ -8,6 +10,11 @@ const scheduleFollowUpNotification = async (req, res) => {
       targetRole = "executive",
     } = req.body;
     const FollowupNotification = req.db.FollowupNotification;
+
+    if (!FollowupNotification) {
+      console.log("❌ FollowupNotification model not available in req.db");
+      return res.status(500).json({ message: "Model not found in tenant DB" });
+    }
 
     if (!userId || !clientName || !date || !time) {
       return res.status(400).json({ message: "Missing required fields." });
