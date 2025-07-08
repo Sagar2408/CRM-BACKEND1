@@ -222,6 +222,7 @@ exports.getAdminDashboard = async (req, res) => {
 
 exports.getAttendanceByDateRange = async (req, res) => {
   const { ExecutiveActivity, Users } = req.db;
+
   try {
     const { startDate, endDate } = req.query;
 
@@ -234,24 +235,17 @@ exports.getAttendanceByDateRange = async (req, res) => {
     const start = parseISO(startDate);
     const end = parseISO(endDate);
 
-    // Step 1: Get all ExecutiveIds with their names
-    const executiveIds = await ExecutiveActivity.findAll({
-      attributes: ["ExecutiveId"],
-      include: [
-        {
-          model: Users,
-          attributes: ["username"],
+    // ✅ Step 1: Fetch all non-admin executives
+    const allExecutives = await Users.findAll({
+      where: {
+        role: {
+          [Op.ne]: "Admin", // Exclude Admin
         },
-      ],
-      group: ["ExecutiveId", "User.id"],
+      },
+      attributes: ["id", "username"],
     });
 
-    const allExecutives = executiveIds.map((entry) => ({
-      id: entry.ExecutiveId,
-      name: entry.User?.username || "Unknown",
-    }));
-
-    // Step 2: Get logs within the date range
+    // ✅ Step 2: Get activity logs within the date range
     const logs = await ExecutiveActivity.findAll({
       where: {
         createdAt: {
@@ -260,7 +254,7 @@ exports.getAttendanceByDateRange = async (req, res) => {
       },
     });
 
-    // Step 3: Map logs by executive and date
+    // ✅ Step 3: Map logs by ExecutiveId and date
     const logsMap = {};
     logs.forEach((log) => {
       const date = format(new Date(log.createdAt), "yyyy-MM-dd");
@@ -270,13 +264,13 @@ exports.getAttendanceByDateRange = async (req, res) => {
       logsMap[log.ExecutiveId][date] = log;
     });
 
-    // Step 4: Generate date list
+    // ✅ Step 4: Create date range
     const dateList = eachDayOfInterval({ start, end }).map((date) =>
       format(date, "yyyy-MM-dd")
     );
 
-    // Step 5: Build report
-    const report = allExecutives.map(({ id, name }) => {
+    // ✅ Step 5: Build attendance report
+    const report = allExecutives.map(({ id, username }) => {
       const attendance = {};
 
       dateList.forEach((date) => {
@@ -286,7 +280,7 @@ exports.getAttendanceByDateRange = async (req, res) => {
 
       return {
         executiveId: id,
-        executiveName: name,
+        executiveName: username,
         dateRange: `${format(start, "yyyy-MM-dd")} to ${format(
           end,
           "yyyy-MM-dd"
@@ -297,7 +291,7 @@ exports.getAttendanceByDateRange = async (req, res) => {
 
     res.json(report);
   } catch (error) {
-    console.error("Error generating attendance:", error);
+    console.error("❌ Error generating attendance report:", error);
     res.status(500).json({ error: "Failed to generate attendance report" });
   }
 };
