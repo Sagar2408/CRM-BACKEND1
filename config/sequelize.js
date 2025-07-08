@@ -88,6 +88,10 @@ module.exports = function initializeModels(sequelize) {
     sequelize,
     Sequelize
   );
+  db.FollowupNotification = require("../models/FollowupNotification.model")(
+    sequelize,
+    Sequelize
+  );
 
   // ------------------------
   // Define Associations

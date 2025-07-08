@@ -8,6 +8,7 @@ const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
 const cron = require("node-cron");
 const notifyUpcomingMeetings = require("./cron/meetingNotifier");
+const notifyScheduledFollowups = require("./cron/followupNotifier");
 const { getTenantDB } = require("./config/sequelizeManager");
 const { initializeNotificationHelper } = require("./utils/notificationHelper");
 const corsOptions = require("./utils/corsOption");
@@ -233,6 +234,12 @@ app.use(
   tenantResolver,
   require("./routes/Organisation.routes")
 );
+app.use(
+  "api/schedule",
+  auth(),
+  tenantResolver,
+  require("./routes/FollowupNotification.routes")
+);
 
 // 🧠 Store connected users
 const connectedUsers = {};
@@ -292,6 +299,8 @@ io.on("connection", (socket) => {
 cron.schedule("* * * * *", async () => {
   console.log("⏰ Cron job running for meeting notifications...");
   await notifyUpcomingMeetings();
+  //To notify executive about a followup or call before 2 minutes by sending a notification
+  await notifyScheduledFollowups();
 });
 
 if (process.env.NODE_ENV !== "test") {
