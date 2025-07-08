@@ -12,11 +12,17 @@ const scheduleFollowUpNotification = async (req, res) => {
     if (!userId || !clientName || !date || !time) {
       return res.status(400).json({ message: "Missing required fields." });
     }
+    // ✅ Combine date and time and parse as IST
+    const istDateTime = moment.tz(
+      `${date} ${time}`,
+      "YYYY-MM-DD HH:mm:ss",
+      "Asia/Kolkata"
+    );
 
-    const scheduledTime = new Date(`${date}T${time}`);
-    const reminderTime = new Date(scheduledTime.getTime() - 2 * 60 * 1000); // minus 2 minutes
+    // ✅ Subtract 2 minutes in IST
+    const reminderTime = istDateTime.clone().subtract(2, "minutes").toDate();
 
-    const message = `Reminder: Follow up with ${clientName} for the scheduled follow up on ${date} at ${time}.`;
+    const message = `Reminder: Follow up with ${clientName} scheduled on ${date} at ${time}.`;
 
     const scheduled = await FollowupNotification.create({
       userId,
