@@ -33,6 +33,6 @@ router.get(
 );
 
 //Get all followups created by executive as well as process person
-router.get("all-followups/:freah_lead_id", getAllFollowUpsByFreshLeadId);
+router.get("/all-followups/:freah_lead_id", getAllFollowUpsByFreshLeadId);
 
 module.exports = router;
