@@ -10,8 +10,15 @@ const createProcessFollowUp = async (req, res) => {
       follow_up_date,
       follow_up_time,
       comments,
+      document_name,
     } = req.body;
     //console.log(req.body);
+
+    if (follow_up_type === "document collection" && !document_name) {
+      return res.status(400).json({
+        message: "Document name is required for document collection follow-up.",
+      });
+    }
 
     // Ensure fresh_lead_id is provided
     if (!fresh_lead_id) {
@@ -54,6 +61,8 @@ const createProcessFollowUp = async (req, res) => {
       follow_up_date,
       follow_up_time,
       comments,
+      document_name:
+        follow_up_type === "document collection" ? document_name : null,
     });
 
     // ✅ Update customer status to "under_review" for the same fresh_lead_id

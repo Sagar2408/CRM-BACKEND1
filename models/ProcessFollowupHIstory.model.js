@@ -54,6 +54,10 @@ module.exports = (sequelize) => {
       comments: {
         type: DataTypes.TEXT,
       },
+      document_name: {
+        type: DataTypes.STRING,
+        allowNull: true, // Only used when follow_up_type = 'document collection'
+      },
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
