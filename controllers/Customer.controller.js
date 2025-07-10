@@ -4,6 +4,17 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 
+require("dotenv").config();
+
+// Email transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
 const loginCustomer = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -269,7 +280,11 @@ const forgotPassword = async (req, res) => {
 
     res.status(200).json({ message: "Password reset link sent to your email" });
   } catch (error) {
-    console.error("Forgot password error:", error);
+    console.error("Forgot password error:", {
+      message: error.message,
+      stack: error.stack,
+      sql: error?.sql,
+    });
     res.status(500).json({ error: "Internal server error" });
   }
 };
