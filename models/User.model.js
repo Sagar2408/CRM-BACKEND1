@@ -97,8 +97,18 @@ module.exports = (sequelize) => {
       can_login: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: true,
+        defaultValue: false,
       },
+      otp: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+
+      otpExpiry: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+      },
+
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,

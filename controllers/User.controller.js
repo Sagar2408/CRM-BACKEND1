@@ -16,6 +16,11 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+//To Verify Executive Email
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 /*-----------------------Login---------------------*/
 const login = async (req, res) => {
   try {
@@ -1024,6 +1029,155 @@ const createAdmin = async (req, res) => {
   }
 };
 
+const createExecutiveWithOtp = async (req, res) => {
+  try {
+    const Users = req.db.Users;
+
+    const {
+      username,
+      email,
+      password,
+      profile_picture,
+      team_id,
+      firstname,
+      lastname,
+      country,
+      city,
+      state,
+      postal_code,
+      tax_id,
+    } = req.body;
+
+    // Basic validation
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ error: "Username and password are required." });
+    }
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: "Invalid email format." });
+    }
+
+    // Prevent creating non-executive roles via this endpoint
+    if (req.body.role && req.body.role !== "Executive") {
+      return res
+        .status(400)
+        .json({ error: "This route only allows creation of Executives." });
+    }
+
+    // Check for duplicate username or email
+    const existing = await Users.findOne({
+      where: {
+        [Op.or]: [{ username }, { email }],
+      },
+    });
+
+    if (existing) {
+      const conflictField =
+        existing.username === username ? "Username" : "Email";
+      return res
+        .status(400)
+        .json({ error: `${conflictField} already exists.` });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Generate OTP
+    const otp = generateOTP();
+    const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    const newExecutive = await Users.create({
+      username,
+      email,
+      password: hashedPassword,
+      profile_picture,
+      team_id,
+      firstname,
+      lastname,
+      country,
+      city,
+      state,
+      postal_code,
+      tax_id,
+      role: "Executive",
+      can_login: false,
+      otp,
+      otpExpiry,
+    });
+
+    // Send OTP email
+    if (email) {
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "OTP Verification - Executive Account",
+        text: `Hello ${username},\n\nYour OTP for email verification is: ${otp}\nThis OTP will expire in 10 minutes.\n\nThank you.`,
+      };
+
+      try {
+        await transporter.sendMail(mailOptions);
+      } catch (emailErr) {
+        console.warn("⚠️ Failed to send OTP email:", emailErr.message);
+        // Optional: rollback user creation here
+      }
+    }
+
+    return res.status(201).json({
+      message: "Executive created successfully. OTP sent to email.",
+      executive: {
+        id: newExecutive.id,
+        username: newExecutive.username,
+        email: newExecutive.email,
+        role: newExecutive.role,
+        team_id: newExecutive.team_id,
+        firstname: newExecutive.firstname,
+        lastname: newExecutive.lastname,
+        createdAt: newExecutive.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Create Executive error:", error);
+    let msg = "Internal server error.";
+    if (error.name === "SequelizeValidationError") {
+      msg = error.errors.map((e) => e.message).join(", ");
+    } else if (error.name === "SequelizeUniqueConstraintError") {
+      msg = "Username or email already exists.";
+    }
+    return res.status(500).json({ error: msg });
+  }
+};
+
+const verifyExecutiveOTP = async (req, res) => {
+  const { email, otp } = req.body;
+  const Users = req.db.Users;
+
+  if (!email || !otp) {
+    return res.status(400).json({ error: "Email and OTP are required." });
+  }
+
+  const user = await Users.findOne({ where: { email, role: "Executive" } });
+
+  if (!user) {
+    return res.status(404).json({ error: "Executive not found." });
+  }
+
+  if (user.otp !== otp) {
+    return res.status(400).json({ error: "Invalid OTP." });
+  }
+
+  if (Date.now() > user.otpExpiry) {
+    return res.status(400).json({ error: "OTP has expired." });
+  }
+
+  user.can_login = true;
+  user.otp = null;
+  user.otpExpiry = null;
+  await user.save();
+
+  return res.status(200).json({ message: "OTP verified successfully." });
+};
+
 // Export all controller methods
 module.exports = {
   login,
@@ -1050,4 +1204,6 @@ module.exports = {
   createTeamLead,
   createAdmin,
   getTLById,
+  createExecutiveWithOtp,
+  verifyExecutiveOTP,
 };
