@@ -63,7 +63,19 @@ module.exports = (sequelize) => {
         onDelete: "SET NULL",
         onUpdate: "CASCADE",
       },
-
+      resetPasswordToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      resetPasswordExpiry: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+      },
+      can_login: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      },
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,

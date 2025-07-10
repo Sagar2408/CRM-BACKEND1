@@ -1,5 +1,8 @@
+const { Op } = require("sequelize");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 const loginCustomer = async (req, res) => {
   try {
@@ -201,6 +204,115 @@ const getAllCustomers = async (req, res) => {
   }
 };
 
+const changePassword = async (req, res) => {
+  try {
+    const Customer = req.db.Customer;
+    const { currentPassword, newPassword } = req.body;
+    const { id } = req.user;
+
+    if (!id) {
+      return res.status(401).json({ message: "Unauthorized access" });
+    }
+
+    const customer = await Customer.findByPk(id);
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, customer.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    customer.password = await bcrypt.hash(newPassword, 10);
+    await customer.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Password update error:", error); // ✅ Error log
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const forgotPassword = async (req, res) => {
+  try {
+    const Customer = req.db.Customer;
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    const customer = await Customer.findOne({ where: { email } });
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenExpiry = Date.now() + 3600000; // 1 hour from now
+
+    await customer.update({
+      resetPasswordToken: resetToken,
+      resetPasswordExpiry: resetTokenExpiry,
+    });
+
+    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Password Reset Request",
+      text: `Click this link to reset your password: ${resetUrl}\nThis link expires in 1 hour.`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ message: "Password reset link sent to your email" });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const Customer = req.db.Customer;
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res
+        .status(400)
+        .json({ error: "Token and new password are required" });
+    }
+
+    const customer = await Customer.findOne({
+      where: {
+        resetPasswordToken: token,
+        resetPasswordExpiry: {
+          [Op.gt]: Date.now(), // Token must not be expired
+        },
+      },
+    });
+
+    if (!customer) {
+      return res.status(400).json({ error: "Invalid or expired token" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await customer.update({
+      password: hashedPassword,
+      resetPasswordToken: null,
+      resetPasswordExpiry: null,
+    });
+
+    res.status(200).json({ message: "Password successfully reset" });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 // 📌 Mark customer as "under_review"
 const markAsUnderReview = async (req, res) => {
   const Customer = req.db.Customer;
@@ -302,6 +414,9 @@ module.exports = {
   signupCustomer,
   logoutCustomer,
   getAllCustomers,
+  changePassword,
+  forgotPassword,
+  resetPassword,
   markAsUnderReview,
   markAsApproved,
   markAsRejected,

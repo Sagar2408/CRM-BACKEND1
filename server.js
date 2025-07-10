@@ -175,7 +175,6 @@ app.use("/api", tenantResolver, require("./routes/Eod.routes"));
 
 app.use(
   "/api/customer",
-  auth(),
   tenantResolver,
   require("./routes/CustomerDocuments.routes")
 );

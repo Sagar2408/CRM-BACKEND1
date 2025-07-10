@@ -9,6 +9,9 @@ const {
   markAsApproved,
   markAsRejected,
   markAsMeeting,
+  changePassword,
+  forgotPassword,
+  resetPassword,
 } = require("../controllers/Customer.controller");
 const auth = require("../middleware/auth");
 
@@ -22,6 +25,10 @@ router.post("/signup", signupCustomer);
 router.post("/logout", auth(), logoutCustomer);
 
 router.get("/getAllCustomer", getAllCustomers);
+
+router.post("/change-password", auth(), changePassword);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 router.put("/status/under_review/:id", auth(), markAsUnderReview);
 router.put("/status/approved/:id", auth(), markAsApproved);
