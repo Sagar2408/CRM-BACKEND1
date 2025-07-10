@@ -470,6 +470,103 @@ const getProcessPersonMeetings = async (req, res) => {
   }
 };
 
+const getAllFollowUpsByFreshLeadId = async (req, res) => {
+  const {
+    FollowUpHistory,
+    FollowUp,
+    ProcessFollowUpHistory,
+    FreshLead,
+    Lead,
+    ClientLead,
+    Customer,
+  } = req.db;
+
+  const fresh_lead_id =
+    req.params.fresh_lead_id ||
+    req.query.fresh_lead_id ||
+    req.body.fresh_lead_id;
+
+  if (!fresh_lead_id) {
+    return res.status(400).json({ error: "Missing fresh_lead_id in request" });
+  }
+
+  try {
+    // ✅ Executive follow-ups
+    const executiveFollowUps = await FollowUpHistory.findAll({
+      where: { fresh_lead_id },
+      include: [
+        {
+          model: FollowUp,
+          as: "followUp", // Optional
+        },
+      ],
+      raw: true,
+      nest: true,
+    });
+
+    // ✅ Process follow-ups
+    const processFollowUps = await ProcessFollowUpHistory.findAll({
+      where: { fresh_lead_id },
+      include: [
+        {
+          model: FreshLead,
+          as: "freshLead",
+          attributes: ["name", "phone", "email"],
+          include: [
+            {
+              model: Lead,
+              as: "lead",
+              attributes: ["id"],
+              include: [
+                {
+                  model: ClientLead,
+                  as: "clientLead",
+                  attributes: ["education", "experience", "state", "dob"],
+                },
+              ],
+            },
+            {
+              model: Customer,
+              as: "customer",
+              attributes: ["status"],
+            },
+          ],
+        },
+      ],
+      raw: true,
+      nest: true,
+    });
+
+    // ✅ Normalize and combine both follow-up arrays
+    const allFollowUps = [
+      ...executiveFollowUps.map((f) => ({
+        ...f,
+        source: "Executive",
+        document_name: null, // Not applicable
+      })),
+      ...processFollowUps.map((f) => ({
+        ...f,
+        source: "ProcessPerson",
+      })),
+    ];
+
+    // ✅ Sort all follow-ups by date and time
+    allFollowUps.sort((a, b) => {
+      const dateA = new Date(`${a.follow_up_date}T${a.follow_up_time}`);
+      const dateB = new Date(`${b.follow_up_date}T${b.follow_up_time}`);
+      return dateB - dateA;
+    });
+
+    return res.status(200).json({
+      message: "Combined follow-up history retrieved successfully.",
+      data: allFollowUps,
+    });
+  } catch (error) {
+    console.error("Error combining follow-up histories:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   createProcessFollowUp,
   getProcessFollowUpsByFreshLeadId,
@@ -477,4 +574,5 @@ module.exports = {
   moveToRejected,
   createMeetingForProcessPerson,
   getProcessPersonMeetings,
+  getAllFollowUpsByFreshLeadId,
 };
