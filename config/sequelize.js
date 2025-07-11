@@ -93,6 +93,11 @@ module.exports = function initializeModels(sequelize) {
     Sequelize
   );
 
+  db.UnverifiedUser = require("../models/UnverifiedUsers.model")(
+    sequelize,
+    Sequelize
+  );
+
   // ------------------------
   // Define Associations
   // ------------------------

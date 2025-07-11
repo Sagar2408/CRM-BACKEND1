@@ -1031,7 +1031,7 @@ const createAdmin = async (req, res) => {
 
 const createExecutiveWithOtp = async (req, res) => {
   try {
-    const Users = req.db.Users;
+    const { Users, UnverifiedUser } = req.db;
 
     const {
       username,
@@ -1087,7 +1087,7 @@ const createExecutiveWithOtp = async (req, res) => {
     const otp = generateOTP();
     const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-    const newExecutive = await Users.create({
+    const newExecutive = await UnverifiedUser.create({
       username,
       email,
       password: hashedPassword,
@@ -1101,7 +1101,6 @@ const createExecutiveWithOtp = async (req, res) => {
       postal_code,
       tax_id,
       role: "Executive",
-      can_login: false,
       otp,
       otpExpiry,
     });
@@ -1150,32 +1149,112 @@ const createExecutiveWithOtp = async (req, res) => {
 
 const verifyExecutiveOTP = async (req, res) => {
   const { email, otp } = req.body;
-  const Users = req.db.Users;
+  const { Users, UnverifiedUser } = req.db;
 
   if (!email || !otp) {
     return res.status(400).json({ error: "Email and OTP are required." });
   }
 
-  const user = await Users.findOne({ where: { email, role: "Executive" } });
+  const pendingUser = await UnverifiedUser.findOne({ where: { email } });
 
-  if (!user) {
-    return res.status(404).json({ error: "Executive not found." });
+  if (!pendingUser) {
+    return res
+      .status(404)
+      .json({ error: "No pending registration found for this email." });
   }
 
-  if (user.otp !== otp) {
+  if (pendingUser.otp !== otp) {
     return res.status(400).json({ error: "Invalid OTP." });
   }
 
-  if (Date.now() > user.otpExpiry) {
+  if (Date.now() > pendingUser.otpExpiry) {
     return res.status(400).json({ error: "OTP has expired." });
   }
 
-  user.can_login = true;
-  user.otp = null;
-  user.otpExpiry = null;
-  await user.save();
+  // Check again in Users to avoid duplicates
+  const existing = await Users.findOne({
+    where: {
+      [Op.or]: [{ email }, { username: pendingUser.username }],
+    },
+  });
 
-  return res.status(200).json({ message: "OTP verified successfully." });
+  if (existing) {
+    return res.status(400).json({ error: "User already exists in system." });
+  }
+
+  // Create verified user
+  const verifiedUser = await Users.create({
+    username: pendingUser.username,
+    email: pendingUser.email,
+    password: pendingUser.password,
+    profile_picture: pendingUser.profile_picture,
+    team_id: pendingUser.team_id,
+    firstname: pendingUser.firstname,
+    lastname: pendingUser.lastname,
+    country: pendingUser.country,
+    city: pendingUser.city,
+    state: pendingUser.state,
+    postal_code: pendingUser.postal_code,
+    tax_id: pendingUser.tax_id,
+    role: pendingUser.role,
+    can_login: true,
+  });
+
+  // Delete from unverified
+  await pendingUser.destroy();
+
+  return res.status(200).json({
+    message: "OTP verified and user activated.",
+    user: {
+      id: verifiedUser.id,
+      username: verifiedUser.username,
+      email: verifiedUser.email,
+      role: verifiedUser.role,
+    },
+  });
+};
+
+const resendExecutiveOtp = async (req, res) => {
+  const { email } = req.body;
+  const { UnverifiedUser } = req.db;
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: "Valid email is required." });
+  }
+
+  try {
+    const unverified = await UnverifiedUser.findOne({ where: { email } });
+
+    if (!unverified) {
+      return res
+        .status(404)
+        .json({ error: "No unverified user found with this email." });
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    unverified.otp = otp;
+    unverified.otpExpiry = otpExpiry;
+    await unverified.save();
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Resend OTP - Executive Account",
+      text: `Hello ${unverified.username},\n\nYour new OTP is: ${otp}\nThis OTP will expire in 10 minutes.\n\nThank you.`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return res.status(200).json({ message: "OTP resent successfully." });
+  } catch (err) {
+    console.error("Error resending OTP:", err);
+    return res
+      .status(500)
+      .json({ error: "Something went wrong while resending OTP." });
+  }
 };
 
 // Export all controller methods
@@ -1206,4 +1285,5 @@ module.exports = {
   getTLById,
   createExecutiveWithOtp,
   verifyExecutiveOTP,
+  resendExecutiveOtp,
 };

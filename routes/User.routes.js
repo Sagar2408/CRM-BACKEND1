@@ -63,12 +63,18 @@ router.get(
   userController.getOnlineExecutives
 );
 
+//create executive and send otp to verify email
 router.post(
   "/create-executive",
   auth(["Admin"]),
   userController.createExecutiveWithOtp
 );
+
+//verify the otp
 router.post("/verify-otp", auth(["Admin"]), userController.verifyExecutiveOTP);
+
+//resedn otp
+router.post("/resend-otp", userController.resendExecutiveOtp);
 
 router.post("/create-admin", auth(["Admin"]), userController.createAdmin);
 router.post("/create-exec", auth(["Admin"]), userController.createExecutive);

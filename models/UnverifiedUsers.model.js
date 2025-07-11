@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
   return sequelize.define(
-    "User",
+    "UnverifiedUser",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -12,7 +12,6 @@ module.exports = (sequelize) => {
       username: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
       },
       email: {
         type: DataTypes.STRING,
@@ -24,48 +23,13 @@ module.exports = (sequelize) => {
       },
       password: {
         type: DataTypes.STRING,
-        allowNull: true,
-      },
-      profile_picture: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      resetPasswordToken: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      resetPasswordExpiry: {
-        type: DataTypes.BIGINT,
-        allowNull: true,
+        allowNull: false,
       },
       role: {
-        type: DataTypes.ENUM("Admin", "TL", "Executive"),
-        allowNull: false,
+        type: DataTypes.ENUM("Executive"), // or more if needed
         defaultValue: "Executive",
-      },
-      permission: {
-        type: DataTypes.ENUM("approved", "not approved", "pending"),
         allowNull: false,
-        defaultValue: "pending",
       },
-      is_online: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
-      // Link to Team
-      team_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: {
-          model: "teams", // ✅ lowercase to match actual table
-          key: "id",
-        },
-        onDelete: "SET NULL",
-        onUpdate: "CASCADE",
-      },
-
-      // Additional Profile Info
       firstname: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -94,11 +58,15 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      can_login: {
-        type: DataTypes.BOOLEAN,
+      otp: {
+        type: DataTypes.STRING,
         allowNull: false,
-        defaultValue: false,
       },
+      otpExpiry: {
+        type: DataTypes.BIGINT,
+        allowNull: false,
+      },
+      // Any other fields you collect
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
@@ -109,9 +77,9 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "users", // ✅ matches schema convention
-      freezeTableName: true, // ✅ disables auto-pluralization
-      timestamps: true, // ✅ enables Sequelize time tracking
+      tableName: "unverified_users",
+      freezeTableName: true,
+      timestamps: true,
     }
   );
 };
