@@ -23,6 +23,7 @@ exports.uploadDocuments = (req, res) => {
         .json({ message: "Missing customerId, userType, or files." });
     }
 
+    // Validate userType
     const allowedUserTypes = ["customer", "process_person"];
     if (!allowedUserTypes.includes(userType)) {
       return res.status(400).json({
@@ -30,20 +31,15 @@ exports.uploadDocuments = (req, res) => {
       });
     }
 
-    let parsedNames;
+    // Parse documentNames (stringified array from frontend)
+    let parsedNames = [];
     try {
-      parsedNames =
-        typeof documentNames === "string"
-          ? JSON.parse(documentNames)
-          : documentNames;
-    } catch (e) {
+      parsedNames = JSON.parse(documentNames);
+    } catch (err) {
       return res.status(400).json({ message: "Invalid documentNames format." });
     }
 
-    if (
-      !Array.isArray(parsedNames) ||
-      parsedNames.length !== req.files.length
-    ) {
+    if (parsedNames.length !== req.files.length) {
       return res.status(400).json({
         message: "Mismatch between number of files and document names.",
       });
@@ -51,14 +47,12 @@ exports.uploadDocuments = (req, res) => {
 
     try {
       const documents = await Promise.all(
-        req.files.map((file, i) => {
-          const baseName = parsedNames[i];
-          const extension = file.originalname.split(".").pop();
-          const finalName = `${baseName}.${extension}`;
-
+        req.files.map((file, index) => {
+          const ext = file.originalname.split(".").pop();
+          const customFileName = `${parsedNames[index]}.${ext}`;
           return CustomerDocument.create({
             customerId,
-            documentName: finalName,
+            documentName: customFileName,
             mimeType: file.mimetype,
             documentData: file.buffer,
             userType,
@@ -72,10 +66,9 @@ exports.uploadDocuments = (req, res) => {
       });
     } catch (error) {
       console.error("Upload Error:", error);
-      res.status(500).json({
-        message: "Error saving documents to the database.",
-        error: error.message,
-      });
+      res
+        .status(500)
+        .json({ message: "Error saving documents to the database." });
     }
   });
 };
