@@ -15,7 +15,7 @@ exports.uploadDocuments = (req, res) => {
         .json({ message: "File upload error.", error: err.message });
     }
 
-    const { customerId, userType } = req.body;
+    const { customerId, userType, documentNames } = req.body;
 
     if (!customerId || !userType || !req.files || req.files.length === 0) {
       return res
@@ -23,7 +23,6 @@ exports.uploadDocuments = (req, res) => {
         .json({ message: "Missing customerId, userType, or files." });
     }
 
-    // Validate userType value
     const allowedUserTypes = ["customer", "process_person"];
     if (!allowedUserTypes.includes(userType)) {
       return res.status(400).json({
@@ -31,17 +30,40 @@ exports.uploadDocuments = (req, res) => {
       });
     }
 
+    let parsedNames;
+    try {
+      parsedNames =
+        typeof documentNames === "string"
+          ? JSON.parse(documentNames)
+          : documentNames;
+    } catch (e) {
+      return res.status(400).json({ message: "Invalid documentNames format." });
+    }
+
+    if (
+      !Array.isArray(parsedNames) ||
+      parsedNames.length !== req.files.length
+    ) {
+      return res.status(400).json({
+        message: "Mismatch between number of files and document names.",
+      });
+    }
+
     try {
       const documents = await Promise.all(
-        req.files.map((file) =>
-          CustomerDocument.create({
+        req.files.map((file, i) => {
+          const baseName = parsedNames[i];
+          const extension = file.originalname.split(".").pop();
+          const finalName = `${baseName}.${extension}`;
+
+          return CustomerDocument.create({
             customerId,
-            documentName: file.originalname,
+            documentName: finalName,
             mimeType: file.mimetype,
             documentData: file.buffer,
             userType,
-          })
-        )
+          });
+        })
       );
 
       res.status(201).json({
@@ -50,9 +72,10 @@ exports.uploadDocuments = (req, res) => {
       });
     } catch (error) {
       console.error("Upload Error:", error);
-      res
-        .status(500)
-        .json({ message: "Error saving documents to the database." });
+      res.status(500).json({
+        message: "Error saving documents to the database.",
+        error: error.message,
+      });
     }
   });
 };
