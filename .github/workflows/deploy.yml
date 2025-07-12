@@ -20,7 +20,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            cd /home/ubuntu/your-node-crm
+            cd /home/ubuntu/CRM-backend
             git pull origin main
             npm install
-            pm2 restart crm
+            pm2 restart CRM-backend
