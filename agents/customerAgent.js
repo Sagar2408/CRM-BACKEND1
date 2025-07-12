@@ -12,12 +12,12 @@ async function askCustomerAgent(question, customerId, db) {
       limit: 10,
     });
 
-    const historyMessages = history.map((msg) =>
-      `${msg.role === "user" ? "User" : "Agent"}: ${msg.message}`
-    ).join("\n");
+    const historyMessages = history
+      .map((msg) => `${msg.role === "user" ? "User" : "Agent"}: ${msg.message}`)
+      .join("\n");
 
     const prompt = `You are a friendly customer-facing AI assistant at AtoZee Visas.
-You do not provide legal advice or exact policy details. Instead, always redirect to AtoZee’s team.
+You do not provide legal advice or exact policy details. always redirect to AtoZee’s team.
 
 Conversation history:
 ${historyMessages}
@@ -28,8 +28,18 @@ ${question}`;
     const reply = `Thanks for your interest! ${question} — AtoZee Visas can guide you through the entire process. Please reach out to our consultants directly at +91-99999-12345 or visit https://atozeevisas.com.`;
 
     // Save history
-    await ChatHistory.create({ customerId, role: "user", message: question, agentType: "customer" });
-    await ChatHistory.create({ customerId, role: "assistant", message: reply, agentType: "customer" });
+    await ChatHistory.create({
+      customerId,
+      role: "user",
+      message: question,
+      agentType: "customer",
+    });
+    await ChatHistory.create({
+      customerId,
+      role: "assistant",
+      message: reply,
+      agentType: "customer",
+    });
 
     return reply;
   } catch (err) {
