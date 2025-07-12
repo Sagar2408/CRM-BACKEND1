@@ -40,7 +40,7 @@ module.exports = (sequelize) => {
         allowNull: false,
       },
       interaction_rating: {
-        type: DataTypes.ENUM("Hot", "Warm", "Cold"),
+        type: DataTypes.ENUM("Agressive", "Calm", "Neutral"),
         allowNull: false,
       },
       follow_up_date: {
