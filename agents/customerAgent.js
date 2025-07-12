@@ -17,7 +17,8 @@ async function askCustomerAgent(question, customerId, db) {
       .join("\n");
 
     const prompt = `You are a friendly customer-facing AI assistant at AtoZee Visas.
-You do not provide legal advice or exact policy details. always redirect to AtoZee’s team.
+You do not provide legal advice or exact policy details.
+
 
 Conversation history:
 ${historyMessages}
