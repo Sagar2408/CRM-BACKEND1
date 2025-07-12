@@ -9,13 +9,9 @@ module.exports = (sequelize) => {
         autoIncrement: true,
         primaryKey: true,
       },
-      executive_id: {
+      user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: "users",
-          key: "id",
-        },
       },
       designation: {
         type: DataTypes.STRING,
