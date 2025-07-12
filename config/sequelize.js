@@ -97,6 +97,7 @@ module.exports = function initializeModels(sequelize) {
     sequelize,
     Sequelize
   );
+  db.Payroll = require("../models/Payroll.model")(sequelize, Sequelize);
 
   // ------------------------
   // Define Associations
@@ -465,6 +466,18 @@ module.exports = function initializeModels(sequelize) {
   db.Customer.belongsTo(db.ProcessPerson, {
     foreignKey: "process_person_id",
     as: "assignedProcessPerson", // ✅ UNIQUE alias
+  });
+  // One executive (User) can have many Payroll records
+  db.Users.hasMany(db.Payroll, {
+    foreignKey: "executive_id",
+    as: "payrolls", // ✅ Unique alias to avoid collisions
+    onDelete: "CASCADE",
+  });
+
+  // Each Payroll record belongs to one executive (User)
+  db.Payroll.belongsTo(db.Users, {
+    foreignKey: "executive_id",
+    as: "executive", // ✅ Unique alias for clarity
   });
 
   // ------------------------
