@@ -10,13 +10,19 @@ exports.generatePayroll = async (req, res) => {
   const { Payroll, Users, ExecutiveActivity } = req.db;
 
   try {
-    const { executive_id, startDate, endDate, gross_salary, designation } =
-      req.body;
+    const { executive_id, startDate, endDate, gross_salary } = req.body;
+    let { designation } = req.body;
 
+    // ✅ Default designation
+    if (!designation) {
+      designation = "Executive";
+    }
+
+    // ✅ Validate required fields
     if (!executive_id || !startDate || !endDate || !gross_salary) {
       return res.status(400).json({
         error:
-          "executive_id, startDate, endDate, gross_salary, and designation are required.",
+          "executive_id, startDate, endDate, and gross_salary are required.",
       });
     }
 
@@ -68,7 +74,7 @@ exports.generatePayroll = async (req, res) => {
 
     if (existing) {
       await existing.update({
-        designation: "Executive",
+        designation,
         gross_salary,
         total_present_days,
         total_working_days: totalWorkingDays,
@@ -99,7 +105,7 @@ exports.generatePayroll = async (req, res) => {
       payroll,
     });
   } catch (err) {
-    console.error("❌ Error generating single payroll:", err.message);
+    console.error("❌ Error generating payroll:", err.message);
     res
       .status(500)
       .json({ error: "Internal server error", message: err.message });
