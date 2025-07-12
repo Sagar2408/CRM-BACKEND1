@@ -20,7 +20,16 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            cd /home/ubuntu/CRM-backend
+            cd /home/ubuntu/CRM-Backend
             git pull origin main
             npm install
-            pm2 restart CRM-backend
+
+            # Try to restart if already running, else start
+            pm2 describe CRM-backend > /dev/null
+            if [ $? -eq 0 ]; then
+              pm2 restart CRM-backend
+            else
+              pm2 start npm --name CRM-backend -- start
+            fi
+
+            pm2 save
