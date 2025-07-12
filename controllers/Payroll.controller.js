@@ -98,8 +98,10 @@ exports.generatePayroll = async (req, res) => {
       payroll,
     });
   } catch (err) {
-    console.error("❌ Error generating single payroll:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("❌ Error generating single payroll:", err.message);
+    res
+      .status(500)
+      .json({ error: "Internal server error", message: err.message });
   }
 };
 
