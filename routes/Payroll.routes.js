@@ -2,13 +2,11 @@ const express = require("express");
 const router = express.Router();
 const payrollController = require("../controllers/Payroll.controller");
 
-//Genarate payroll for all executives for a month
-router.post("/generate/all", payrollController.generatePayroll);
 //Generate payroll for single executive
-router.post("/generate/single", payrollController.generateSinglePayroll);
+router.post("/generate", payrollController.generatePayroll);
 //Get all payroll
-router.get("/all", payrollController.getAllPayrolls);
+router.get("/", payrollController.getAllPayrolls);
 //Get single executives payroll
-router.get("/single", payrollController.getPayrollForExecutive);
+router.get("/one", payrollController.getPayrollForExecutive);
 
 module.exports = router;
