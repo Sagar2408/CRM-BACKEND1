@@ -10,7 +10,8 @@ exports.generatePayroll = async (req, res) => {
   const { Payroll, Users, ExecutiveActivity } = req.db;
 
   try {
-    const { executive_id, startDate, endDate, gross_salary } = req.body;
+    const { executive_id, startDate, endDate, gross_salary, designation } =
+      req.body;
 
     if (!executive_id || !startDate || !endDate || !gross_salary) {
       return res.status(400).json({
