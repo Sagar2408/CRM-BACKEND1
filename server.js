@@ -239,6 +239,12 @@ app.use(
   tenantResolver,
   require("./routes/FollowupNotification.routes")
 );
+app.use(
+  "/api/payroll",
+  auth(),
+  tenantResolver,
+  require("./routes/Payroll.routes")
+);
 
 // 🧠 Store connected users
 const connectedUsers = {};

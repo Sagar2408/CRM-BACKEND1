@@ -52,6 +52,4 @@ module.exports = (sequelize) => {
       timestamps: true, // ✅ enables Sequelize time tracking
     }
   );
-
-  return Payroll;
 };
