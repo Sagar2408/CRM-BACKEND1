@@ -4,6 +4,7 @@ const {
   saveCallDetails,
   getWeeklyCallDurations,
   getCallTimeByDateRange,
+  getCallDurationsGroupedByDay,
 } = require("../controllers/CallDetails.controller");
 
 const auth = require("../middleware/auth");
@@ -18,6 +19,9 @@ router.get("/call-duration-weekly/:executiveId", auth(), getWeeklyCallDurations)
 
 // ✅ Fetch Call Data by time range
 router.get("/call-time/:executiveId", auth(), getCallTimeByDateRange);
+
+router.get("/call-durations-grouped/:executiveId", auth(), getCallDurationsGroupedByDay);
+
 
 
 module.exports = router;

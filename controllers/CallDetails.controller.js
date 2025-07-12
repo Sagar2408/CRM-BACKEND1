@@ -1,6 +1,6 @@
 const { Op } = require("sequelize");
 const moment = require("moment");
-
+const { get } = require("../routes/ExecutiveActivity.routes");
 // 🔽 Already existing function
 const saveCallDetails = async (req, res) => {
   try {
@@ -75,7 +75,6 @@ const saveCallDetails = async (req, res) => {
     });
   }
 };
-
 // 🔼 New function: getWeeklyCallDurations
 const getWeeklyCallDurations = async (req, res) => {
   try {
@@ -159,9 +158,48 @@ const getCallTimeByDateRange = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+// /api/call-durations-grouped/:executiveId?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+const getCallDurationsGroupedByDay = async (req, res) => {
+  try {
+    const executiveId = parseInt(req.params.executiveId);
+    const { startDate, endDate } = req.query;
+    const db = req.db;
 
+    const startTime = moment(`${startDate} 00:00:00`).toDate();
+    const endTime = moment(`${endDate} 23:59:59`).toDate();
+
+    const calls = await db.CallDetails.findAll({
+      where: {
+        executiveId,
+        startTime: {
+          [Op.between]: [startTime, endTime],
+        },
+        durationSeconds: { [Op.gt]: 0 },
+      },
+    });
+
+    const dailyMap = {};
+
+    calls.forEach(call => {
+      const day = moment(call.startTime).format("YYYY-MM-DD");
+      dailyMap[day] = (dailyMap[day] || 0) + call.durationSeconds;
+    });
+
+    return res.json({
+      executiveId,
+      groupedByDate: Object.entries(dailyMap).reduce((acc, [date, secs]) => {
+        acc[date] = +(secs / 60).toFixed(2);
+        return acc;
+      }, {}),
+    });
+  } catch (err) {
+    console.error("🔥 Error:", err.message);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
 module.exports = {
   saveCallDetails,
   getWeeklyCallDurations,
   getCallTimeByDateRange,
+  getCallDurationsGroupedByDay,
 };
