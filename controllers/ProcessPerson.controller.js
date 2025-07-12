@@ -798,7 +798,7 @@ const getProcessPersonCustomers = async (req, res) => {
         {
           model: ProcessFollowUpHistory,
           as: "processfollowuphistories",
-          attributes: ["follow_up_type"],
+          attributes: ["follow_up_type", "interaction_rating"],
           limit: 1,
           separate: true,
           order: [["createdAt", "DESC"]],
