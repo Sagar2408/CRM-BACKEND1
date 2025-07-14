@@ -1,6 +1,12 @@
 // Required dependencies
 const { Op } = require("sequelize");
-const { parseISO, addDays, format, eachDayOfInterval } = require("date-fns");
+const {
+  parseISO,
+  addDays,
+  format,
+  eachDayOfInterval,
+  isWithinInterval,
+} = require("date-fns");
 
 // Utility to get today's date in YYYY-MM-DD format
 function getTodayDate() {
@@ -367,5 +373,128 @@ exports.getExecutiveSummaryByRange = async (req, res) => {
   } catch (err) {
     console.error("Error fetching summary:", err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+//Get attendance as well as leave
+exports.getAttendanceByDateRangeIncludingLeave = async (req, res) => {
+  const { ExecutiveActivity, Users, LeaveApplication } = req.db;
+
+  try {
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        error: "startDate and endDate query params are required (YYYY-MM-DD)",
+      });
+    }
+
+    const start = parseISO(startDate);
+    const end = parseISO(endDate);
+
+    // Step 1: Fetch all non-admin executives
+    const allExecutives = await Users.findAll({
+      where: {
+        role: {
+          [Op.ne]: "Admin",
+        },
+      },
+      attributes: ["id", "username"],
+    });
+
+    // Step 2: Get all executive activity logs in date range
+    const logs = await ExecutiveActivity.findAll({
+      where: {
+        createdAt: {
+          [Op.between]: [start, end],
+        },
+      },
+    });
+
+    // Step 3: Get all approved leaves in the range
+    const leaves = await LeaveApplication.findAll({
+      where: {
+        status: "Approved",
+        [Op.or]: [
+          {
+            startDate: {
+              [Op.between]: [start, end],
+            },
+          },
+          {
+            endDate: {
+              [Op.between]: [start, end],
+            },
+          },
+          {
+            startDate: {
+              [Op.lte]: start,
+            },
+            endDate: {
+              [Op.gte]: end,
+            },
+          },
+        ],
+      },
+    });
+
+    // Step 4: Organize logs and leaves
+    const logsMap = {};
+    logs.forEach((log) => {
+      const date = format(new Date(log.createdAt), "yyyy-MM-dd");
+      if (!logsMap[log.ExecutiveId]) logsMap[log.ExecutiveId] = {};
+      logsMap[log.ExecutiveId][date] = log;
+    });
+
+    const leavesMap = {};
+    leaves.forEach((leave) => {
+      if (!leavesMap[leave.employeeId]) leavesMap[leave.employeeId] = [];
+      leavesMap[leave.employeeId].push({
+        startDate: leave.startDate,
+        endDate: leave.endDate,
+      });
+    });
+
+    // Step 5: Create date list
+    const dateList = eachDayOfInterval({ start, end }).map((d) =>
+      format(d, "yyyy-MM-dd")
+    );
+
+    // Step 6: Build attendance report
+    const report = allExecutives.map(({ id, username }) => {
+      const attendance = {};
+
+      dateList.forEach((date) => {
+        const isLeave = (leavesMap[id] || []).some((leave) =>
+          isWithinInterval(new Date(date), {
+            start: new Date(leave.startDate),
+            end: new Date(leave.endDate),
+          })
+        );
+
+        if (isLeave) {
+          attendance[date] = "On Leave";
+        } else {
+          const log = logsMap[id]?.[date];
+          attendance[date] =
+            !log || log.workTime === null ? "Absent" : "Present";
+        }
+      });
+
+      return {
+        executiveId: id,
+        executiveName: username,
+        dateRange: `${format(start, "yyyy-MM-dd")} to ${format(
+          end,
+          "yyyy-MM-dd"
+        )}`,
+        attendance,
+      };
+    });
+
+    res.json(report);
+  } catch (error) {
+    console.error("❌ Error generating attendance report:", error);
+    res.status(500).json({ error: "Failed to generate attendance report" });
   }
 };
