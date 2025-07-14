@@ -36,31 +36,13 @@ const mapFieldName = (fieldName) => {
 };
 
 // CSV parser
-const processCSV = (filePath) => {
-  return new Promise((resolve, reject) => {
-    const fileData = [];
-    fs.createReadStream(filePath)
-      .pipe(csv())
-      .on("data", (row) => {
-        const mappedRow = {};
-        for (const key in row) {
-          const mappedKey = mapFieldName(key);
-          mappedRow[mappedKey] = row[key];
-        }
-        fileData.push(mappedRow);
-      })
-      .on("end", () => resolve(fileData))
-      .on("error", (err) => reject(err));
-  });
-};
-
-// Excel parser
+// 📦 Updated Excel parser
 const processExcel = (filePath) => {
   const workbook = xlsx.readFile(filePath);
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const data = xlsx.utils.sheet_to_json(sheet, { raw: false, defval: "" });
 
-  return data.map((record) => {
+  return data.map((record, index) => {
     const mapped = {};
     for (const key in record) {
       const mappedKey = mapFieldName(key);
@@ -71,10 +53,18 @@ const processExcel = (filePath) => {
           value = value.w;
         }
 
-        value = String(value).replace(/[^\d]/g, "").slice(0, 15);
-        if (value.length < 8) {
-          console.warn("⚠️ Invalid phone number:", record[key]);
-          value = "0";
+        value = String(value).trim();
+
+        if (/^\+[\d]{8,}/.test(value)) {
+          // Valid international format, keep as is
+        } else {
+          const digits = value.replace(/[^\d]/g, "");
+          if (digits.length < 8) {
+            console.warn(`⚠️ [Row ${index + 2}] Invalid phone number:`, record[key]);
+            value = "0";
+          } else {
+            value = `+91${digits}`;
+          }
         }
       }
 
@@ -83,6 +73,45 @@ const processExcel = (filePath) => {
     return mapped;
   });
 };
+
+// 📦 Updated CSV parser
+const processCSV = (filePath) => {
+  return new Promise((resolve, reject) => {
+    const fileData = [];
+    fs.createReadStream(filePath)
+      .pipe(csv())
+      .on("data", (row) => {
+        const mappedRow = {};
+        for (const key in row) {
+          const mappedKey = mapFieldName(key);
+          let value = row[key];
+
+          if (mappedKey === "phone") {
+            value = String(value).trim();
+
+            if (/^\+[\d]{8,}/.test(value)) {
+              // do nothing
+            } else {
+              const digits = value.replace(/[^\d]/g, "");
+              if (digits.length < 8) {
+                console.warn(`⚠️ Invalid phone number in CSV:`, row[key]);
+                value = "0";
+              } else {
+                value = `+91${digits}`;
+              }
+            }
+          }
+
+          mappedRow[mappedKey] =
+            typeof value === "string" ? value.trim() : value;
+        }
+        fileData.push(mappedRow);
+      })
+      .on("end", () => resolve(fileData))
+      .on("error", (err) => reject(err));
+  });
+};
+
 
 // Upload handler
 const uploadFile = async (req, res) => {
