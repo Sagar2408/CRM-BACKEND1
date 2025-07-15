@@ -18,6 +18,12 @@ const io = new Server(server, { cors: corsOptions });
 
 const PORT = process.env.PORT || 5000;
 
+// Attach io to request object
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
 // Middleware
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
