@@ -232,20 +232,6 @@ const copyTextNotification = async (req, res) => {
       message,
       targetRole: "admin",
     });
-
-    const io = req.app.get("io");
-    const connectedUsers = req.app.get("connectedUsers");
-
-    const targetSocketId = connectedUsers[userId];
-
-    if (targetSocketId) {
-      io.to(targetSocketId).emit("newNotification", notification);
-      console.log(`📤 Real-time notification sent to user ${userId}`);
-    } else {
-      console.log(`🔕 User ${userId} is offline. Notification stored only.`);
-      // Optional: maybe store a flag to show unread count when user logs in
-    }
-
     return res
       .status(201)
       .json({ message: "Notification created", notification });
