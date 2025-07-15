@@ -248,6 +248,7 @@ app.use(
 
 // 🧠 Store connected users
 const connectedUsers = {};
+global.connectedUsers = connectedUsers; // ✅ Attach to global
 
 // Initialize Notification System
 initializeNotificationHelper(io, connectedUsers);
