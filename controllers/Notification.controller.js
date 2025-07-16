@@ -232,6 +232,18 @@ const copyTextNotification = async (req, res) => {
       message,
       targetRole: "admin",
     });
+
+    // ✅ Emit real-time notification to the target user if online
+    if (global.connectedUsers && global.connectedUsers[userId]) {
+      req.io.to(global.connectedUsers[userId]).emit("new_notification", {
+        message,
+        userId,
+      });
+      console.log(`📣 Sent socket notification to user ${userId}`);
+    } else {
+      console.log(`ℹ️ User ${userId} not connected via socket`);
+    }
+
     return res
       .status(201)
       .json({ message: "Notification created", notification });

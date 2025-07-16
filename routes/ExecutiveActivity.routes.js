@@ -9,6 +9,12 @@ router.post("/stopBreak", executiveActivityController.stopBreak);
 router.post("/updateCallTime", executiveActivityController.updateCallTime);
 router.post("/trackLeadVisit", executiveActivityController.trackLeadVisit);
 router.get("/adminDashboard", executiveActivityController.getAdminDashboard);
+//get attendace + leaves
+router.get(
+  "/getAttendance",
+  executiveActivityController.getAttendanceByDateRangeIncludingLeave
+);
+//old api to get attendance only
 router.get("/attendance", executiveActivityController.getAttendanceByDateRange);
 router.get(
   "/daily-activity",
