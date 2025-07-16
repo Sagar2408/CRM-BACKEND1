@@ -47,7 +47,7 @@ const authMaster = require("./middleware/authMaster");
 const tenantResolver = require("./middleware/tenantResolver");
 
 // 📦 Routes
-app.use("/masteruser", require("./routes/MasterUser.routes")); // public login/signup
+app.use("/api/masteruser", require("./routes/MasterUser.routes")); // public login/signup
 app.use("/api/company", require("./routes/Company.routes")); // includes both public & protected
 app.use("/api/crew", auth(), tenantResolver, require("./routes/Agents.routes"));
 
