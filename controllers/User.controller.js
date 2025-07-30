@@ -1250,7 +1250,7 @@ const resendExecutiveOtp = async (req, res) => {
 
     return res.status(200).json({ message: "OTP resent successfully." });
   } catch (err) {
-    console.error("Error resending OTP:", err);
+    console.error("Error resending OTP:", err.message, err.stack);
     return res
       .status(500)
       .json({ error: "Something went wrong while resending OTP." });
