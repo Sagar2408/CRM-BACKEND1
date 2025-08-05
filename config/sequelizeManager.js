@@ -13,6 +13,12 @@ async function getTenantDB(companyId) {
   if (!company) throw new Error("❌ Company not found");
 
   // Create tenant-specific Sequelize instance
+  console.log({
+    db_name: company.db_name,
+    db_user: company.db_user,
+    db_host: company.db_host,
+  });
+
   const sequelize = new Sequelize(
     company.db_name,
     company.db_user,
